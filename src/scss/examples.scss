@@ -1,0 +1,26 @@
+/* stylelint-disable scss/selector-no-redundant-nesting-selector */
+@use "@coreui/coreui/scss/variables" as * with (
+  $enable-deprecation-messages: false
+);
+@use "@coreui/coreui/scss/mixins/breakpoints" as *;
+@use "@coreui/coreui/scss/mixins/color-mode" as *;
+
+.example {
+  &:not(:first-child) {
+    margin-top: 1.5rem;
+  }
+
+  .tab-content {
+    background-color: var(--#{$prefix}tertiary-bg);
+  }
+
+  & + p {
+    margin-top: 1.5rem;
+  }
+}
+
+@include color-mode(dark) {
+  .example .tab-content {
+    background-color: var(--#{$prefix}secondary-bg);
+  }
+}
