@@ -11,7 +11,7 @@ import {
   CCol,
   CProgress,
   CRow,
-} from '@coreui/react'
+} from '@coreui/react' 
 import CIcon from '@coreui/icons-react'
 import {
   cilCloudDownload,
