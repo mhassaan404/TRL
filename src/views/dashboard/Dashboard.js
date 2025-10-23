@@ -11,7 +11,7 @@ import {
   CCol,
   CProgress,
   CRow,
-} from '@coreui/react' 
+} from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
   cilCloudDownload,
@@ -24,9 +24,9 @@ const Dashboard = () => {
 
   const [data, setData] = useState([]);
   useEffect(() => {
-    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxIiwidW5pcXVlX25hbWUiOiJBbGkgUmF6YSIsInJvbGUiOiJBZG1pbiIsIm5iZiI6MTc2MDYxMjM3NCwiZXhwIjoxNzYwNjEzMjc0LCJpYXQiOjE3NjA2MTIzNzQsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjcyOTUiLCJhdWQiOiJodHRwczovL2xvY2FsaG9zdDo3Mjk1In0.Ql1LvDe_CT6aw714kfyWmS6l1Zc4ifweY9EefRHT1dE"
+    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxIiwidW5pcXVlX25hbWUiOiJBbGkgUmF6YSIsInJvbGUiOiJBZG1pbiIsIm5iZiI6MTc2MTEzODY0NiwiZXhwIjoxNzYxNzMzNTQ2LCJpYXQiOjE3NjExMzg2NDYsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjcyOTUiLCJhdWQiOiJodHRwczovL2xvY2FsaG9zdDo3Mjk1In0.-3APl3911E5JbRFASzJvgGv8o1RgH7Op9CIcLBIOZRc"
 
-    fetch("https://localhost:7295/api/Dashboard/data", {
+    fetch("https://localhost:7295/api/Dashboard/dashboard", {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`,
