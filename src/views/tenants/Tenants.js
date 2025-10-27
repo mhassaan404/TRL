@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
+import Loader from "../../components/Loader";
 import {
   CButton,
   CCard,
@@ -26,6 +27,7 @@ import {
   getFilteredRowModel,
   flexRender,
 } from "@tanstack/react-table";
+import { toast } from 'react-toastify';
 
 const Tenants = () => {
   const token =
@@ -41,7 +43,6 @@ const Tenants = () => {
     floorId: "",
     unitId: "",
     monthlyRent: 0,
-    moveOutDate: "",
     isActive: true,
   };
 
@@ -51,34 +52,38 @@ const Tenants = () => {
   const [globalFilter, setGlobalFilter] = useState("");
   const [validated, setValidated] = useState(false);
   const [tenant, setTenant] = useState(emptyTenant);
+  const [loading, setLoading] = useState(false);
 
   const [buildings, setBuildings] = useState([]);
   const [floors, setFloors] = useState([]);
   const [units, setUnits] = useState([]);
 
-  // Load tenants
-  useEffect(() => {
+  const loadTenants = () => {
+    setLoading(true);
     fetch("https://localhost:7295/api/Tenant/tenants", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
-      // .then(setTenants)
-      .then(data => {
-        setTenants(data)
-      })
-      .catch((err) => console.error(err));
+      .then((data) => setTenants(data))
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
+  };
+
+  // Load tenants
+  useEffect(() => {
+    loadTenants()
   }, []);
 
   // Load buildings
   useEffect(() => {
+    setLoading(true);
     fetch("https://localhost:7295/api/Tenant/buildings", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
       .then(setBuildings)
-      .catch((err) => console.error(err));
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
   }, []);
 
   // Handle dropdown chaining
@@ -87,24 +92,30 @@ const Tenants = () => {
     setFloors([]);
     setUnits([]);
     if (!id) return;
+
+    setLoading(true);
     fetch(`https://localhost:7295/api/Tenant/floors?buildingId=${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
       .then(setFloors)
-      .catch((err) => console.error(err));
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
   };
 
   const handleFloorChange = (id) => {
     setTenant({ ...tenant, floorId: id, unitId: "" });
     setUnits([]);
     if (!id) return;
+
+    setLoading(true);
     fetch(`https://localhost:7295/api/Tenant/units?floorId=${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
       .then(setUnits)
-      .catch((err) => console.error(err));
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
   };
 
   const handleUnitChange = (id) => {
@@ -120,6 +131,7 @@ const Tenants = () => {
       return;
     }
 
+    setLoading(true)
     if (editData) {
       // Update existing tenant
       const updatedTenant = {
@@ -131,10 +143,9 @@ const Tenants = () => {
         Contact: tenant.phone,
         Email: tenant.email,
         MonthlyRent: Number(tenant.monthlyRent),
-        MoveOutDate: tenant.moveOutDate,
         City: tenant.city,
-        IsActive: tenant.isActive,
-        Notes: tenant.notes
+        Notes: tenant.notes,
+        IsActive: tenant.isActive
       };
 
       fetch("https://localhost:7295/api/Tenant/UpdateTenants", {
@@ -146,7 +157,7 @@ const Tenants = () => {
         body: JSON.stringify(updatedTenant),
       })
         .then((res) => {
-          if (!res.ok) throw new Error("Failed to update tenant");
+          if (!res.ok) toast.error("Failed to update tenant");
           return res.json();
         })
         .then((data) => {
@@ -155,15 +166,23 @@ const Tenants = () => {
               t.TenantId === editData.TenantId ? data : t
             )
           );
+          loadTenants();
           setEditData(null);
           setVisible(false);
           setTenant(emptyTenant);
           setValidated(false);
+          if (data.success) {
+            toast.success(data.message);
+          }
+          else {
+            toast.error(data.errorMessage);
+          }
         })
         .catch((err) => {
           console.error(err);
-          alert("Error updating tenant!");
-        });
+          toast.error("Error updating tenant!");
+        })
+        .finally(() => setLoading(false));
     }
     else {
       // Add new tenant
@@ -175,12 +194,11 @@ const Tenants = () => {
         Contact: tenant.phone,
         Email: tenant.email,
         MonthlyRent: Number(tenant.monthlyRent),
-        MoveOutDate: tenant.moveOutDate || null,
         City: tenant.city,
-        IsActive: tenant.isActive,
-        Notes: tenant.notes
+        Notes: tenant.notes,
+        IsActive: tenant.isActive
       };
-      
+
       fetch("https://localhost:7295/api/Tenant/SaveTenants", {
         method: "POST",
         headers: {
@@ -190,18 +208,58 @@ const Tenants = () => {
         body: JSON.stringify(newTenant),
       })
         .then((res) => {
-          if (!res.ok) throw new Error("Failed to add tenant");
+          if (!res.ok) toast.error("Failed to add tenant");
           return res.json();
         })
         .then((data) => {
-          setTenants((prev) => [...prev, data]);
+          loadTenants();
           setVisible(false);
           setTenant(emptyTenant);
           setValidated(false);
+          if (data.success) {
+            toast.success(data.message);
+          }
+          else {
+            toast.error(data.errorMessage);
+          }
         })
         .catch((err) => {
           console.error(err);
-          alert("Error adding tenant!");
+          toast.error(data.errorMessage);
+        })
+        .finally(() => setLoading(false));
+    }
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm("Are you sure you want to delete this tenant?")) {
+      setLoading(true);
+      fetch(`https://localhost:7295/api/Tenant/DeleteTenants?tenantId=${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+      })
+        .then((res) => {
+          if (!res.ok) toast.error("Failed to delete tenant");
+          return res.json();
+        })
+        .then((data) => {
+          loadTenants();
+          if (data.success) {
+            toast.success(data.message);
+          }
+          else {
+            toast.error(data.errorMessage);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          toast.error("Error deleting tenant!");
+        })
+        .finally(() => {
+          setLoading(false); // stop loader
         });
     }
   };
@@ -225,17 +283,16 @@ const Tenants = () => {
       floorId: t.FloorId || "",
       unitId: t.UnitId || "",
       monthlyRent: t.MonthlyRent || 0,
-      moveOutDate: t.MoveOutDate || "",
       isActive: !!t.IsActive
     });
     setVisible(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this tenant?")) {
-      setTenants((prev) => prev.filter((t) => t.TenantId !== id));
-    }
-  };
+  // const handleDelete = (id) => {
+  //   if (window.confirm("Are you sure you want to delete this tenant?")) {
+  //     setTenants((prev) => prev.filter((t) => t.TenantId !== id));
+  //   }
+  // };
 
   const exportCSV = (columns, data, filename = "tenants.csv") => {
     const exportCols = columns.filter(
@@ -340,231 +397,234 @@ const Tenants = () => {
   });
 
   return (
-    <CRow>
-      <CCol xs={12}>
-        <CCard className="mb-4">
-          <CCardHeader className="d-flex justify-content-between align-items-center">
-            <strong>Tenants</strong>
-            <div>
-              <input
-                type="text"
-                placeholder="Search..."
-                value={globalFilter ?? ""}
-                onChange={(e) => setGlobalFilter(e.target.value)}
-                style={{ width: "200px", marginRight: "10px" }}
-              />
-              <CButton
-                color="success"
-                onClick={() => exportCSV(columns, tenants)}
-                className="me-2"
-              >
-                Export CSV
-              </CButton>
-              <CButton
-                color="primary"
-                onClick={() => {
-                  setEditData(null);
-                  setTenant(emptyTenant);
-                  setVisible(true);
-                }}
-              >
-                + Add Tenant
-              </CButton>
-            </div>
-          </CCardHeader>
-          <CCardBody>
-            <table className="table table-bordered table-striped">
-              <thead>
-                {table.getHeaderGroups().map((hg) => (
-                  <tr key={hg.id}>
-                    {hg.headers.map((header) => (
-                      <th
-                        key={header.id}
-                        onClick={header.column.getToggleSortingHandler()}
-                        style={{ cursor: "pointer" }}
-                      >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                        {{
-                          asc: " 🔼",
-                          desc: " 🔽",
-                        }[header.column.getIsSorted()] ?? null}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody>
-                {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </CCardBody>
-        </CCard>
-      </CCol>
+    <>
+      {loading && <Loader />}
+      <CRow>
+        <CCol xs={12}>
+          <CCard className="mb-4">
+            <CCardHeader className="d-flex justify-content-between align-items-center">
+              <strong>Tenants</strong>
+              <div>
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={globalFilter ?? ""}
+                  onChange={(e) => setGlobalFilter(e.target.value)}
+                  style={{ width: "200px", marginRight: "10px" }}
+                />
+                <CButton
+                  color="success"
+                  onClick={() => exportCSV(columns, tenants)}
+                  className="me-2"
+                >
+                  Export CSV
+                </CButton>
+                <CButton
+                  color="primary"
+                  onClick={() => {
+                    setEditData(null);
+                    setTenant(emptyTenant);
+                    setVisible(true);
+                  }}
+                >
+                  + Add Tenant
+                </CButton>
+              </div>
+            </CCardHeader>
+            <CCardBody>
+              <table className="table table-bordered table-striped">
+                <thead>
+                  {table.getHeaderGroups().map((hg) => (
+                    <tr key={hg.id}>
+                      {hg.headers.map((header) => (
+                        <th
+                          key={header.id}
+                          onClick={header.column.getToggleSortingHandler()}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                          {{
+                            asc: " 🔼",
+                            desc: " 🔽",
+                          }[header.column.getIsSorted()] ?? null}
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+                <tbody>
+                  {table.getRowModel().rows.map((row) => (
+                    <tr key={row.id}>
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CCardBody>
+          </CCard>
+        </CCol>
 
-      {/* Add/Edit Modal */}
-      <CModal visible={visible} onClose={handleCancel} size="xl" backdrop="static">
-        <CModalHeader>
-          <CModalTitle>{editData ? "Edit Tenant" : "Add Tenant"}</CModalTitle>
-        </CModalHeader>
-        <CModalBody>
-          <CForm
-            className="row g-3 needs-validation"
-            noValidate
-            validated={validated}
-            onSubmit={handleSubmit}
-          >
-            <CCol md={4}>
-              <CFormLabel htmlFor="tenantName">Name</CFormLabel>
-              <CFormInput
-                id="tenantName"
-                value={tenant.name}
-                onChange={(e) => setTenant({ ...tenant, name: e.target.value })}
-                placeholder="Enter Name"
-                required
-              />
-              <CFormFeedback invalid>Enter tenant name</CFormFeedback>
-            </CCol>
+        {/* Add/Edit Modal */}
+        <CModal visible={visible} onClose={handleCancel} size="xl" backdrop="static">
+          <CModalHeader>
+            <CModalTitle>{editData ? "Edit Tenant" : "Add Tenant"}</CModalTitle>
+          </CModalHeader>
+          <CModalBody>
+            <CForm
+              className="row g-3 needs-validation"
+              noValidate
+              validated={validated}
+              onSubmit={handleSubmit}
+            >
+              <CCol md={4}>
+                <CFormLabel htmlFor="tenantName">Name</CFormLabel>
+                <CFormInput
+                  id="tenantName"
+                  value={tenant.name}
+                  onChange={(e) => setTenant({ ...tenant, name: e.target.value })}
+                  placeholder="Enter Name"
+                  required
+                />
+                <CFormFeedback invalid>Enter tenant name</CFormFeedback>
+              </CCol>
 
-            <CCol md={4}>
-              <CFormLabel>Email</CFormLabel>
-              <CFormInput
-                type="email"
-                value={tenant.email}
-                onChange={(e) => setTenant({ ...tenant, email: e.target.value })}
-                placeholder="Enter Email"
-                required
-              />
-            </CCol>
+              <CCol md={4}>
+                <CFormLabel>Email</CFormLabel>
+                <CFormInput
+                  type="email"
+                  value={tenant.email}
+                  onChange={(e) => setTenant({ ...tenant, email: e.target.value })}
+                  placeholder="Enter Email"
+                  required
+                />
+              </CCol>
 
-            <CCol md={4}>
-              <CFormLabel>Phone</CFormLabel>
-              <CFormInput
-                value={tenant.phone}
-                onChange={(e) => setTenant({ ...tenant, phone: e.target.value })}
-                placeholder="Enter Phone"
-                required
-              />
-            </CCol>
+              <CCol md={4}>
+                <CFormLabel>Phone</CFormLabel>
+                <CFormInput
+                  value={tenant.phone}
+                  onChange={(e) => setTenant({ ...tenant, phone: e.target.value })}
+                  placeholder="Enter Phone"
+                  required
+                />
+              </CCol>
 
-            <CCol md={4}>
-              <CFormLabel>Building</CFormLabel>
-              <CFormSelect
-                value={tenant.buildingId}
-                onChange={(e) => handleBuildingChange(e.target.value)}
-                required
-              >
-                <option value="">Select Building</option>
-                {buildings.map((b) => (
-                  <option key={b.BuildingId} value={b.BuildingId}>
-                    {b.BuildingName}
-                  </option>
-                ))}
-              </CFormSelect>
-            </CCol>
+              <CCol md={4}>
+                <CFormLabel>Building</CFormLabel>
+                <CFormSelect
+                  value={tenant.buildingId}
+                  onChange={(e) => handleBuildingChange(e.target.value)}
+                  required
+                >
+                  <option value="">Select Building</option>
+                  {buildings.map((b) => (
+                    <option key={b.BuildingId} value={b.BuildingId}>
+                      {b.BuildingName}
+                    </option>
+                  ))}
+                </CFormSelect>
+              </CCol>
 
-            <CCol md={4}>
-              <CFormLabel>Floor</CFormLabel>
-              <CFormSelect
-                value={tenant.floorId}
-                onChange={(e) => handleFloorChange(e.target.value)}
-                disabled={!tenant.buildingId}
-                required
-              >
-                <option value="">Select Floor</option>
-                {floors.map((f) => (
-                  <option key={f.FloorId} value={f.FloorId}>
-                    {f.FloorNumber}
-                  </option>
-                ))}
-              </CFormSelect>
-            </CCol>
+              <CCol md={4}>
+                <CFormLabel>Floor</CFormLabel>
+                <CFormSelect
+                  value={tenant.floorId}
+                  onChange={(e) => handleFloorChange(e.target.value)}
+                  disabled={!tenant.buildingId}
+                  required
+                >
+                  <option value="">Select Floor</option>
+                  {floors.map((f) => (
+                    <option key={f.FloorId} value={f.FloorId}>
+                      {f.FloorNumber}
+                    </option>
+                  ))}
+                </CFormSelect>
+              </CCol>
 
-            <CCol md={4}>
-              <CFormLabel>Unit</CFormLabel>
-              <CFormSelect
-                value={tenant.unitId}
-                onChange={(e) => handleUnitChange(e.target.value)}
-                disabled={!tenant.floorId}
-                required
-              >
-                <option value="">Select Unit</option>
-                {units.map((u) => (
-                  <option key={u.UnitId} value={u.UnitId}>
-                    {u.UnitNumber}
-                  </option>
-                ))}
-              </CFormSelect>
-            </CCol>
+              <CCol md={4}>
+                <CFormLabel>Unit</CFormLabel>
+                <CFormSelect
+                  value={tenant.unitId}
+                  onChange={(e) => handleUnitChange(e.target.value)}
+                  disabled={!tenant.floorId}
+                  required
+                >
+                  <option value="">Select Unit</option>
+                  {units.map((u) => (
+                    <option key={u.UnitId} value={u.UnitId}>
+                      {u.UnitNumber}
+                    </option>
+                  ))}
+                </CFormSelect>
+              </CCol>
 
-            <CCol md={4}>
-              <CFormLabel>City</CFormLabel>
-              <CFormInput
-                value={tenant.city}
-                onChange={(e) => setTenant({ ...tenant, city: e.target.value })}
-                placeholder="Enter City"
-                required
-              />
-            </CCol>
+              <CCol md={4}>
+                <CFormLabel>City</CFormLabel>
+                <CFormInput
+                  value={tenant.city}
+                  onChange={(e) => setTenant({ ...tenant, city: e.target.value })}
+                  placeholder="Enter City"
+                  required
+                />
+              </CCol>
 
-            <CCol md={4}>
-              <CFormLabel>Monthly Rent</CFormLabel>
-              <CFormInput
-                type="number"
-                min={1}
-                value={tenant.monthlyRent}
-                onChange={(e) => setTenant({ ...tenant, monthlyRent: e.target.value })}
-                required
-              />
-            </CCol>
+              <CCol md={4}>
+                <CFormLabel>Monthly Rent</CFormLabel>
+                <CFormInput
+                  type="number"
+                  min={1}
+                  value={tenant.monthlyRent}
+                  onChange={(e) => setTenant({ ...tenant, monthlyRent: e.target.value })}
+                  required
+                />
+              </CCol>
 
-            <CCol xs={12}>
-              <CFormLabel>Notes</CFormLabel>
-              <CFormTextarea
-                value={tenant.notes}
-                onChange={(e) =>
-                  setTenant({ ...tenant, notes: e.target.value })
-                }
-                placeholder="Enter Notes"
-              />
-            </CCol>
+              <CCol xs={12}>
+                <CFormLabel>Notes</CFormLabel>
+                <CFormTextarea
+                  value={tenant.notes || ""}
+                  onChange={(e) =>
+                    setTenant({ ...tenant, notes: e.target.value })
+                  }
+                  placeholder="Enter Notes"
+                />
+              </CCol>
 
-            <CCol xs={12}>
-              <CFormCheck
-                id="agree"
-                label="Is Active"
-                checked={tenant.isActive}
-                onChange={(e) =>
-                  setTenant({ ...tenant, isActive: e.target.checked })
-                }
-              />
-            </CCol>
+              <CCol xs={12}>
+                <CFormCheck
+                  id="agree"
+                  label="Is Active"
+                  checked={tenant.isActive}
+                  onChange={(e) =>
+                    setTenant({ ...tenant, isActive: e.target.checked })
+                  }
+                />
+              </CCol>
 
-            <CCol xs={12} className="d-flex justify-content-end gap-2">
-              <CButton color="warning" onClick={handleCancel}>
-                Cancel
-              </CButton>
-              <CButton color="primary" type="submit">
-                {editData ? "Update Tenant" : "Add Tenant"}
-              </CButton>
-            </CCol>
-          </CForm>
-        </CModalBody>
-      </CModal>
-    </CRow>
+              <CCol xs={12} className="d-flex justify-content-end gap-2">
+                <CButton color="warning" onClick={handleCancel}>
+                  Cancel
+                </CButton>
+                <CButton color="primary" type="submit">
+                  {editData ? "Update Tenant" : "Add Tenant"}
+                </CButton>
+              </CCol>
+            </CForm>
+          </CModalBody>
+        </CModal>
+      </CRow>
+    </>
   );
 };
 
