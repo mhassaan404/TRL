@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import classNames from 'classnames'
 import { format } from 'date-fns'
+import Loader from "../../components/Loader";
+import { API_BASE_URL } from "../../config";
 
 import {
   CButton,
@@ -12,10 +13,6 @@ import {
   CProgress,
   CRow,
 } from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import {
-  cilCloudDownload,
-} from '@coreui/icons'
 
 import WidgetsDropdown from '../widgets/WidgetsDropdown'
 import MainChart from './MainChart'
@@ -24,14 +21,9 @@ const Dashboard = () => {
 
   const [data, setData] = useState([]);
   useEffect(() => {
-    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxIiwidW5pcXVlX25hbWUiOiJBbGkgUmF6YSIsInJvbGUiOiJBZG1pbiIsIm5iZiI6MTc2MTEzODY0NiwiZXhwIjoxNzYxNzMzNTQ2LCJpYXQiOjE3NjExMzg2NDYsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjcyOTUiLCJhdWQiOiJodHRwczovL2xvY2FsaG9zdDo3Mjk1In0.-3APl3911E5JbRFASzJvgGv8o1RgH7Op9CIcLBIOZRc"
-
-    fetch("https://localhost:7295/api/Dashboard/dashboard", {
+    fetch(`${API_BASE_URL}/Dashboard/dashboard`, {
       method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      }
+      credentials: "include",
     })
       .then(res => res.json())
       .then(data => setData(data))
@@ -42,12 +34,6 @@ const Dashboard = () => {
   const totalRent = data.map(x => x.TotalRentDue);
   const collected = data.map(x => x.CollectedAmount);
   const pending = data.map(x => x.PendingAmount);
-
-  // Example dummy datasets for past 7 months
-  const _tenants = [20, 29, 23, 19, 25, 26, 28]
-  const _totalRent = [220000, 290000, 230000, 190000, 250000, 260000, 280000]
-  const _collected = [180000, 240000, 140000, 155000, 195000, 210000, 240000]
-  const _pending = _totalRent.map((t, i) => t - _collected[i]) // auto-calc pending
 
   return (
     <>

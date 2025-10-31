@@ -25,6 +25,16 @@ const _nav = [
     },
   },
   {
+    component: CNavItem,
+    name: 'Test',
+    to: '/test',
+    icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
+    badge: {
+      color: 'info',
+      text: 'NEW',
+    },
+  },
+  {
     component: CNavTitle,
     name: 'Operations',
   },
@@ -39,6 +49,18 @@ const _nav = [
     name: 'Properties',
     to: '/properties',
     icon: <CIcon icon={cilBuilding} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavGroup,
+    name: 'Properties',
+    icon: <CIcon icon={cilBuilding} customClassName="nav-icon" />,
+    items: [
+      {
+        component: CNavItem,
+        name: 'Property Dashboard',
+        to: '/properties/PropertyDashboard',
+      },
+    ],
   },
   {
     component: CNavGroup,
