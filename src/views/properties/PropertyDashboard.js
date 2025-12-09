@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Loader from "../../components/Loader";
-import { API_BASE_URL } from "../../config";
+import api from "../../api/axios";
 import {
     CDropdown,
     CDropdownToggle,
@@ -27,29 +27,31 @@ const Properties = () => {
     const [globalFilter, setGlobalFilter] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [expandedRows, setExpandedRows] = useState({});
 
-    const loadProperties = () => {
-        setLoading(true);
-        fetch(`${API_BASE_URL}/Properties`, {
-            method: 'GET',
-            credentials: 'include',
-        })
-            .then((res) => res.json())
-            .then(setProperties)
-            .catch(console.error)
-            .finally(() => setLoading(false));
+    const loadProperties = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const res = await api.get("/Properties");
+            setProperties(res.data);
+        } catch (err) {
+            console.error(err);
+            setError("Failed to load properties"); // ✅ added
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
         loadProperties();
     }, []);
 
-    const [expandedRows, setExpandedRows] = useState({});
-    const toggleExpand = (id) => {
+    const toggleExpand = (id) =>
         setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
-    };
 
-    // Columns definition
     const columns = useMemo(
         () => [
             {
@@ -73,29 +75,25 @@ const Properties = () => {
             {
                 accessorKey: "IsActive",
                 header: "Status",
-                cell: ({ getValue }) => {
-                    const isActive = getValue() === true;
-                    return (
-                        <span
-                            style={{
-                                display: "inline-block",
-                                padding: "2px 6px",
-                                borderRadius: "12px",
-                                fontSize: "0.85rem",
-                                color: "white",
-                                backgroundColor: isActive ? "green" : "grey",
-                            }}
-                        >
-                            {isActive ? "Active" : "Inactive"}
-                        </span>
-                    );
-                },
+                cell: ({ getValue }) => (
+                    <span
+                        style={{
+                            display: "inline-block",
+                            padding: "2px 6px",
+                            borderRadius: "12px",
+                            fontSize: "0.85rem",
+                            color: "white",
+                            backgroundColor: getValue() ? "green" : "grey",
+                        }}
+                    >
+                        {getValue() ? "Active" : "Inactive"}
+                    </span>
+                ),
             },
         ],
         [expandedRows]
     );
 
-    // Filter data manually for status
     const filteredData = useMemo(() => {
         if (!statusFilter) return properties;
         return properties.filter((p) =>
@@ -103,7 +101,6 @@ const Properties = () => {
         );
     }, [properties, statusFilter]);
 
-    // Table setup
     const table = useReactTable({
         data: filteredData,
         columns,
@@ -120,6 +117,8 @@ const Properties = () => {
     return (
         <>
             {loading && <Loader />}
+            {error && <div className="text-danger mb-3">{error}</div>}
+
             <CRow>
                 <CCol xs={12}>
                     <CCard className="mb-4">
@@ -129,34 +128,35 @@ const Properties = () => {
 
                         <CCardBody>
                             <CRow className="align-items-center mb-2">
-                                <CCol md={1}>
-                                    <div className="d-flex align-items-center gap-2 flex-wrap">
-                                        <span>Show</span>
-                                        <select
-                                            className="form-select form-select-sm"
-                                            value={table.getState().pagination.pageSize}
-                                            onChange={(e) => table.setPageSize(Number(e.target.value))}
-                                        >
-                                            {[5, 10, 20, 50].map((size) => (
-                                                <option key={size} value={size}>
-                                                    {size}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <span>entries</span>
-                                    </div>
+
+                                {/* Left: Show entries */}
+                                <CCol xs={12} sm={6} md={4} className="d-flex align-items-center gap-2 flex-wrap mb-2">
+                                    <span>Show</span>
+                                    <select
+                                        className="form-select form-select-sm"
+                                        style={{ maxWidth: "70px", flexGrow: 1 }}
+                                        value={table.getState().pagination.pageSize}
+                                        onChange={(e) => table.setPageSize(Number(e.target.value))}
+                                    >
+                                        {[5, 10, 20, 50].map((size) => (
+                                            <option key={size} value={size}>{size}</option>
+                                        ))}
+                                    </select>
+                                    <span>entries</span>
                                 </CCol>
 
-                                <CCol md={8} className="d-flex align-items-center justify-content-end gap-2 flex-wrap ms-auto">
+                                {/* Right: Search + Status Filter */}
+                                <CCol xs={12} sm={6} md={8} className="d-flex align-items-center justify-content-end gap-2 flex-wrap">
                                     <input
                                         type="text"
                                         placeholder="Search..."
                                         value={globalFilter ?? ""}
                                         onChange={(e) => setGlobalFilter(e.target.value)}
                                         className="form-control"
-                                        style={{ width: "180px" }}
+                                        style={{ maxWidth: "220px", flexGrow: 1 }}
                                     />
-                                    <CDropdown className="flex-shrink-0" style={{ minWidth: "160px" }}>
+
+                                    <CDropdown className="flex-shrink-0" style={{ minWidth: "150px" }}>
                                         <CDropdownToggle
                                             as="div"
                                             color="info"
@@ -175,72 +175,107 @@ const Properties = () => {
                                 </CCol>
                             </CRow>
 
-                            <table className="table table-bordered table-striped">
-                                <thead>
-                                    {table.getHeaderGroups().map((hg) => (
-                                        <tr key={hg.id}>
-                                            {hg.headers.map((header) => (
-                                                <th
-                                                    key={header.id}
-                                                    onClick={header.column.getToggleSortingHandler()}
-                                                    style={{ cursor: "pointer" }}
-                                                >
-                                                    {flexRender(header.column.columnDef.header, header.getContext())}
-                                                    {header.column.getIsSorted()
-                                                        ? header.column.getIsSorted() === "asc"
-                                                            ? " 🔼"
-                                                            : " 🔽"
-                                                        : null}
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    ))}
-                                </thead>
-                                <tbody>
-                                    {table.getRowModel().rows.map((row) => (
-                                        <React.Fragment key={row.original.UnitId}>
-                                            <tr>
-                                                {row.getVisibleCells().map((cell) => (
-                                                    <td key={cell.id}>
-                                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                                    </td>
+                            <div style={{ overflowX: "auto", width: "100%" }}>
+                                <table className="table table-bordered table-striped">
+                                    <thead>
+                                        {table.getHeaderGroups().map((hg) => (
+                                            <tr key={hg.id}>
+                                                {hg.headers.map((header) => (
+                                                    <th
+                                                        key={header.id}
+                                                        onClick={header.column.getToggleSortingHandler()}
+                                                        style={{ cursor: "pointer" }}
+                                                    >
+                                                        {flexRender(
+                                                            header.column.columnDef
+                                                                .header,
+                                                            header.getContext()
+                                                        )}
+                                                        {header.column.getIsSorted()
+                                                            ? header.column.getIsSorted() ===
+                                                                "asc"
+                                                                ? " 🔼"
+                                                                : " 🔽"
+                                                            : null}
+                                                    </th>
                                                 ))}
                                             </tr>
-                                            {expandedRows[row.original.UnitId] && (
-                                                <tr>
-                                                    <td colSpan={columns.length}>
-                                                        <div>
-                                                            <strong>Address:</strong> {row.original.Address}
-                                                        </div>
-                                                        <div>
-                                                            <strong>City Name:</strong> {row.original.CityName}
-                                                        </div>
-                                                        <div>
-                                                            <strong>Note:</strong> {row.original.Note}
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </React.Fragment>
-                                    ))}
-                                </tbody>
-                            </table>
+                                        ))}
+                                    </thead>
 
-                            {/* Bottom: entries info and pagination */}
+                                    <tbody>
+                                        {table.getRowModel().rows.map((row) => (
+                                            <React.Fragment
+                                                key={row.original.UnitId}
+                                            >
+                                                <tr>
+                                                    {row
+                                                        .getVisibleCells()
+                                                        .map((cell) => (
+                                                            <td key={cell.id}>
+                                                                {flexRender(
+                                                                    cell.column
+                                                                        .columnDef
+                                                                        .cell,
+                                                                    cell.getContext()
+                                                                )}
+                                                            </td>
+                                                        ))}
+                                                </tr>
+
+                                                {expandedRows[
+                                                    row.original.UnitId
+                                                ] && (
+                                                        <tr>
+                                                            <td colSpan={columns.length}>
+                                                                <div>
+                                                                    <strong>
+                                                                        Address:
+                                                                    </strong>{" "}
+                                                                    {
+                                                                        row.original
+                                                                            .Address
+                                                                    }
+                                                                </div>
+                                                                <div>
+                                                                    <strong>
+                                                                        City Name:
+                                                                    </strong>{" "}
+                                                                    {
+                                                                        row.original
+                                                                            .CityName
+                                                                    }
+                                                                </div>
+                                                                <div>
+                                                                    <strong>Note:</strong>{" "}
+                                                                    {row.original.Note}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                            </React.Fragment>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
                             <div className="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-2">
-                                {/* Bottom left: Showing X to Y of Z */}
                                 <div>
                                     Showing{" "}
-                                    {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}{" "}
+                                    {table.getState().pagination.pageIndex *
+                                        table.getState().pagination.pageSize +
+                                        1}{" "}
                                     to{" "}
                                     {Math.min(
-                                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                                        (table.getState().pagination.pageIndex +
+                                            1) *
+                                        table.getState().pagination
+                                            .pageSize,
                                         filteredData.length
                                     )}{" "}
                                     of {filteredData.length} entries
                                 </div>
 
-                                {/* Bottom right: Pagination buttons */}
                                 <div className="d-flex gap-1 flex-wrap">
                                     <CButton
                                         color="secondary"
@@ -251,12 +286,22 @@ const Properties = () => {
                                         Previous
                                     </CButton>
 
-                                    {Array.from({ length: table.getPageCount() }).map((_, i) => (
+                                    {Array.from({
+                                        length: table.getPageCount(),
+                                    }).map((_, i) => (
                                         <CButton
                                             key={i}
-                                            color={i === table.getState().pagination.pageIndex ? "primary" : "secondary"}
+                                            color={
+                                                i ===
+                                                    table.getState().pagination
+                                                        .pageIndex
+                                                    ? "primary"
+                                                    : "secondary"
+                                            }
                                             size="sm"
-                                            onClick={() => table.setPageIndex(i)}
+                                            onClick={() =>
+                                                table.setPageIndex(i)
+                                            }
                                         >
                                             {i + 1}
                                         </CButton>

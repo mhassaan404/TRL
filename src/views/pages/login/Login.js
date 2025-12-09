@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from "../../../config";
 import {
   CButton,
   CCard,
@@ -37,7 +38,7 @@ const Login = () => {
 
     setLoading(true)
     try {
-      const res = await fetch('https://localhost:7295/api/Auth/login', {
+      const res = await fetch(`${API_BASE_URL}/Auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include', // for HttpOnly cookie
