@@ -99,9 +99,19 @@ export const applyGlobalDiscountPercent = (invoices, percent) => {
 };
 
 // Toggle select all invoices
-export const toggleSelectAll = (invoices, checked) => {
+export const toggleSelectAll = (invoices, checked, isEditMode = false) => {
     return invoices.map(inv => {
         const remaining = getRemainingRent(inv);
+        
+        // In edit mode, allow selection for all rows
+        if (isEditMode) {
+            return {
+                ...inv,
+                selected: checked,
+                payAmount: inv.payAmount // keep existing payAmount
+            };
+        }
+
         return {
             ...inv,
             selected: remaining > 0 ? checked : false,
@@ -111,25 +121,43 @@ export const toggleSelectAll = (invoices, checked) => {
 };
 
 // Toggle single invoice selection
-export const toggleInvoiceSelect = (invoices, invoiceId, checked) => {
+// export const toggleInvoiceSelect = (invoices, invoiceId, checked) => {
+//     return invoices.map(inv => {
+//         const rowKey = inv.PaymentId || inv.InvoiceId;
+//         if (rowKey !== invoiceId) return inv;
+
+//         const remaining = getRemainingRent(inv);
+//         if (remaining <= 0) return inv;
+
+//         return {
+//             ...inv,
+//             selected: checked,
+//             payAmount: checked ? remaining : 0
+//         };
+//     });
+// };
+export const toggleInvoiceSelect = (invoices, invoiceId, checked, isEditMode = false) => {
     return invoices.map(inv => {
-        const rowKey = inv.PaymentId || inv.InvoiceId;
+        const rowKey = inv.invoiceId;
         if (rowKey !== invoiceId) return inv;
 
         const remaining = getRemainingRent(inv);
-        if (remaining <= 0) return inv;
+
+        // ✅ Only block selection if NOT edit mode and fully paid
+        if (!isEditMode && remaining <= 0) return inv;
 
         return {
             ...inv,
             selected: checked,
-            payAmount: checked ? remaining : 0
+            payAmount: checked && !isEditMode ? remaining : inv.payAmount // keep existing payAmount in edit mode
         };
     });
 };
 
+
 export const updateInvoiceField = (invoices, invoiceId, field, value) => {
     return invoices.map(inv => {
-        const rowKey = inv.PaymentId || inv.InvoiceId;
+        const rowKey = inv.invoiceId;
         if (rowKey !== invoiceId) return inv;
 
         const copy = { ...inv };
@@ -137,22 +165,19 @@ export const updateInvoiceField = (invoices, invoiceId, field, value) => {
         if (field === "discountPercent") {
             let pct = Math.min(100, Math.max(0, Number(value) || 0));
             copy.discountPercent = pct;
-            copy.computedDiscount = Math.round((copy.TotalRent || 0) * (pct / 100));
+            copy.computedDiscount = Math.round((copy.totalRent || 0) * (pct / 100));
         }
         else if (field === "discountAmount") {
             let amt = Math.max(0, Number(value) || 0);
-            copy.discountAmount = Math.min(amt, copy.TotalRent || 0);
+            copy.discountAmount = Math.min(amt, copy.totalRent || 0);
         }
         else if (field === "payAmount") {
             let amt = Number(value) || 0;
-            // const remainingRent = getRemainingRent(copy);
-            // copy.payAmount = Math.min(amt, remainingRent);
 
-            if (copy.PaymentId) {
+            if (copy.paymentId) {
                 // EDIT MODE → allow full edit
-                copy.payAmount = Math.min(amt, copy.TotalRent || 0);
+                copy.payAmount = Math.min(amt, copy.totalRent || 0);
             } else {
-                console.log('fe');
                 // ADD MODE → restrict to remaining
                 const remainingRent = getRemainingRent(copy);
                 copy.payAmount = Math.min(amt, remainingRent);
@@ -171,4 +196,22 @@ export const updateInvoiceField = (invoices, invoiceId, field, value) => {
 
         return copy;
     });
+};
+
+export function formatDateDDMMM(dateString) {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0'); // 01, 02, etc.
+    const month = date.toLocaleString('en-US', { month: 'short' }); // Jan, Feb, Mar...
+    return `${day}-${month}`;
+}
+
+export function formatDate(date) {
+  if (!date) return "";
+  const d = new Date(date);
+  return d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 };

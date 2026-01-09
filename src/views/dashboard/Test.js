@@ -1,487 +1,3 @@
-// // src/pages/rent/RentCollection.jsx
-// import React, { useEffect, useMemo, useState } from "react";
-// import {
-//     CButton,
-//     CCard,
-//     CCardBody,
-//     CCardHeader,
-//     CCol,
-//     CForm,
-//     CModal,
-//     CModalBody,
-//     CModalHeader,
-//     CModalTitle,
-//     CRow
-// } from "@coreui/react";
-// import { toast } from "react-toastify";
-
-// import {
-//     useReactTable, getCoreRowModel, getSortedRowModel,
-//     getPaginationRowModel, getFilteredRowModel
-// } from "@tanstack/react-table";
-
-// import api from "../../api/axios";
-// import Loader from "../../components/Loader";
-
-// import RentTable from "../../components/rent/RentTable";
-// import InvoiceTable from "../../components/rent/InvoiceTable";
-// import TotalsSummary from "../../components/rent/TotalsSummary";
-// import GlobalActions from "../../components/rent/GlobalActions";
-
-// import {
-//     fmt,
-//     computeTotals,
-//     toggleSelectAll,
-//     toggleInvoiceSelect,
-//     updateInvoiceField,
-//     applyGlobalDiscountAmount,
-//     applyGlobalDiscountPercent
-// } from "../../utils/rentUtils";
-
-// const emptyRentForm = {
-//     tenantId: "",
-//     invoices: [],
-//     monthlyRent: 0,
-//     pendingAmount: 0,
-//     previousBalance: 0,
-//     lateFee: 0,
-
-//     globalPaymentMethod: "",
-//     globalPaymentDate: "",
-//     globalNotes: "",
-//     globalWaveLateFee: false,
-//     globalDiscountAmount: "",
-//     globalDiscountPercent: ""
-// };
-
-// const RentCollection = () => {
-//     const [loading, setLoading] = useState(false);
-//     const [visible, setVisible] = useState(false);
-//     const [rentList, setRentList] = useState([]);
-//     const [rentForm, setRentForm] = useState(emptyRentForm);
-//     const [tenants, setTenants] = useState([]);
-//     const [expandedRows, setExpandedRows] = useState({});
-//     const [editInvoiceId, setEditInvoiceId] = useState(null);
-//     const isEditMode = !!editInvoiceId;
-
-//     /* ------------------ LOADERS ------------------ */
-
-//     useEffect(() => {
-//         loadRentCollection();
-//         loadTenants();
-//     }, []);
-
-//     const loadRentCollection = async () => {
-//         try {
-//             setLoading(true);
-//             const res = await api.get("/Rent/GetRentCollection");
-//             setRentList(Array.isArray(res.data) ? res.data : []);
-//         } catch {
-//             toast.error("Failed to load rent list");
-//         } finally {
-//             setLoading(false);
-//         }
-//     };
-
-//     const loadTenants = async () => {
-//         try {
-//             const res = await api.get("/Rent/GetTenants");
-//             setTenants(Array.isArray(res.data) ? res.data : []);
-//         } catch {
-//             toast.error("Failed to load tenants");
-//         }
-//     };
-
-//     /* ------------------ TABLE ------------------ */
-
-//     const columns = useMemo(
-//         () => [
-//             { accessorKey: "TenantName", header: "Tenant" },
-//             { accessorKey: "BuildingName", header: "Building" },
-//             { accessorKey: "UnitNumber", header: "Unit" },
-//             { accessorKey: "MonthlyRent", header: "Rent" }
-//         ],
-//         []
-//     );
-
-//     const table = useReactTable({
-//         // data: rentList,
-//         // columns,
-//         // getCoreRowModel: getCoreRowModel()
-
-
-//         data: rentList,
-//         columns,
-//         getCoreRowModel: getCoreRowModel(),
-//         getSortedRowModel: getSortedRowModel(),
-//         getPaginationRowModel: getPaginationRowModel(),
-//         getFilteredRowModel: getFilteredRowModel(),
-//     });
-
-//     const toggleExpand = (id) =>
-//         setExpandedRows((p) => ({ ...p, [id]: !p[id] }));
-
-
-//     // ----- Update -----
-//     // const handleEdit = async (row) => {
-//     //     setVisible(true);
-//     //     setEditInvoiceId(row.InvoiceId);
-
-//     //     setLoading(true);
-//     //     try {
-//     //         const res = await api.get(`/Rent/GetInvoiceById?invoiceId=${row.InvoiceId}`);
-//     //         console.log(res);
-
-//     //         // const invoices = await loadInvoicesForTenant(tenantId);
-
-//     //         setRentForm(p => ({
-//     //             ...p,
-//     //             tenantId: row.TenantId,
-//     //             invoices: payments.map(pmt => ({
-//     //                 ...pmt,
-//     //                 selected: true,                         // always selected in edit
-//     //                 payAmount: pmt.PaymentAmount || 0,
-//     //                 paymentDate: pmt.PaymentDate?.slice(0, 10) || new Date().toISOString().slice(0, 10),
-//     //                 paymentMethod: pmt.PaymentMethod || "",
-//     //                 invoiceNotes: pmt.Notes || "",
-//     //                 discountAmount: pmt.DiscountAmount || 0,
-//     //                 discountPercent: pmt.DiscountPercent || 0,
-//     //                 computedDiscount: 0,
-//     //                 waveLateFee: !!pmt.IsLateFeeWaived,
-//     //             })),
-//     //             // Totals for tenant
-//     //             monthlyRent: invoices.at(-1)?.TotalRent || 0,
-//     //             pendingAmount: invoices.reduce((s, i) => s + ((i.TotalRent || 0) - (i.PaidAmount || 0)), 0),
-//     //             previousBalance: invoices.slice(0, -1).reduce((s, i) => s + ((i.TotalRent || 0) - (i.PaidAmount || 0)), 0),
-//     //             lateFee: invoices.reduce((s, i) => s + (i.LateFee || 0), 0),
-//     //         }));
-
-//     //         // setRentForm(p => ({
-//     //         //     ...p,
-//     //         //     tenantId: row.TenantId,
-//     //         //     invoices: res.data.map(pmt => ({
-//     //         //         ...pmt,
-//     //         //         selected: true,     // always selected in edit
-//     //         //         payAmount: pmt.PaymentAmount,
-//     //         //         paymentDate: pmt.PaymentDate?.slice(0, 10),
-//     //         //         paymentMethod: pmt.PaymentMethod,
-//     //         //         invoiceNotes: pmt.Notes
-//     //         //     }))
-//     //         // }));
-//     //     } finally {
-//     //         setLoading(false);
-//     //     }
-//     // };
-
-//     const handleEdit = async (row) => {
-//         try {
-//             setLoading(true);
-
-//             // Fetch the payment records for this invoice
-//             const res = await api.get(`/Rent/GetInvoiceById?invoiceId=${row.InvoiceId}`);
-//             const payments = res.data; // actual array
-
-//             if (!payments.length) {
-//                 toast.error("No payment records found");
-//                 return;
-//             }
-
-//             // Compute totals from payments
-//             const monthlyRent = payments.at(-1)?.TotalRent || 0;
-//             const pendingAmount = payments.reduce((s, i) => s + ((i.TotalRent || 0) - (i.PaidAmount || 0)), 0);
-//             const previousBalance = payments.slice(0, -1).reduce((s, i) => s + ((i.TotalRent || 0) - (i.PaidAmount || 0)), 0);
-//             const lateFee = payments.reduce((s, i) => s + (i.LateFee || 0), 0);
-
-//             // Map payments to invoice format for modal
-//             const invoices = payments.map(pmt => ({
-//                 ...pmt,
-//                 selected: true,                         // always selected in edit
-//                 payAmount: pmt.PaymentAmount || 0,
-//                 paymentDate: pmt.PaymentDate?.slice(0, 10) || new Date().toISOString().slice(0, 10),
-//                 paymentMethod: pmt.PaymentMethod || "",
-//                 invoiceNotes: pmt.Notes || "",
-//                 discountAmount: pmt.DiscountAmount || 0,
-//                 discountPercent: pmt.DiscountPercent || 0,
-//                 computedDiscount: 0,
-//                 waveLateFee: !!pmt.IsLateFeeWaived,
-//             }));
-
-//             setRentForm({
-//                 tenantId: row.TenantId,
-//                 invoices,
-//                 monthlyRent,
-//                 pendingAmount,
-//                 previousBalance,
-//                 lateFee,
-//                 globalPaymentMethod: "",
-//                 globalPaymentDate: "",
-//                 globalNotes: "",
-//                 globalWaveLateFee: false,
-//                 globalDiscountAmount: "",
-//                 globalDiscountPercent: ""
-//             });
-
-//             setVisible(true); // open modal
-//         } catch (err) {
-//             console.error(err);
-//             toast.error("Failed to load invoice details");
-//         } finally {
-//             setLoading(false);
-//         }
-//     };
-
-//     // ----- Delete -----
-//     const handleDelete = async (rentRecord) => {
-//         if (!window.confirm("Are you sure you want to delete this rent payment?")) return;
-
-//         try {
-//             setLoading(true);
-//             // Dummy API call, replace with your endpoint
-//             await api.delete(`/Rent/DeletePayment?paymentId=${rentRecord.RentInvoiceId}`);
-//             toast.success("Payment deleted successfully");
-//             loadRentCollection(); // refresh table
-//         } catch {
-//             toast.error("Failed to delete payment");
-//         } finally {
-//             setLoading(false);
-//         }
-//     };
-
-//     /* ------------------ INVOICES ------------------ */
-//     const loadInvoicesForTenant = async (tenantId) => {
-//         console.log(tenantId);
-//         const res = await api.get(`/Rent/GetUnpaidInvoiceByTenant?tenantId=${tenantId}`);
-//         return (res.data || []).map((i) => ({
-//             ...i,
-//             TotalRent: Number(i.TotalRent || 0),
-//             PaidAmount: Number(i.PaidAmount || 0),
-//             LateFee: Number(i.LateFee || 0),
-//             selected: false,
-//             payAmount: 0,
-//             discountAmount: 0,
-//             discountPercent: 0,
-//             computedDiscount: 0,
-//             waveLateFee: false,
-//             paymentMethod: "",
-//             paymentDate: new Date().toISOString().slice(0, 10),
-//             invoiceNotes: ""
-//         }));
-//     };
-
-//     const handleTenantChange = async (e) => {
-//         const tenantId = e.target.value;
-//         setRentForm((p) => ({ ...p, tenantId }));
-
-//         if (!tenantId) {
-//             setRentForm(emptyRentForm);
-//             return;
-//         }
-
-//         try {
-//             setLoading(true);
-//             const invoices = await loadInvoicesForTenant(tenantId);
-
-//             setRentForm((p) => ({
-//                 ...p,
-//                 invoices,
-//                 monthlyRent: invoices.at(-1)?.TotalRent || 0,
-//                 pendingAmount: invoices.reduce(
-//                     (s, i) => s + (i.TotalRent - i.PaidAmount),
-//                     0
-//                 ),
-//                 previousBalance: invoices
-//                     .slice(0, -1)
-//                     .reduce((s, i) => s + (i.TotalRent - i.PaidAmount), 0),
-//                 lateFee: invoices.reduce((s, i) => s + i.LateFee, 0)
-//             }));
-//         } catch {
-//             toast.error("Failed to load invoices");
-//         } finally {
-//             setLoading(false);
-//         }
-//     };
-
-//     /* ------------------ ACTIONS ------------------ */
-
-//     const totals = useMemo(
-//         () => computeTotals(rentForm.invoices, rentForm.globalWaveLateFee),
-//         [rentForm.invoices, rentForm.globalWaveLateFee]
-//     );
-
-//     const handlePaySelected = async () => {
-//         if (!totals.anySelected) {
-//             toast.error("No invoice selected");
-//             return;
-//         }
-
-//         setLoading(true);
-//         try {
-//             const payload = rentForm.invoices
-//                 .filter((i) => i.selected)
-//                 .map((i) => ({
-//                     TenantId: rentForm.tenantId,
-//                     RentInvoiceId: i.InvoiceId,
-//                     PaymentAmount: i.payAmount,
-//                     PaymentDate: i.paymentDate,
-//                     PaymentMethod: i.paymentMethod,
-//                     Notes: i.invoiceNotes,
-//                     DiscountAmount:
-//                         Number(i.discountAmount || 0) +
-//                         Number(i.computedDiscount || 0),
-//                     IsLateFeeWaived: !!i.waveLateFee
-//                 }));
-
-//             await api.post("/Rent/SubmitPayments", payload);
-//             toast.success("Payment successful");
-//             setVisible(false);
-//             setRentForm(emptyRentForm);
-//             loadRentCollection();
-//         } catch {
-//             toast.error("Payment failed");
-//         } finally {
-//             setLoading(false);
-//         }
-//     };
-
-//     const handleUpdatePayments = async () => {
-//         await api.put("/Rent/UpdatePayments", rentForm.invoices);
-//         toast.success("Payments updated");
-//         setVisible(false);
-//         setEditInvoiceId(null);
-//         loadRentCollection();
-//     };
-
-//     /* ------------------ RENDER ------------------ */
-//     return (
-//         <>
-//             {loading && <Loader />}
-
-//             <CCard className="mb-4">
-//                 <CCardHeader className="d-flex justify-content-between align-items-center">
-//                     <strong>Rent Collection</strong>
-//                     <CButton color="success" onClick={() => { setVisible(true); setRentForm(emptyRentForm); }}>+ Add Rent</CButton>
-//                 </CCardHeader>
-//                 <CCardBody>
-//                     <RentTable
-//                         table={table}
-//                         expandedRows={expandedRows}
-//                         toggleExpand={toggleExpand}
-//                         handleEdit={handleEdit}   // added
-//                         handleDelete={handleDelete} // added
-//                     />
-//                 </CCardBody>
-//             </CCard>
-
-//             <CModal
-//                 visible={visible}
-//                 fullscreen
-//                 onClose={() => setVisible(false)}
-//             >
-//                 <CModalHeader>
-//                     <CModalTitle>Rent Payment</CModalTitle>
-//                 </CModalHeader>
-//                 <CModalBody>
-//                     <CForm className="row g-3">
-//                         <CCol md={3}>
-//                             <label>Tenant</label>
-//                             <select
-//                                 className="form-select"
-//                                 value={rentForm.tenantId}
-//                                 disabled={isEditMode}
-//                                 onChange={handleTenantChange}
-//                             >
-//                                 <option value="">Select</option>
-//                                 {tenants.map((t) => (
-//                                     <option key={t.TenantId} value={t.TenantId}>
-//                                         {t.TenantName}
-//                                     </option>
-//                                 ))}
-//                             </select>
-//                         </CCol>
-
-//                         <CCol md={2}><label>Monthly Rent</label><div className="border p-2">{fmt(rentForm.monthlyRent)}</div></CCol>
-//                         <CCol md={2}><label>Pending</label><div className="border p-2">{fmt(rentForm.pendingAmount)}</div></CCol>
-//                         <CCol md={2}><label>Previous Balance</label><div className="border p-2">{fmt(rentForm.previousBalance)}</div></CCol>
-//                         <CCol md={2}><label>Total Late Fee</label><div className="border p-2">{fmt(rentForm.lateFee)}</div></CCol>
-
-//                         <GlobalActions
-//                             rentForm={rentForm}
-//                             setRentForm={setRentForm}
-//                             handleApplyGlobalDiscountAmount={() =>
-//                                 setRentForm((p) => ({
-//                                     ...p,
-//                                     invoices: applyGlobalDiscountAmount(
-//                                         p.invoices,
-//                                         p.globalDiscountAmount
-//                                     )
-//                                 }))
-//                             }
-//                             handleApplyGlobalDiscountPercent={() =>
-//                                 setRentForm((p) => ({
-//                                     ...p,
-//                                     invoices: applyGlobalDiscountPercent(
-//                                         p.invoices,
-//                                         p.globalDiscountPercent
-//                                     )
-//                                 }))
-//                             }
-//                         />
-
-//                         <CCol md={12}>
-//                             <InvoiceTable
-//                                 invoices={rentForm.invoices}
-//                                 rentForm={rentForm}
-//                                 toggleSelectAll={(checked) =>
-//                                     setRentForm((p) => ({
-//                                         ...p,
-//                                         invoices: toggleSelectAll(p.invoices, checked)
-//                                     }))
-//                                 }
-//                                 toggleInvoiceSelect={(id, checked) =>
-//                                     setRentForm((p) => ({
-//                                         ...p,
-//                                         invoices: toggleInvoiceSelect(
-//                                             p.invoices,
-//                                             id,
-//                                             checked
-//                                         )
-//                                     }))
-//                                 }
-//                                 updateInvoiceField={(id, f, v) =>
-//                                     setRentForm((p) => ({
-//                                         ...p,
-//                                         invoices: updateInvoiceField(
-//                                             p.invoices,
-//                                             id,
-//                                             f,
-//                                             v
-//                                         )
-//                                     }))
-//                                 }
-//                             />
-//                         </CCol>
-
-//                         <TotalsSummary totals={totals} fmt={fmt} />
-
-//                         <div className="text-end">
-//                             <CButton
-//                                 color={isEditMode ? "warning" : "primary"}
-//                                 disabled={!totals.anySelected && !isEditMode}
-//                                 onClick={isEditMode ? handleUpdatePayments : handlePaySelected}
-//                             >
-//                                 {isEditMode ? "Update Payment" : "Pay Selected"}
-//                             </CButton>
-//                         </div>
-//                     </CForm>
-//                 </CModalBody>
-//             </CModal>
-//         </>
-//     );
-// };
-
-// export default RentCollection;
-
-
 // src/pages/rent/RentCollection.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -498,10 +14,7 @@ import {
 } from "@coreui/react";
 import { toast } from "react-toastify";
 
-import {
-    useReactTable,
-    getCoreRowModel,
-} from "@tanstack/react-table";
+import { useReactTable, getCoreRowModel, getSortedRowModel } from '@tanstack/react-table';
 
 import api from "../../api/axios";
 import Loader from "../../components/Loader";
@@ -519,6 +32,8 @@ import {
     updateInvoiceField,
     applyGlobalDiscountAmount,
     applyGlobalDiscountPercent,
+    formatDateDDMMM,
+    formatDate
 } from "../../utils/rentUtils";
 
 const emptyRentForm = {
@@ -546,6 +61,7 @@ const RentCollection = () => {
     const [expandedRows, setExpandedRows] = useState({});
     const [editInvoiceId, setEditInvoiceId] = useState(null);
     const isEditMode = !!editInvoiceId;
+    const [sorting, setSorting] = useState([]);
 
     // ------------------ LOADERS ------------------
     useEffect(() => {
@@ -557,7 +73,8 @@ const RentCollection = () => {
         try {
             setLoading(true);
             const res = await api.get("/Rent/GetRentCollection");
-            setRentList(Array.isArray(res.data) ? res.data : []);
+            // setRentList(Array.isArray(res.data) ? res.data : []);
+            setRentList(Array.isArray(res.data.invoices) ? res.data.invoices : []);
         } catch {
             toast.error("Failed to load rent list");
         } finally {
@@ -577,10 +94,22 @@ const RentCollection = () => {
     // ------------------ TABLE ------------------
     const columns = useMemo(
         () => [
-            { accessorKey: "TenantName", header: "Tenant" },
-            { accessorKey: "BuildingName", header: "Building" },
-            { accessorKey: "UnitNumber", header: "Unit" },
-            { accessorKey: "MonthlyRent", header: "Rent" },
+            { accessorKey: "tenantName", header: "Tenant" },
+            { accessorKey: "buildingName", header: "Building" },
+            { accessorKey: "floorNumber", header: "Floor" },
+            { accessorKey: "unitNumber", header: "Unit" },
+            { accessorKey: "monthlyRent", header: "Monthly Rent" },
+            { accessorKey: "statusName", header: "Status" },
+            {
+                accessorKey: "dueDate",
+                header: "Due Date",
+                cell: ({ row }) => formatDate(row.original.dueDate)
+            },
+            {
+                accessorKey: "invoiceDate",
+                header: "Invoice Date",
+                cell: ({ row }) => formatDate(row.original.invoiceDate)
+            },
         ],
         []
     );
@@ -588,51 +117,53 @@ const RentCollection = () => {
     const table = useReactTable({
         data: rentList || [],
         columns,
+        state: { sorting },
+        onSortingChange: setSorting,
         getCoreRowModel: getCoreRowModel(),
+        getSortedRowModel: getSortedRowModel(),
     });
 
     const toggleExpand = (id) =>
         setExpandedRows((p) => ({ ...p, [id]: !p[id] }));
 
     // ------------------ EDIT ------------------
-    const handleEdit = async (row) => {
+    const handleEdit_OLD = async (row) => {
         try {
             setLoading(true);
-            const res = await api.get(`/Rent/GetInvoiceById?invoiceId=${row.InvoiceId}`);
-            const payments = res.data || [];
 
-            if (!payments.length) {
+            // Call updated API
+            const res = await api.get(`/Rent/GetInvoiceById?invoiceId=${row.InvoiceId}`);
+            if (!res.data) {
                 toast.error("No payment records found");
                 return;
             }
-            console.log(payments);
-            // Map payments for modal
-            const invoices = payments.map((pmt) => ({
-                ...pmt,
-                selected: true,
-                payAmount: pmt.PaymentAmount || 0,
-                paymentDate: pmt.PaymentDate?.slice(0, 10) || new Date().toISOString().slice(0, 10),
-                paymentMethod: pmt.PaymentMethod || "",
-                invoiceNotes: pmt.Notes || "",
-                discountAmount: pmt.DiscountAmount || 0,
-                discountPercent: pmt.DiscountPercent || 0,
-                computedDiscount: 0,
-                waveLateFee: !!pmt.IsLateFeeWaived,
-            }));
 
-            // Compute totals
-            const monthlyRent = payments.at(-1)?.TotalRent || 0;
-            const pendingAmount = payments.reduce((s, i) => s + ((i.TotalRent || 0) - (i.PaidAmount || 0)), 0);
-            const previousBalance = payments.slice(0, -1).reduce((s, i) => s + ((i.TotalRent || 0) - (i.PaidAmount || 0)), 0);
-            const lateFee = payments.reduce((s, i) => s + (i.LateFee || 0), 0);
+            const { invoices, summary } = res.data;
+
+            if (!invoices || !invoices.length) {
+                toast.error("No invoices found");
+                return;
+            }
+
+            // Map invoices for modal
+            const mappedInvoices = invoices.map((inv) => ({
+                ...inv,
+                selected: true,
+                payAmount: inv.paidAmount || 0,
+                paymentDate: inv.paymentDate?.slice(0, 10) || new Date().toISOString().slice(0, 10),
+                paymentMethod: inv.paymentMethod || "",
+                invoiceNotes: inv.notes || "",
+                computedDiscount: 0,
+                waveLateFee: !!inv.isLateFeeWaived,
+            }));
 
             setRentForm({
                 tenantId: row.TenantId,
-                invoices,
-                monthlyRent,
-                pendingAmount,
-                previousBalance,
-                lateFee,
+                invoices: mappedInvoices,
+                monthlyRent: summary?.monthlyRent || 0,
+                pendingAmount: summary?.pending || 0,
+                previousBalance: summary?.previousBalance || 0,
+                lateFee: summary?.totalLateFee || 0,
                 globalPaymentMethod: "",
                 globalPaymentDate: "",
                 globalNotes: "",
@@ -649,6 +180,47 @@ const RentCollection = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleEdit = (row) => {
+        // EDIT MODE
+        setEditInvoiceId(row.invoiceId);
+        setRentForm(prev => ({
+            ...prev,
+            tenantId: row.tenantId,
+            invoices: [{
+                ...row,
+                // normalize numbers
+                paidAmount: Number(row.paidAmount || 0),
+                lateFee: Number(row.lateFee || 0),
+                discountAmount: 0,
+                discountPercent: 0,
+                // UI fields
+                selected: true,
+                payAmount: 0,
+                computedDiscount: 0,
+                waveLateFee: !!row.isLateFeeWaived,
+                paymentMethod: "",
+                paymentDate: new Date().toISOString().slice(0, 10),
+                invoiceNotes: ""
+            }],
+
+            // summary fields from row
+            monthlyRent: Number(row.monthlyRent || 0),
+            pendingAmount: Number(row.pendingAmount || 0),
+            previousBalance: Number(row.previousBalance || 0),
+            lateFee: Number(row.lateFee || 0),
+
+            // reset globals
+            globalPaymentMethod: "",
+            globalPaymentDate: "",
+            globalNotes: "",
+            globalWaveLateFee: false,
+            globalDiscountAmount: "",
+            globalDiscountPercent: ""
+        }));
+
+        setVisible(true);
     };
 
     // ------------------ DELETE ------------------
@@ -669,52 +241,108 @@ const RentCollection = () => {
     // ------------------ LOAD INVOICES FOR TENANT ------------------
     const loadInvoicesForTenant = async (tenantId) => {
         const res = await api.get(`/Rent/GetUnpaidInvoiceByTenant?tenantId=${tenantId}`);
-        return (res.data || []).map((i) => ({
+        const { invoices = [], summary = {} } = res.data || {};
+
+        const mappedInvoices = invoices.map(i => ({
             ...i,
-            TotalRent: Number(i.TotalRent || 0),
-            PaidAmount: Number(i.PaidAmount || 0),
-            LateFee: Number(i.LateFee || 0),
+            monthlyRent: Number(i.monthlyRent || 0),
+            paidAmount: Number(i.paidAmount || 0),
+            lateFee: Number(i.lateFee || 0),
+            discountAmount: Number(i.discountAmount || 0),
+            discountPercent: Number(i.discountPercent || 0),
+
             selected: false,
             payAmount: 0,
-            discountAmount: 0,
-            discountPercent: 0,
             computedDiscount: 0,
-            waveLateFee: false,
+            waveLateFee: !!i.isLateFeeWaived,
             paymentMethod: "",
             paymentDate: new Date().toISOString().slice(0, 10),
-            invoiceNotes: "",
+            invoiceNotes: ""
         }));
+
+        return { invoices: mappedInvoices, summary };
     };
 
     const handleTenantChange = async (e) => {
         const tenantId = e.target.value;
-        setRentForm((p) => ({ ...p, tenantId }));
+
+        setRentForm(prev => ({ ...prev, tenantId }));
 
         if (!tenantId) {
             setRentForm(emptyRentForm);
             setEditInvoiceId(null);
+            setVisible(false);
             return;
         }
 
         try {
             setLoading(true);
-            const invoices = await loadInvoicesForTenant(tenantId);
-            setRentForm((p) => ({
-                ...p,
+
+            const { invoices, summary } = await loadInvoicesForTenant(tenantId);
+
+            if (!invoices || !invoices.length) {
+                toast.error("No invoices found");
+                return;
+            }
+
+            setRentForm(prev => ({
+                ...prev,
+                tenantId,
                 invoices,
-                monthlyRent: invoices.at(-1)?.TotalRent || 0,
-                pendingAmount: invoices.reduce((s, i) => s + (i.TotalRent - i.PaidAmount), 0),
-                previousBalance: invoices.slice(0, -1).reduce((s, i) => s + (i.TotalRent - i.PaidAmount), 0),
-                lateFee: invoices.reduce((s, i) => s + i.LateFee, 0),
+
+                monthlyRent: Number(summary.monthlyRent || 0),
+                pendingAmount: Number(summary.pending || 0),
+                previousBalance: Number(summary.previousBalance || 0),
+                lateFee: Number(summary.totalLateFee || 0),
+
+                globalPaymentMethod: "",
+                globalPaymentDate: "",
+                globalNotes: "",
+                globalWaveLateFee: false,
+                globalDiscountAmount: "",
+                globalDiscountPercent: ""
             }));
-            setEditInvoiceId(null); // Reset edit mode
+
+            setEditInvoiceId(null);
             setVisible(true);
-        } catch {
+        } catch (err) {
+            console.error(err);
             toast.error("Failed to load invoices");
         } finally {
             setLoading(false);
         }
     };
+
+
+    // const handleTenantChange = async (e) => {
+    //     const tenantId = e.target.value;
+    //     setRentForm((p) => ({ ...p, tenantId }));
+
+    //     if (!tenantId) {
+    //         setRentForm(emptyRentForm);
+    //         setEditInvoiceId(null);
+    //         return;
+    //     }
+
+    //     try {
+    //         setLoading(true);
+    //         const invoices = await loadInvoicesForTenant(tenantId);
+    //         setRentForm((p) => ({
+    //             ...p,
+    //             invoices,
+    //             monthlyRent: invoices.at(-1)?.TotalRent || 0,
+    //             pendingAmount: invoices.reduce((s, i) => s + (i.TotalRent - i.PaidAmount), 0),
+    //             previousBalance: invoices.slice(0, -1).reduce((s, i) => s + (i.TotalRent - i.PaidAmount), 0),
+    //             lateFee: invoices.reduce((s, i) => s + i.LateFee, 0),
+    //         }));
+    //         setEditInvoiceId(null); // Reset edit mode
+    //         setVisible(true);
+    //     } catch {
+    //         toast.error("Failed to load invoices");
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
 
     // ------------------ ACTIONS ------------------
     const totals = useMemo(
@@ -865,13 +493,13 @@ const RentCollection = () => {
                                 toggleSelectAll={(checked) =>
                                     setRentForm((p) => ({
                                         ...p,
-                                        invoices: toggleSelectAll(p.invoices, checked),
+                                        invoices: toggleSelectAll(p.invoices, checked, isEditMode),
                                     }))
                                 }
                                 toggleInvoiceSelect={(id, checked) =>
                                     setRentForm((p) => ({
                                         ...p,
-                                        invoices: toggleInvoiceSelect(p.invoices, id, checked),
+                                        invoices: toggleInvoiceSelect(p.invoices, id, checked, isEditMode),
                                     }))
                                 }
                                 updateInvoiceField={(id, f, v) =>

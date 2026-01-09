@@ -1,64 +1,10 @@
-// // src/components/rent/RentTable.jsx
-// import React from "react";
-// import { CButton } from "@coreui/react";
-// import { flexRender } from "@tanstack/react-table";
-
-// const RentTable = ({ table, expandedRows, toggleExpand, handleEdit, handleDelete }) => {
-//   const columnsLength = table.getHeaderGroups()[0]?.headers.length || 1;
-
-//   return (
-//     <table className="table table-bordered table-striped">
-//       <thead>
-//         {table.getHeaderGroups().map(hg => (
-//           <tr key={hg.id}>
-//             {hg.headers.map(header => (
-//               <th key={header.id} onClick={header.column.getToggleSortingHandler ? header.column.getToggleSortingHandler() : undefined}>
-//                 {flexRender(header.column.columnDef.header, header.getContext())}
-//                 {header.column.getIsSorted ? (header.column.getIsSorted() ? (header.column.getIsSorted() === "asc" ? " 🔼" : " 🔽") : null) : null}
-//               </th>
-//             ))}
-//           </tr>
-//         ))}
-//       </thead>
-//       <tbody>
-//         {table.getRowModel().rows.map(row => (
-//           <React.Fragment key={row.original.Id}>
-//             <tr>
-//               {row.getVisibleCells().map(cell => (
-//                 <td key={cell.id}>
-//                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
-//                 </td>
-//               ))}
-//             </tr>
-//             {expandedRows[row.original.Id] && (
-//               <tr>
-//                 <td colSpan={columnsLength}>
-//                   <div><strong>Tenant:</strong> {row.original.TenantName}</div>
-//                   <div><strong>Building:</strong> {row.original.BuildingName}</div>
-//                   <div><strong>Unit:</strong> {row.original.UnitNumber}</div>
-//                   <div><strong>Monthly Rent:</strong> {row.original.MonthlyRent}</div>
-//                 </td>
-//               </tr>
-//             )}
-//           </React.Fragment>
-//         ))}
-//         {table.getRowModel().rows.length === 0 && (
-//           <tr><td colSpan={columnsLength} className="text-center">No records found.</td></tr>
-//         )}
-//       </tbody>
-//     </table>
-//   );
-// };
-
-// export default RentTable;
-
-
-
-
 // src/components/rent/RentTable.jsx
 import React from "react";
 import { CButton } from "@coreui/react";
 import { flexRender } from "@tanstack/react-table";
+import CIcon from '@coreui/icons-react';
+import { cilPlus, cilMinus } from '@coreui/icons';
+import { formatDate } from "../../utils/rentUtils";
 
 const RentTable = ({ table, expandedRows, toggleExpand, handleEdit, handleDelete }) => {
     const columnsLength = table.getHeaderGroups()[0]?.headers.length || 1;
@@ -68,14 +14,11 @@ const RentTable = ({ table, expandedRows, toggleExpand, handleEdit, handleDelete
             <thead>
                 {table.getHeaderGroups().map((hg) => (
                     <tr key={hg.id}>
+                        <th></th>
                         {hg.headers.map((header) => (
                             <th
                                 key={header.id}
-                                onClick={
-                                    header.column.getToggleSortingHandler
-                                        ? header.column.getToggleSortingHandler()
-                                        : undefined
-                                }
+                                onClick={header.column.getToggleSortingHandler ? header.column.getToggleSortingHandler() : undefined}
                             >
                                 {flexRender(header.column.columnDef.header, header.getContext())}
                                 {header.column.getIsSorted
@@ -92,18 +35,33 @@ const RentTable = ({ table, expandedRows, toggleExpand, handleEdit, handleDelete
             <tbody>
                 {table.getRowModel().rows.length === 0 && (
                     <tr>
-                        <td colSpan={columnsLength + 1} className="text-center">
+                        <td colSpan={columnsLength + 2} className="text-center">
                             No records found.
                         </td>
                     </tr>
                 )}
 
                 {table.getRowModel().rows.map((row) => (
-                    <React.Fragment key={row.original.InvoiceId}>
+                    <React.Fragment key={row.original.invoiceId}>
                         <tr>
-                            {row.getVisibleCells().map((cell) => (
-                                <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                            ))}
+                            {/* Expand/collapse button */}
+                            <td>
+                                <button
+                                    className="btn btn-sm btn-light"
+                                    onClick={() => toggleExpand(row.original.invoiceId)}
+                                >
+                                    <CIcon icon={expandedRows[row.original.invoiceId] ? cilMinus : cilPlus} />
+                                </button>
+                            </td>
+
+                            {row.getVisibleCells().map((cell) => {
+                                return (
+                                    <td key={cell.id}>
+                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                    </td>
+                                );
+                            })}
+
                             <td>
                                 <CButton size="sm" color="info" onClick={() => handleEdit(row.original)}>
                                     Update
@@ -113,24 +71,16 @@ const RentTable = ({ table, expandedRows, toggleExpand, handleEdit, handleDelete
                                 </CButton>
                             </td>
                         </tr>
-                        {expandedRows[row.original.InvoiceId] ? (
+
+                        {expandedRows[row.original.invoiceId] && (
                             <tr>
-                                <td colSpan={columnsLength + 1}>
+                                <td colSpan={columnsLength + 2}>
                                     <div>
-                                        <strong>Tenant:</strong> {row.original.TenantName}
-                                    </div>
-                                    <div>
-                                        <strong>Building:</strong> {row.original.BuildingName}
-                                    </div>
-                                    <div>
-                                        <strong>Unit:</strong> {row.original.UnitNumber}
-                                    </div>
-                                    <div>
-                                        <strong>Monthly Rent:</strong> {row.original.MonthlyRent}
+                                        <strong>Last Payment Date:</strong> {formatDate(row.original.paymentDate?.slice(0, 10))}
                                     </div>
                                 </td>
                             </tr>
-                        ) : null}
+                        )}
                     </React.Fragment>
                 ))}
             </tbody>
