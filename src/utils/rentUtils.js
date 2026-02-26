@@ -9,6 +9,34 @@ export const getRemainingRent = (invoice) => {
 }
 
 // Compute totals using API-provided values where possible
+// export const computeTotals = (invoices, globalWaveLateFee = false) => {
+//   const selectedInvoices = invoices.filter((i) => i.selected)
+//   let sumPayAmount = 0
+//   let sumLateFees = 0
+//   let sumDiscounts = 0
+
+//   selectedInvoices.forEach((i) => {
+//     // Use API pre-calculated discount
+//     sumDiscounts += Number(i.appliedDiscount || 0)
+//     // Pay amount is user-entered or prefilled
+//     sumPayAmount += Number(i.payAmount || 0)
+//     // Late fee with waive logic
+//     const effectiveLate = globalWaveLateFee || i.waveLateFee ? 0 : Number(i.lateFee || 0)
+//     sumLateFees += effectiveLate
+//   })
+
+//   const grandTotal = sumPayAmount + sumLateFees
+
+//   return {
+//     selectedCount: selectedInvoices.length,
+//     sumSelectedPayAmount: sumPayAmount,
+//     sumSelectedLateFees: sumLateFees,
+//     sumSelectedDiscounts: sumDiscounts,
+//     grandTotal,
+//     anySelected: selectedInvoices.length > 0,
+//   }
+// }
+
 export const computeTotals = (invoices, globalWaveLateFee = false) => {
   const selectedInvoices = invoices.filter((i) => i.selected)
   let sumPayAmount = 0
@@ -16,56 +44,87 @@ export const computeTotals = (invoices, globalWaveLateFee = false) => {
   let sumDiscounts = 0
 
   selectedInvoices.forEach((i) => {
-    // Use API pre-calculated discount
-    sumDiscounts += Number(i.appliedDiscount || 0)
-    // Pay amount is user-entered or prefilled
+    // Use local discountAmount + any appliedDiscount from API
+    sumDiscounts += Number(i.discountAmount || 0) + Number(i.appliedDiscount || 0)
     sumPayAmount += Number(i.payAmount || 0)
-    // Late fee with waive logic
     const effectiveLate = globalWaveLateFee || i.waveLateFee ? 0 : Number(i.lateFee || 0)
     sumLateFees += effectiveLate
   })
 
-  const grandTotal = sumPayAmount + sumLateFees
+  const grandTotal = sumPayAmount + sumLateFees - sumDiscounts // discounts subtract
 
   return {
     selectedCount: selectedInvoices.length,
     sumSelectedPayAmount: sumPayAmount,
     sumSelectedLateFees: sumLateFees,
     sumSelectedDiscounts: sumDiscounts,
-    grandTotal,
+    grandTotal: Math.max(0, grandTotal), // prevent negative
     anySelected: selectedInvoices.length > 0,
   }
 }
 
 // Apply global discount amount (oldest first) — updates discountAmount
+// export const applyGlobalDiscountAmount = (invoices, discountAmount) => {
+//   let amt = Number(discountAmount) || 0
+//   if (amt <= 0) return invoices
+
+//   const target = invoices
+//     .filter((i) => i.selected)
+//     .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+
+//   const updated = invoices.map((inv) => ({ ...inv }))
+
+//   for (let t of target) {
+//     if (amt <= 0) break
+
+//     const tKey = t.invoiceId
+//     const idx = updated.findIndex((u) => u.invoiceId === tKey)
+//     if (idx === -1) continue
+
+//     const remainingBefore = getRemainingRent(updated[idx])
+
+//     if (remainingBefore <= 0) continue
+
+//     const take = Math.min(amt, remainingBefore)
+//     updated[idx].discountAmount = (updated[idx].discountAmount || 0) + take
+//     amt -= take
+//   }
+
+//   return updated
+// }
 export const applyGlobalDiscountAmount = (invoices, discountAmount) => {
-  let amt = Number(discountAmount) || 0
-  if (amt <= 0) return invoices
+  let amt = Number(discountAmount) || 0;
+  if (amt <= 0) return invoices;
 
   const target = invoices
     .filter((i) => i.selected)
-    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
 
-  const updated = invoices.map((inv) => ({ ...inv }))
+  const updated = invoices.map((inv) => ({ ...inv }));
+
+  // First, reset local discountAmount on selected invoices to avoid accumulation
+  updated.forEach((inv) => {
+    if (inv.selected) {
+      inv.discountAmount = 0;  // ← key fix: reset before new apply
+    }
+  });
 
   for (let t of target) {
-    if (amt <= 0) break
+    if (amt <= 0) break;
 
-    const tKey = t.invoiceId
-    const idx = updated.findIndex((u) => u.invoiceId === tKey)
-    if (idx === -1) continue
+    const idx = updated.findIndex((u) => u.invoiceId === t.invoiceId);
+    if (idx === -1) continue;
 
-    const remainingBefore = getRemainingRent(updated[idx])
+    const remainingBefore = getRemainingRent(updated[idx]);
+    if (remainingBefore <= 0) continue;
 
-    if (remainingBefore <= 0) continue
-
-    const take = Math.min(amt, remainingBefore)
-    updated[idx].discountAmount = (updated[idx].discountAmount || 0) + take
-    amt -= take
+    const take = Math.min(amt, remainingBefore);
+    updated[idx].discountAmount = take;  // ← set, don't add
+    amt -= take;
   }
 
-  return updated
-}
+  return updated;
+};
 
 // Apply global discount percent — updates discountPercent & computedDiscount
 export const applyGlobalDiscountPercent = (invoices, percent) => {
@@ -120,27 +179,62 @@ export const toggleInvoiceSelect = (invoices, invoiceId, checked) => {
 }
 
 // Update single field — safe, no isEditMode dependency
+// export const updateInvoiceField = (invoices, invoiceId, field, value) => {
+//   return invoices.map((inv) => {
+//     const rowKey = inv.invoiceId
+//     if (rowKey !== invoiceId) return inv
+
+//     const copy = { ...inv }
+
+//     if (field === 'discountAmount') {
+//       // let amt = Math.max(0, Number(value) || 0)
+//       // copy.discountAmount = Math.min(amt, copy.monthlyRent || 0)
+//       let amt = Number(value) || 0
+//       copy.discountAmount = Math.min(amt, getRemainingRent(copy))
+//     } else if (field === 'payAmount') {
+//       let amt = Number(value) || 0
+//       copy.payAmount = Math.min(amt, getRemainingRent(copy))
+//     } else if (field === 'waveLateFee') {
+//       copy.waveLateFee = !!value
+//     } else {
+//       copy[field] = value
+//     }
+
+//     if (copy.selected && field === 'discountAmount') {
+//       copy.payAmount = getRemainingRent(copy)
+//     }
+
+//     return copy
+//   })
+// }
+
+// Update single field — safe, no isEditMode dependency
 export const updateInvoiceField = (invoices, invoiceId, field, value) => {
   return invoices.map((inv) => {
     const rowKey = inv.invoiceId
     if (rowKey !== invoiceId) return inv
 
     const copy = { ...inv }
+    const remaining = getRemainingRent(copy)
 
     if (field === 'discountAmount') {
       let amt = Math.max(0, Number(value) || 0)
-      copy.discountAmount = Math.min(amt, copy.monthlyRent || 0)
+
+      // ── This is the key change ──
+      copy.discountAmount = Math.min(amt, getRemainingRent(copy)) // ← was monthlyRent before
+
+      // Optional: adjust payAmount if it would now exceed (remaining - new discount)
+      if (copy.payAmount > getRemainingRent(copy) - copy.discountAmount) {
+        copy.payAmount = Math.max(0, getRemainingRent(copy) - copy.discountAmount)
+      }
     } else if (field === 'payAmount') {
       let amt = Number(value) || 0
-      copy.payAmount = Math.min(amt, getRemainingRent(copy))
+      // Pay amount cannot exceed (remaining - discountAmount)
+      copy.payAmount = Math.min(amt, remaining - (copy.discountAmount || 0))
     } else if (field === 'waveLateFee') {
       copy.waveLateFee = !!value
     } else {
       copy[field] = value
-    }
-
-    if (copy.selected && field === 'discountAmount') {
-      copy.payAmount = getRemainingRent(copy)
     }
 
     return copy

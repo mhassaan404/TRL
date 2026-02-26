@@ -12,6 +12,7 @@ import {
 } from '@coreui/react'
 import { toast } from 'react-toastify'
 import { rentService } from '../../services/rent.service'
+import { useIsDarkMode } from '../../hooks/useIsDarkMode'
 
 const AdjustmentModal = ({
   visible,
@@ -23,6 +24,9 @@ const AdjustmentModal = ({
 }) => {
   const [amount, setAmount] = useState('')
   const [notes, setNotes] = useState('')
+
+  const safeMax = Number(maxAdjustment) || 0
+  const canAdjust = safeMax > 0
 
   // Reset inputs every time modal opens (prevents stale data & duplicate warnings)
   useEffect(() => {
@@ -78,16 +82,19 @@ const AdjustmentModal = ({
     }
   }
 
+  const isDark = useIsDarkMode()
   return (
     <CModal visible={visible} onClose={onClose} backdrop="static">
-      <CModalHeader>
-        <strong>Add Adjustment / Reversal</strong>
+      <CModalHeader className={isDark ? 'bg-body-secondary' : 'bg-body-tertiary'}>
+        <strong>
+          Add Adjustment / Reversal
+        </strong>
       </CModalHeader>
       <CModalBody>
         <CForm>
           <CFormInput label="Invoice ID" value={invoiceId || ''} readOnly className="mb-3" />
 
-          <CFormInput
+          {/* <CFormInput
             label="Adjustment Amount"
             type="number"
             placeholder={`Max: ${maxAdjustment}`}
@@ -112,6 +119,32 @@ const AdjustmentModal = ({
               }
             }}
             className="mb-3"
+          /> */}
+
+          <CFormInput
+            label="Adjustment Amount"
+            type="number"
+            placeholder={canAdjust ? `Max: ${safeMax.toFixed(2)}` : 'No payments to adjust'}
+            min={0}
+            max={safeMax}
+            step="0.01" // browser suggests 2 decimals
+            value={amount}
+            className="mb-3"
+            onChange={(e) => {
+              const val = e.target.value
+
+              if (val === '' || /^\d{0,10}(\.\d{0,2})?$/.test(val)) {
+                const num = parseFloat(val)
+
+                if (val === '' || (!isNaN(num) && num <= safeMax)) {
+                  setAmount(val)
+                } else if (!isNaN(num) && num > safeMax) {
+                  setAmount(safeMax.toFixed(2))
+                  toast.info(`Limited to max ${safeMax.toFixed(2)}`)
+                }
+              }
+            }}
+            disabled={!canAdjust}
           />
 
           <CFormTextarea

@@ -110,21 +110,21 @@ export const useRentCollection = () => {
 
   // ── Edit Mode Open ────────────────────────────────────────────────────────
   const openEditPayment = (row) => {
-    setIsEditMode(true);
-    setEditingInvoiceId(row.invoiceId);
+    setIsEditMode(true)
+    setEditingInvoiceId(row.invoiceId)
 
     const editedInvoice = {
-      ...row,  // Keep all API read-only fields (monthlyRent, paidAmount, remainingAmount, appliedDiscount, lateFee, etc.)
-      selected: true,  // Force selected
-      waveLateFee: false,  // Not prefilled (default false)
-      discountAmount: 0,   // Not prefilled
-      discountPercent: 0,  // Not prefilled (read-only)
-      payAmount: 0,        // Not prefilled
+      ...row, // Keep all API read-only fields (monthlyRent, paidAmount, remainingAmount, appliedDiscount, lateFee, etc.)
+      selected: true, // Force selected
+      waveLateFee: false, // Not prefilled (default false)
+      discountAmount: 0, // Not prefilled
+      discountPercent: 0, // Not prefilled (read-only)
+      payAmount: 0, // Not prefilled
       computedDiscount: 0, // Not prefilled
-      paymentDate: '',     // Not prefilled
-      paymentMethod: '',   // Not prefilled
-      invoiceNotes: '',    // Not prefilled
-    };
+      paymentDate: '', // Not prefilled
+      paymentMethod: '', // Not prefilled
+      invoiceNotes: '', // Not prefilled
+    }
 
     setRentForm({
       ...emptyRentForm,
@@ -134,11 +134,11 @@ export const useRentCollection = () => {
       pendingAmount: Number(row.pendingAmount || 0),
       previousBalance: Number(row.previousBalance || 0),
       lateFee: Number(row.lateFee || 0),
-    });
+    })
 
-    setOpenFrom('ROW_CLICK');
-    setIsModalOpen(true);
-  };
+    setOpenFrom('ROW_CLICK')
+    setIsModalOpen(true)
+  }
 
   const closeModal = () => {
     setIsModalOpen(false)
@@ -151,30 +151,30 @@ export const useRentCollection = () => {
 
   // ── Tenant Change + Load Unpaid Invoices ──────────────────────────────────
   const handleTenantChange = async (tenantId) => {
-    setRentForm((prev) => ({ ...prev, tenantId }));
+    setRentForm((prev) => ({ ...prev, tenantId }))
     if (!tenantId) {
-      closeModal();
-      return;
+      closeModal()
+      return
     }
-    setLoading(true);
+    setLoading(true)
     try {
-      const { invoices, summary } = await rentService.getUnpaidInvoicesByTenant(tenantId);
+      const { invoices, summary } = await rentService.getUnpaidInvoicesByTenant(tenantId)
       if (!invoices?.length) {
-        toast.info('No unpaid invoices found for this tenant');
-        return;
+        toast.info('No unpaid invoices found for this tenant')
+        return
       }
       const mappedInvoices = invoices.map((i) => ({
-        ...i,  // Keep all API read-only fields (monthlyRent, paidAmount, remainingAmount, appliedDiscount, lateFee, etc.)
-        selected: false,  // Not prefilled
-        waveLateFee: false,  // Not prefilled (default false)
-        discountAmount: 0,   // Not prefilled
-        discountPercent: 0,  // Not prefilled (read-only anyway)
-        payAmount: 0,        // Not prefilled
+        ...i, // Keep all API read-only fields (monthlyRent, paidAmount, remainingAmount, appliedDiscount, lateFee, etc.)
+        selected: false, // Not prefilled
+        waveLateFee: false, // Not prefilled (default false)
+        discountAmount: 0, // Not prefilled
+        discountPercent: 0, // Not prefilled (read-only anyway)
+        payAmount: 0, // Not prefilled
         computedDiscount: 0, // Not prefilled
-        paymentDate: '',     // Not prefilled
-        paymentMethod: '',   // Not prefilled
-        invoiceNotes: '',    // Not prefilled
-      }));
+        paymentDate: '', // Not prefilled
+        paymentMethod: '', // Not prefilled
+        invoiceNotes: '', // Not prefilled
+      }))
       setRentForm({
         ...emptyRentForm,
         tenantId,
@@ -183,14 +183,14 @@ export const useRentCollection = () => {
         pendingAmount: Number(summary.pending || 0),
         previousBalance: Number(summary.previousBalance || 0),
         lateFee: Number(summary.totalLateFee || 0),
-      });
-      setOpenFrom('TENANT_CHANGE');
+      })
+      setOpenFrom('TENANT_CHANGE')
     } catch {
-      toast.error('Failed to load invoices for tenant');
+      toast.error('Failed to load invoices for tenant')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   // ── Totals ─────────────────────────────────────────────────────────────────
   const totals = useMemo(
@@ -252,6 +252,16 @@ export const useRentCollection = () => {
       toast.warn('No invoices selected')
       return
     }
+    // ── Add this block here ──
+    const hasPayment = totals.sumSelectedPayAmount > 0 || totals.sumSelectedLateFees > 0
+    const hasOnlyDiscount = totals.sumSelectedPayAmount <= 0 && totals.sumSelectedDiscounts > 0
+
+    if (hasOnlyDiscount && !hasPayment) {
+      if (!window.confirm('You are recording a discount/waiver with no cash payment. Proceed?')) {
+        return
+      }
+    }
+
     setLoading(true)
     try {
       const payload = rentForm.invoices
@@ -295,6 +305,37 @@ export const useRentCollection = () => {
     }
   }
 
+  const handleApplyGlobalPaymentDate = () => {
+    setRentForm((prev) => ({
+      ...prev,
+      invoices: prev.invoices.map((inv) =>
+        inv.selected && prev.globalPaymentDate
+          ? { ...inv, paymentDate: prev.globalPaymentDate }
+          : inv,
+      ),
+    }))
+  }
+
+  const handleApplyGlobalPaymentMethod = () => {
+    setRentForm((prev) => ({
+      ...prev,
+      invoices: prev.invoices.map((inv) =>
+        inv.selected && prev.globalPaymentMethod
+          ? { ...inv, paymentMethod: prev.globalPaymentMethod }
+          : inv,
+      ),
+    }))
+  }
+
+  const handleApplyGlobalNotes = () => {
+    setRentForm((prev) => ({
+      ...prev,
+      invoices: prev.invoices.map((inv) =>
+        inv.selected && prev.globalNotes ? { ...inv, invoiceNotes: prev.globalNotes } : inv,
+      ),
+    }))
+  }
+
   return {
     loading,
     rentList,
@@ -318,6 +359,11 @@ export const useRentCollection = () => {
     handleGlobalWaveChange,
     handleSubmitPayments,
     handleDeletePayment,
+
+    handleApplyGlobalPaymentDate,
+    handleApplyGlobalPaymentMethod,
+    handleApplyGlobalNotes,
+
     fmt,
     formatDate,
   }

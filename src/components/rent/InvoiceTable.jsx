@@ -1,6 +1,6 @@
 // src/components/rent/InvoiceTable.jsx
-import React, { useState } from 'react';
-import { toast } from 'react-toastify';
+import React, { useState } from 'react'
+import { toast } from 'react-toastify'
 import {
   CForm,
   CFormTextarea,
@@ -12,12 +12,13 @@ import {
   CModalHeader,
   CModalBody,
   CModalFooter,
-} from '@coreui/react';
+} from '@coreui/react'
 
-import { formatDate } from '../../utils/rentUtils';
-import { rentService } from '../../services/rent.service';
+import { formatDate } from '../../utils/rentUtils'
+import { rentService } from '../../services/rent.service'
+import { useIsDarkMode } from '../../hooks/useIsDarkMode'
 
-const fmt = (v) => Number(v || 0).toLocaleString();
+const fmt = (v) => Number(v || 0).toLocaleString()
 
 const InvoiceTable = ({
   invoices,
@@ -32,46 +33,46 @@ const InvoiceTable = ({
     invoice: null,
     data: [],
     loading: false,
-  });
+  })
 
   const [adjustmentState, setAdjustmentState] = useState({
     visible: false,
     invoiceId: null,
-  });
+  })
 
-  const [adjustmentAmount, setAdjustmentAmount] = useState('');
-  const [adjustmentNotes, setAdjustmentNotes] = useState('');
-  const [maxAdjustment, setMaxAdjustment] = useState(0);
+  const [adjustmentAmount, setAdjustmentAmount] = useState('')
+  const [adjustmentNotes, setAdjustmentNotes] = useState('')
+  const [maxAdjustment, setMaxAdjustment] = useState(0)
 
   if (!invoices?.length) {
-    return <div className="text-center py-5 text-muted">Select a tenant to view invoices</div>;
+    return <div className="text-center py-5 text-muted">Select a tenant to view invoices</div>
   }
 
   const openPaymentHistory = async (invoice) => {
-    setHistoryState((prev) => ({ ...prev, loading: true, visible: true, invoice }));
+    setHistoryState((prev) => ({ ...prev, loading: true, visible: true, invoice }))
 
     try {
-      const history = await rentService.getPaymentHistory(invoice.invoiceId);
-      setHistoryState((prev) => ({ ...prev, data: history, loading: false }));
-      setMaxAdjustment(Number(invoice.paidAmount || 0));
+      const history = await rentService.getPaymentHistory(invoice.invoiceId)
+      setHistoryState((prev) => ({ ...prev, data: history, loading: false }))
+      setMaxAdjustment(Number(invoice.paidAmount || 0))
     } catch (err) {
-      console.error('Failed to load payment history:', err);
-      setHistoryState((prev) => ({ ...prev, data: [], loading: false }));
-      toast.error(err.response?.data?.message || 'Could not load payment history');
+      console.error('Failed to load payment history:', err)
+      setHistoryState((prev) => ({ ...prev, data: [], loading: false }))
+      toast.error(err.response?.data?.message || 'Could not load payment history')
     }
-  };
+  }
 
   const handleSubmitAdjustment = async () => {
-    const amount = Number(adjustmentAmount);
+    const amount = Number(adjustmentAmount)
     if (amount <= 0 || !adjustmentNotes.trim()) {
-      toast.warn('Please enter a valid amount and reason');
-      return;
+      toast.warn('Please enter a valid amount and reason')
+      return
     }
 
-    const invoice = invoices.find((inv) => inv.invoiceId === adjustmentState.invoiceId);
+    const invoice = invoices.find((inv) => inv.invoiceId === adjustmentState.invoiceId)
     if (!invoice?.tenantId) {
-      toast.error('Invoice information not found');
-      return;
+      toast.error('Invoice information not found')
+      return
     }
 
     try {
@@ -81,26 +82,27 @@ const InvoiceTable = ({
         TenantId: invoice.tenantId,
         PaymentMethod: 'Adjustment',
         Notes: adjustmentNotes.trim(),
-      };
+      }
 
-      const result = await rentService.createPaymentAdjustment(payload);
+      const result = await rentService.createPaymentAdjustment(payload)
 
       if (result?.isSuccess) {
-        toast.success(result.message || 'Adjustment recorded successfully');
+        toast.success(result.message || 'Adjustment recorded successfully')
         // Refresh history
-        await openPaymentHistory(invoice);
+        await openPaymentHistory(invoice)
         // Reset form
-        setAdjustmentState({ visible: false, invoiceId: null });
-        setAdjustmentAmount('');
-        setAdjustmentNotes('');
+        setAdjustmentState({ visible: false, invoiceId: null })
+        setAdjustmentAmount('')
+        setAdjustmentNotes('')
       } else {
-        toast.error(result?.errorMessage || 'Adjustment failed');
+        toast.error(result?.errorMessage || 'Adjustment failed')
       }
     } catch (err) {
-      console.error('Adjustment failed:', err);
-      toast.error(err.response?.data?.message || 'Failed to process adjustment');
+      console.error('Adjustment failed:', err)
+      toast.error(err.response?.data?.message || 'Failed to process adjustment')
     }
-  };
+  }
+  const isDark = useIsDarkMode()
 
   return (
     <>
@@ -110,7 +112,7 @@ const InvoiceTable = ({
             <tr>
               <th style={{ width: 40 }}>
                 <CFormCheck
-                  checked={invoices.length > 0 &&invoices.every((i) => i.selected)}
+                  checked={invoices.length > 0 && invoices.every((i) => i.selected)}
                   onChange={(e) => toggleSelectAll(e.target.checked)}
                 />
               </th>
@@ -134,8 +136,8 @@ const InvoiceTable = ({
           </thead>
           <tbody>
             {invoices.map((inv) => {
-              const id = inv.invoiceId;
-              const remaining = Number(inv.monthlyRent || 0) - Number(inv.paidAmount || 0);
+              const id = inv.invoiceId
+              const remaining = Number(inv.monthlyRent || 0) - Number(inv.paidAmount || 0)
 
               return (
                 <tr key={id}>
@@ -168,7 +170,9 @@ const InvoiceTable = ({
                       type="number"
                       min="0"
                       value={inv.discountAmount || 0}
-                      onChange={(e) => updateInvoiceField(id, 'discountAmount', Number(e.target.value))}
+                      onChange={(e) =>
+                        updateInvoiceField(id, 'discountAmount', Number(e.target.value))
+                      }
                     />
                   </td>
 
@@ -178,7 +182,9 @@ const InvoiceTable = ({
                       min="0"
                       max="100"
                       value={inv.discountPercent || 0}
-                      onChange={(e) => updateInvoiceField(id, 'discountPercent', Number(e.target.value))}
+                      onChange={(e) =>
+                        updateInvoiceField(id, 'discountPercent', Number(e.target.value))
+                      }
                     />
                   </td>
 
@@ -208,9 +214,9 @@ const InvoiceTable = ({
                       disabled={!!rentForm.globalPaymentMethod}
                       onChange={(e) => updateInvoiceField(id, 'paymentMethod', e.target.value)}
                     >
-                      <option value="">—</option>
+                      <option value="">Select</option>
                       <option value="Cash">Cash</option>
-                      <option value="Bank Transfer">Bank</option>
+                      <option value="Bank Transfer">Bank Transfer</option>
                       <option value="Cheque">Cheque</option>
                       <option value="Online">Online</option>
                     </CFormSelect>
@@ -225,16 +231,12 @@ const InvoiceTable = ({
                   </td>
 
                   <td>
-                    <CButton
-                      color="info"
-                      variant="outline"
-                      onClick={() => openPaymentHistory(inv)}
-                    >
+                    <CButton color="info" variant="outline" onClick={() => openPaymentHistory(inv)}>
                       Hist
                     </CButton>
                   </td>
                 </tr>
-              );
+              )
             })}
           </tbody>
         </table>
@@ -317,7 +319,7 @@ const InvoiceTable = ({
         onClose={() => setAdjustmentState({ visible: false, invoiceId: null })}
         backdrop="static"
       >
-        <CModalHeader>
+        <CModalHeader className={isDark ? 'bg-body-secondary' : 'bg-body-tertiary'}>
           <strong>Add Adjustment / Reversal</strong>
         </CModalHeader>
         <CModalBody>
@@ -337,10 +339,10 @@ const InvoiceTable = ({
               max={maxAdjustment}
               value={adjustmentAmount}
               onChange={(e) => {
-                let val = e.target.value.replace(/^0+/, '') || '0';
+                let val = e.target.value.replace(/^0+/, '') || '0'
                 if (/^\d+$/.test(val)) {
-                  val = Math.min(Number(val), maxAdjustment).toString();
-                  setAdjustmentAmount(val);
+                  val = Math.min(Number(val), maxAdjustment).toString()
+                  setAdjustmentAmount(val)
                 }
               }}
               className="mb-3"
@@ -367,7 +369,7 @@ const InvoiceTable = ({
         </CModalFooter>
       </CModal>
     </>
-  );
-};
+  )
+}
 
-export default InvoiceTable;
+export default InvoiceTable
