@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'
 import {
   CModal,
   CModalHeader,
@@ -6,8 +6,8 @@ import {
   CModalFooter,
   CButton,
   CForm,
-  CFormInput
-} from '@coreui/react';
+  CFormInput,
+} from '@coreui/react'
 
 const BulkDueDateUpdateModal = ({
   visible,
@@ -16,12 +16,15 @@ const BulkDueDateUpdateModal = ({
   newDueDate,
   onDateChange,
   onSubmit,
-  isDark
+  isSubmitting,
+  isDark,
 }) => {
   return (
     <CModal visible={visible} onClose={onClose} backdrop="static">
       <CModalHeader className={isDark ? 'bg-body-secondary' : 'bg-body-tertiary'}>
-        <strong>Update Due Date for {selectedCount} Invoice{selectedCount !== 1 ? 's' : ''}</strong>
+        <strong>
+          Update Due Date for {selectedCount} Invoice{selectedCount !== 1 ? 's' : ''}
+        </strong>
       </CModalHeader>
       <CModalBody>
         <CForm>
@@ -32,9 +35,7 @@ const BulkDueDateUpdateModal = ({
             onChange={(e) => onDateChange(e.target.value)}
             className="mb-3"
           />
-          <small className="text-muted">
-            Selected invoices: {selectedCount}
-          </small>
+          <small className="text-muted">Selected invoices: {selectedCount}</small>
         </CForm>
       </CModalBody>
       <CModalFooter>
@@ -43,14 +44,14 @@ const BulkDueDateUpdateModal = ({
         </CButton>
         <CButton
           color="warning"
-          disabled={!newDueDate}
+          disabled={!newDueDate || isSubmitting}
           onClick={onSubmit}
         >
-          Update Due Dates
+          {isSubmitting ? 'Updating...' : 'Update Due Dates'}
         </CButton>
       </CModalFooter>
     </CModal>
-  );
-};
+  )
+}
 
-export default BulkDueDateUpdateModal;
+export default BulkDueDateUpdateModal

@@ -1,4 +1,317 @@
-import React, { useState, useMemo } from 'react'
+// // RentHistory.jsx
+// import React, { useState, useEffect, useMemo } from 'react'
+// import { fmt, formatDate } from '../../utils/rentUtils'
+// import {
+//   CButton,
+//   CCard,
+//   CCardBody,
+//   CCardHeader,
+//   CCol,
+//   CRow,
+//   CFormInput,
+//   CFormSelect,
+//   CBadge,
+// } from '@coreui/react'
+// import {
+//   useReactTable,
+//   getCoreRowModel,
+//   flexRender,
+//   getSortedRowModel,
+// } from '@tanstack/react-table'
+
+// import { useRentHistory } from '../../hooks/useRentHistory'
+
+// // CSV Export Helper
+// const exportToCSV = (columns, data, filename = 'rent_history.csv') => {
+//   const headers = columns.map((col) => `"${col.header}"`).join(',')
+//   const rows = data.map((row) =>
+//     columns.map((col) => `"${String(row[col.accessorKey] ?? '').replace(/"/g, '""')}"`).join(','),
+//   )
+//   const csv = [headers, ...rows].join('\n')
+//   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+//   const url = URL.createObjectURL(blob)
+//   const a = document.createElement('a')
+//   a.href = url
+//   a.download = filename
+//   a.click()
+//   URL.revokeObjectURL(url)
+// }
+
+// const RentHistory = () => {
+//   const {
+//     loading,
+//     historyRecords,
+//     loadRentHistory,
+//     refresh,
+//     setHistoryRecords,
+//     handleDelete,
+//     handleReinstate,
+//   } = useRentHistory()
+
+//   const [globalSearch, setGlobalSearch] = useState('')
+//   const [tenantFilter, setTenantFilter] = useState('')
+//   const [unitFilter, setUnitFilter] = useState('')
+//   const [statusFilter, setStatusFilter] = useState('')
+//   const [datePreset, setDatePreset] = useState('all')
+//   const [dateFrom, setDateFrom] = useState('')
+//   const [dateTo, setDateTo] = useState('')
+
+//   // Load data on mount
+//   useEffect(() => {
+//     loadRentHistory()
+//   }, [loadRentHistory])
+
+//   // Date preset logic
+//   const applyDatePreset = (preset) => {
+//     setDatePreset(preset)
+//     if (preset === 'all') {
+//       setDateFrom('')
+//       setDateTo('')
+//       return
+//     }
+
+//     const today = new Date()
+//     const todayStr = today.toISOString().split('T')[0]
+
+//     let from = ''
+//     if (preset === 'thisMonth') {
+//       from = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0]
+//     } else if (preset === 'last3') {
+//       const d = new Date()
+//       d.setMonth(d.getMonth() - 3)
+//       from = d.toISOString().split('T')[0]
+//     } else if (preset === 'lastYear') {
+//       const d = new Date()
+//       d.setFullYear(d.getFullYear() - 1)
+//       from = d.toISOString().split('T')[0]
+//     }
+
+//     setDateFrom(from)
+//     setDateTo(todayStr)
+//   }
+
+//   const filteredData = useMemo(() => {
+//     return historyRecords.filter((record) => {
+//       const term = globalSearch.toLowerCase().trim()
+//       if (term) {
+//         const matches =
+//           record.tenant?.toLowerCase().includes(term) ||
+//           record.unit?.toLowerCase().includes(term) ||
+//           (record.notes || '').toLowerCase().includes(term) ||
+//           String(record.amount || '').includes(term)
+//         if (!matches) return false
+//       }
+
+//       if (tenantFilter && !record.tenant?.toLowerCase().includes(tenantFilter.toLowerCase().trim()))
+//         return false
+//       if (unitFilter && !record.unit?.toLowerCase().includes(unitFilter.toLowerCase().trim()))
+//         return false
+//       if (statusFilter && record.status !== statusFilter) return false
+
+//       const recDate = record.paymentDate || '9999-12-31'
+//       if (dateFrom && recDate < dateFrom) return false
+//       if (dateTo && recDate > dateTo) return false
+
+//       return true
+//     })
+//   }, [historyRecords, globalSearch, tenantFilter, unitFilter, statusFilter, dateFrom, dateTo])
+
+//   const columns = useMemo(
+//     () => [
+//       { accessorKey: 'id', header: 'ID' },
+//       { accessorKey: 'tenant', header: 'Tenant Name' },
+//       { accessorKey: 'unit', header: 'Property / Unit' },
+//       {
+//         accessorKey: 'monthlyRent',
+//         header: 'Monthly Rent',
+//         cell: ({ getValue }) => fmt(getValue() || 0),
+//       },
+//       {
+//         accessorKey: 'lastPaymentDate',
+//         header: 'Last Payment Date',
+//         cell: ({ row }) => formatDate(row.original.dueDate),
+//       },
+//       { accessorKey: 'paymentMethod', header: 'Payment Method' },
+//       {
+//         accessorKey: 'status',
+//         header: 'Status',
+//         cell: ({ getValue }) => {
+//           const v = getValue()
+//           const colors = {
+//             Paid: 'success',
+//             Late: 'warning',
+//             Pending: 'info',
+//             Overdue: 'danger',
+//             Leaved: 'secondary',
+//           }
+//           return <CBadge color={colors[v] || 'secondary'}>{v || '—'}</CBadge>
+//         },
+//       },
+//       { accessorKey: 'allNotes', header: 'Notes' },
+//       {
+//         id: 'actions',
+//         header: 'Actions',
+//         cell: ({ row }) => (
+//           <>
+//             {row.original.status === 'Leaved' && (
+//               <CButton
+//                 color="warning"
+//                 size="sm"
+//                 className="me-2"
+//                 onClick={() => handleReinstate(row.original.Id || row.original.id)}
+//               >
+//                 Reinstate
+//               </CButton>
+//             )}
+//             <CButton
+//               color="danger"
+//               size="sm"
+//               onClick={() => handleDelete(row.original.Id || row.original.id)}
+//             >
+//               Delete
+//             </CButton>
+//           </>
+//         ),
+//       },
+//     ],
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//     [refresh],
+//   )
+
+//   const table = useReactTable({
+//     data: filteredData,
+//     columns,
+//     getCoreRowModel: getCoreRowModel(),
+//     getSortedRowModel: getSortedRowModel(),
+//   })
+
+//   return (
+//     <CRow>
+//       <CCol xs={12}>
+//         <CCard className="mb-4">
+//           <CCardHeader className="d-flex justify-content-between align-items-center">
+//             <strong>Rent History</strong>
+//             <CButton color="success" onClick={() => exportToCSV(columns, filteredData)}>
+//               Export CSV
+//             </CButton>
+//           </CCardHeader>
+
+//           <CCardBody>
+//             {/* Filters */}
+//             <div className="row g-3 mb-4">
+//               <div className="col-md-3">
+//                 <label className="form-label small text-muted mb-1">Search</label>
+//                 <CFormInput
+//                   placeholder="Tenant, unit, notes, amount..."
+//                   value={globalSearch}
+//                   onChange={(e) => setGlobalSearch(e.target.value)}
+//                 />
+//               </div>
+
+//               <div className="col-md-3">
+//                 <label className="form-label small text-muted mb-1">Status</label>
+//                 <CFormSelect value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+//                   <option value="">All Status</option>
+//                   <option value="Paid">Paid</option>
+//                   <option value="Unpaid">Unpaid</option>
+//                   <option value="Pending">Pending</option>
+//                   <option value="Overdue">Overdue</option>
+//                   <option value="Late">Late</option>
+//                   <option value="Leaved">Leaved</option>
+//                 </CFormSelect>
+//               </div>
+
+//               <div className="col-md-3">
+//                 <label className="form-label small text-muted mb-1">Date Range</label>
+//                 <CFormSelect value={datePreset} onChange={(e) => applyDatePreset(e.target.value)}>
+//                   <option value="all">All Time</option>
+//                   <option value="thisMonth">This Month</option>
+//                   <option value="last3">Last 3 Months</option>
+//                   <option value="lastYear">Last 12 Months</option>
+//                   <option value="custom">Custom Range</option>
+//                 </CFormSelect>
+//               </div>
+
+//               {datePreset === 'custom' && (
+//                 <>
+//                   <div className="col-md-3">
+//                     <label className="form-label small text-muted mb-1">From</label>
+//                     <CFormInput
+//                       type="date"
+//                       value={dateFrom}
+//                       onChange={(e) => setDateFrom(e.target.value)}
+//                     />
+//                   </div>
+//                   <div className="col-md-3">
+//                     <label className="form-label small text-muted mb-1">To</label>
+//                     <CFormInput
+//                       type="date"
+//                       value={dateTo}
+//                       onChange={(e) => setDateTo(e.target.value)}
+//                     />
+//                   </div>
+//                 </>
+//               )}
+//             </div>
+
+//             {loading ? (
+//               <div className="text-center py-5">Loading rent history...</div>
+//             ) : (
+//               <>
+//                 <div className="table-responsive">
+//                   <table className="table table-bordered table-striped">
+//                     <thead>
+//                       {table.getHeaderGroups().map((headerGroup) => (
+//                         <tr key={headerGroup.id}>
+//                           {headerGroup.headers.map((header) => (
+//                             <th
+//                               key={header.id}
+//                               onClick={header.column.getToggleSortingHandler?.()}
+//                               style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }}
+//                             >
+//                               {flexRender(header.column.columnDef.header, header.getContext())}
+//                               {{
+//                                 asc: ' ↑',
+//                                 desc: ' ↓',
+//                               }[header.column.getIsSorted()] ?? null}
+//                             </th>
+//                           ))}
+//                         </tr>
+//                       ))}
+//                     </thead>
+//                     <tbody>
+//                       {table.getRowModel().rows.map((row) => (
+//                         <tr key={row.id}>
+//                           {row.getVisibleCells().map((cell) => (
+//                             <td key={cell.id}>
+//                               {flexRender(cell.column.columnDef.cell, cell.getContext())}
+//                             </td>
+//                           ))}
+//                         </tr>
+//                       ))}
+//                     </tbody>
+//                   </table>
+//                 </div>
+
+//                 {filteredData.length === 0 && !loading && (
+//                   <div className="text-center text-muted py-5">No records found.</div>
+//                 )}
+//               </>
+//             )}
+//           </CCardBody>
+//         </CCard>
+//       </CCol>
+//     </CRow>
+//   )
+// }
+
+// export default RentHistory
+
+
+
+// RentHistory.jsx
+import React, { useState, useEffect, useMemo } from 'react'
+import { fmt, formatDate } from '../../utils/rentUtils'
 import {
   CButton,
   CCard,
@@ -8,14 +321,22 @@ import {
   CRow,
   CFormInput,
   CFormSelect,
+  CBadge,
 } from '@coreui/react'
-import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table'
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+  getSortedRowModel,
+} from '@tanstack/react-table'
 
-// 🔹 CSV Export Helper
-const exportCSV = (columns, data, filename = 'rent_history.csv') => {
-  const headers = columns.map((col) => col.header).join(',')
+import { useRentHistory } from '../../hooks/useRentHistory'
+
+// CSV Export Helper
+const exportToCSV = (columns, data, filename = 'rent_history.csv') => {
+  const headers = columns.map((col) => `"${col.header}"`).join(',')
   const rows = data.map((row) =>
-    columns.map((col) => row[col.accessorKey] ?? '').join(',')
+    columns.map((col) => `"${String(row[col.accessorKey] ?? '').replace(/"/g, '""')}"`).join(','),
   )
   const csv = [headers, ...rows].join('\n')
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -27,85 +348,153 @@ const exportCSV = (columns, data, filename = 'rent_history.csv') => {
   URL.revokeObjectURL(url)
 }
 
-const RentHistory = () => {
-  // Sample historical data
-  const [historyRecords, setHistoryRecords] = useState([
-    {
-      id: 1,
-      tenant: 'Ali Khan',
-      unit: 'Unit 101',
-      amount: '25000',
-      paymentDate: '2025-08-01',
-      method: 'Cash',
-      status: 'Leaved',
-      notes: 'Tenant moved out after 1 year',
-    },
-    {
-      id: 2,
-      tenant: 'Sara Ahmed',
-      unit: 'Unit 202',
-      amount: '40000',
-      paymentDate: '2025-07-05',
-      method: 'Bank Transfer',
-      status: 'Leaved',
-      notes: 'Left due to relocation',
-    },
-  ])
+// Helper to normalize dates to YYYY-MM-DD (fixes most date filter problems)
+const normalizeDate = (value) => {
+  if (!value) return null;
+  if (typeof value === 'string') {
+    // Remove time part if exists (handles ISO format like 2025-03-15T00:00:00)
+    return value.split('T')[0] || null;
+  }
+  if (value instanceof Date && !isNaN(value)) {
+    return value.toISOString().split('T')[0];
+  }
+  return null;
+};
 
-  // 🔹 Filters
+const RentHistory = () => {
+  const {
+    loading,
+    historyRecords,
+    loadRentHistory,
+    refresh,
+    setHistoryRecords,
+    handleDelete,
+    handleReinstate,
+  } = useRentHistory()
+
+  const [globalSearch, setGlobalSearch] = useState('')
   const [tenantFilter, setTenantFilter] = useState('')
   const [unitFilter, setUnitFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [datePreset, setDatePreset] = useState('all')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
 
-  // 🔹 Filtered Data
+  // Load data on mount
+  useEffect(() => {
+    loadRentHistory()
+  }, [loadRentHistory])
+
+  // Date preset logic
+  const applyDatePreset = (preset) => {
+    setDatePreset(preset)
+    if (preset === 'all') {
+      setDateFrom('')
+      setDateTo('')
+      return
+    }
+
+    const today = new Date()
+    const todayStr = today.toISOString().split('T')[0]
+
+    let from = ''
+    if (preset === 'thisMonth') {
+      from = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0]
+    } else if (preset === 'last3') {
+      const d = new Date()
+      d.setMonth(d.getMonth() - 3)
+      from = d.toISOString().split('T')[0]
+    } else if (preset === 'lastYear') {
+      const d = new Date()
+      d.setFullYear(d.getFullYear() - 1)
+      from = d.toISOString().split('T')[0]
+    }
+
+    setDateFrom(from)
+    setDateTo(todayStr)
+  }
+
   const filteredData = useMemo(() => {
     return historyRecords.filter((record) => {
-      const matchTenant = tenantFilter
-        ? record.tenant.toLowerCase().includes(tenantFilter.toLowerCase())
-        : true
-      const matchUnit = unitFilter
-        ? record.unit.toLowerCase().includes(unitFilter.toLowerCase())
-        : true
-      const matchStatus = statusFilter ? record.status === statusFilter : true
-      const matchDateFrom = dateFrom ? record.paymentDate >= dateFrom : true
-      const matchDateTo = dateTo ? record.paymentDate <= dateTo : true
+      // Global search
+      const term = globalSearch.toLowerCase().trim()
+      if (term) {
+        const matches =
+          record.tenant?.toLowerCase().includes(term) ||
+          record.unit?.toLowerCase().includes(term) ||
+          (record.notes || '').toLowerCase().includes(term) ||
+          String(record.amount || '').includes(term)
+        if (!matches) return false
+      }
 
-      return matchTenant && matchUnit && matchStatus && matchDateFrom && matchDateTo
+      // Tenant & Unit filter
+      if (tenantFilter && !record.tenant?.toLowerCase().includes(tenantFilter.toLowerCase().trim()))
+        return false
+      if (unitFilter && !record.unit?.toLowerCase().includes(unitFilter.toLowerCase().trim()))
+        return false
+
+      // Status filter
+      if (statusFilter && record.status !== statusFilter) return false
+
+      // ────────────────────────────────
+      // FIXED DATE FILTER
+      const recDate = normalizeDate(record.paymentDate || record.dueDate || record.lastPaymentDate)
+
+      // If no valid date → show record (you can change to return false if you want to hide)
+      if (!recDate) return true
+
+      if (dateFrom && recDate < dateFrom) return false
+      if (dateTo && recDate > dateTo) return false
+      // ────────────────────────────────
+
+      return true
     })
-  }, [historyRecords, tenantFilter, unitFilter, statusFilter, dateFrom, dateTo])
-
-  // ✅ Delete record
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this record?')) {
-      setHistoryRecords((prev) => prev.filter((rec) => rec.id !== id))
-    }
-  }
-
-  // ✅ Reinstate tenant
-  const handleReinstate = (id) => {
-    if (window.confirm('Are you sure you want to change status to Active?')) {
-      setHistoryRecords((prev) =>
-        prev.map((rec) =>
-          rec.id === id ? { ...rec, status: 'Active', notes: 'Reinstated tenant' } : rec
-        )
-      )
-    }
-  }
+  }, [
+    historyRecords,
+    globalSearch,
+    tenantFilter,
+    unitFilter,
+    statusFilter,
+    dateFrom,
+    dateTo,
+    datePreset   // Added this - important for preset changes
+  ])
 
   const columns = useMemo(
     () => [
       { accessorKey: 'id', header: 'ID' },
       { accessorKey: 'tenant', header: 'Tenant Name' },
       { accessorKey: 'unit', header: 'Property / Unit' },
-      { accessorKey: 'amount', header: 'Rent Amount' },
-      { accessorKey: 'paymentDate', header: 'Payment Date' },
-      { accessorKey: 'method', header: 'Payment Method' },
-      { accessorKey: 'status', header: 'Status' },
-      { accessorKey: 'notes', header: 'Notes' },
       {
-        accessorKey: 'actions',
+        accessorKey: 'monthlyRent',
+        header: 'Monthly Rent',
+        cell: ({ getValue }) => fmt(getValue() || 0),
+      },
+      {
+        accessorKey: 'lastPaymentDate',
+        header: 'Last Payment Date',
+        cell: ({ row }) => formatDate(row.original.dueDate || row.original.lastPaymentDate),
+      },
+      { accessorKey: 'paymentMethod', header: 'Payment Method' },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ getValue }) => {
+          const v = getValue()
+          const colors = {
+            Paid: 'success',
+            Late: 'warning',
+            Pending: 'info',
+            Overdue: 'danger',
+            Leaved: 'secondary',
+            Unpaid: 'danger',
+          }
+          return <CBadge color={colors[v] || 'secondary'}>{v || '—'}</CBadge>
+        },
+      },
+      { accessorKey: 'allNotes', header: 'Notes' },
+      {
+        id: 'actions',
         header: 'Actions',
         cell: ({ row }) => (
           <>
@@ -114,7 +503,7 @@ const RentHistory = () => {
                 color="warning"
                 size="sm"
                 className="me-2"
-                onClick={() => handleReinstate(row.original.id)}
+                onClick={() => handleReinstate(row.original.id || row.original.Id)}
               >
                 Reinstate
               </CButton>
@@ -122,7 +511,7 @@ const RentHistory = () => {
             <CButton
               color="danger"
               size="sm"
-              onClick={() => handleDelete(row.original.id)}
+              onClick={() => handleDelete(row.original.id || row.original.Id)}
             >
               Delete
             </CButton>
@@ -130,13 +519,14 @@ const RentHistory = () => {
         ),
       },
     ],
-    [historyRecords]
+    [refresh]
   )
 
   const table = useReactTable({
     data: filteredData,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
   })
 
   return (
@@ -145,84 +535,113 @@ const RentHistory = () => {
         <CCard className="mb-4">
           <CCardHeader className="d-flex justify-content-between align-items-center">
             <strong>Rent History</strong>
-            <CButton color="success" onClick={() => exportCSV(columns, filteredData)}>
+            <CButton color="success" onClick={() => exportToCSV(columns, filteredData)}>
               Export CSV
             </CButton>
           </CCardHeader>
+
           <CCardBody>
-            {/* 🔹 Filters Section */}
-            <div className="row g-2 mb-3">
-              <div className="col-md">
+            {/* Filters */}
+            <div className="row g-3 mb-4">
+              <div className="col-md-3">
+                <label className="form-label small text-muted mb-1">Search</label>
                 <CFormInput
-                  type="text"
-                  placeholder="Filter by Tenant"
-                  value={tenantFilter}
-                  onChange={(e) => setTenantFilter(e.target.value)}
+                  placeholder="Tenant, unit, notes, amount..."
+                  value={globalSearch}
+                  onChange={(e) => setGlobalSearch(e.target.value)}
                 />
               </div>
-              <div className="col-md">
-                <CFormInput
-                  type="text"
-                  placeholder="Filter by Unit"
-                  value={unitFilter}
-                  onChange={(e) => setUnitFilter(e.target.value)}
-                />
-              </div>
-              <div className="col-md">
-                <CFormSelect
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
+
+              <div className="col-md-3">
+                <label className="form-label small text-muted mb-1">Status</label>
+                <CFormSelect value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                   <option value="">All Status</option>
                   <option value="Paid">Paid</option>
+                  <option value="Unpaid">Unpaid</option>
                   <option value="Pending">Pending</option>
                   <option value="Overdue">Overdue</option>
+                  <option value="Late">Late</option>
                   <option value="Leaved">Leaved</option>
                 </CFormSelect>
               </div>
-              <div className="col-md">
-                <CFormInput
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                />
+
+              <div className="col-md-3">
+                <label className="form-label small text-muted mb-1">Date Range</label>
+                <CFormSelect value={datePreset} onChange={(e) => applyDatePreset(e.target.value)}>
+                  <option value="all">All Time</option>
+                  <option value="thisMonth">This Month</option>
+                  <option value="last3">Last 3 Months</option>
+                  <option value="lastYear">Last 12 Months</option>
+                  <option value="custom">Custom Range</option>
+                </CFormSelect>
               </div>
-              <div className="col-md">
-                <CFormInput
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                />
-              </div>
+
+              {datePreset === 'custom' && (
+                <>
+                  <div className="col-md-3">
+                    <label className="form-label small text-muted mb-1">From</label>
+                    <CFormInput
+                      type="date"
+                      value={dateFrom}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                    />
+                  </div>
+                  <div className="col-md-3">
+                    <label className="form-label small text-muted mb-1">To</label>
+                    <CFormInput
+                      type="date"
+                      value={dateTo}
+                      onChange={(e) => setDateTo(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* 🔹 Table */}
-            <table className="table table-bordered table-striped">
-              <thead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <th
-                        key={header.id}
-                        onClick={header.column.getToggleSortingHandler?.()}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody>
-                {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {loading ? (
+              <div className="text-center py-5">Loading rent history...</div>
+            ) : (
+              <>
+                <div className="table-responsive">
+                  <table className="table table-bordered table-striped">
+                    <thead>
+                      {table.getHeaderGroups().map((headerGroup) => (
+                        <tr key={headerGroup.id}>
+                          {headerGroup.headers.map((header) => (
+                            <th
+                              key={header.id}
+                              onClick={header.column.getToggleSortingHandler?.()}
+                              style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }}
+                            >
+                              {flexRender(header.column.columnDef.header, header.getContext())}
+                              {{
+                                asc: ' ↑',
+                                desc: ' ↓',
+                              }[header.column.getIsSorted()] ?? null}
+                            </th>
+                          ))}
+                        </tr>
+                      ))}
+                    </thead>
+                    <tbody>
+                      {table.getRowModel().rows.map((row) => (
+                        <tr key={row.id}>
+                          {row.getVisibleCells().map((cell) => (
+                            <td key={cell.id}>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {filteredData.length === 0 && !loading && (
+                  <div className="text-center text-muted py-5">No records found.</div>
+                )}
+              </>
+            )}
           </CCardBody>
         </CCard>
       </CCol>
