@@ -1,457 +1,381 @@
-// // // src/pages/rent/RentCollection.page.jsx
-// // import React, { useMemo } from 'react'
-// // import { CButton, CCard, CCardBody, CCardHeader } from '@coreui/react'
-// // import { useReactTable, getCoreRowModel, getSortedRowModel } from '@tanstack/react-table'
+import React, { useState, useMemo } from 'react'
+import {
+  CButton,
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CCol,
+  CRow,
+  CModal,
+  CModalBody,
+  CModalHeader,
+  CModalTitle,
+  CForm,
+  CFormInput,
+  CFormLabel,
+  CFormSelect,
+  CFormTextarea,
+  CFormFeedback,
+} from '@coreui/react'
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getPaginationRowModel,
+  getFilteredRowModel,
+  flexRender,
+} from '@tanstack/react-table'
 
-// // import Loader from '../../components/Loader'
-// // // import RentListTable from '../../components/rent/RentListTable';
-// // import RentListTable from '../../components/rent/RentListTable'
-// // import PaymentModal from '../../components/rent/PaymentModal'
+// 🔹 Floor options
+const floorOptions = ['B2', 'B1', 'G', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
 
-// // import { useRentCollection } from '../../hooks/useRentCollection'
-// // import { formatDate } from '../../utils/rentUtils'
+// 🔹 Property Form Component
+const PropertyForm = ({ onSubmit, initialData }) => {
+  const [validated, setValidated] = useState(false)
+  const [property, setProperty] = useState(
+    initialData || {
+      name: '',
+      unit: '',
+      floor: '',
+      type: '',
+      address: '',
+      city: '',
+      rent: '',
+      status: '',
+      notes: '',
+    }
+  )
 
-// // const RentCollection = () => {
-// //   const {
-// //     loading,
-// //     rentList,
-// //     tenants, // ← pass tenants
-// //     rentForm, // ← pass full form state
-// //     setRentForm, // ← if modal needs to update
-// //     isModalOpen,
-// //     isEditMode,
-// //     openFrom,
-// //     totals,
-// //     openNewPayment,
-// //     openEditPayment,
-// //     handleDeletePayment,
-// //     closeModal,
-// //     handleTenantChange,
-// //     handleToggleSelectAll,
-// //     handleToggleInvoiceSelect,
-// //     handleUpdateInvoiceField,
-// //     handleApplyGlobalDiscountAmount,
-// //     handleApplyGlobalDiscountPercent,
-// //     handleGlobalWaveChange,
-// //     handleSubmitPayments,
+  const handleSubmit = (event) => {
+    event.preventDefault()
+    const form = event.currentTarget
+    if (form.checkValidity() === false) {
+      event.stopPropagation()
+    } else {
+      onSubmit(property)
+      setProperty({
+        name: '',
+        floor: '',
+        unit: '',
+        type: '',
+        address: '',
+        city: '',
+        rent: '',
+        status: '',
+        notes: '',
+      })
+    }
+    setValidated(true)
+  }
 
-// //     handleApplyGlobalPaymentDate,
-// //     handleApplyGlobalPaymentMethod,
-// //     handleApplyGlobalNotes,
-// //   } = useRentCollection()
+  return (
+    <CForm className="row g-3 needs-validation" noValidate validated={validated} onSubmit={handleSubmit}>
+      <CCol md={4}>
+        <CFormLabel htmlFor="propertyName">Property Name</CFormLabel>
+        <CFormInput
+          id="propertyName"
+          value={property.name}
+          onChange={(e) => setProperty({ ...property, name: e.target.value })}
+          required
+        />
+        <CFormFeedback invalid>Please enter property name.</CFormFeedback>
+      </CCol>
 
-// //   const columns = useMemo(
-// //     () => [
-// //       { accessorKey: 'tenantName', header: 'Tenant' },
-// //       { accessorKey: 'buildingName', header: 'Building' },
-// //       { accessorKey: 'floorNumber', header: 'Floor' },
-// //       { accessorKey: 'unitNumber', header: 'Unit' },
-// //       { accessorKey: 'monthlyRent', header: 'Monthly Rent' },
-// //       {
-// //         accessorKey: 'dueDate',
-// //         header: 'Due Date',
-// //         cell: ({ row }) => formatDate(row.original.dueDate),
-// //       },
-// //       {
-// //         accessorKey: 'invoiceDate',
-// //         header: 'Invoice Date',
-// //         cell: ({ row }) => formatDate(row.original.invoiceDate),
-// //       },
-// //       {
-// //         accessorKey: 'statusName',
-// //         header: 'Status',
-// //         cell: ({ row }) => {
-// //           const status = row.original.statusName
+      <CCol md={4}>
+        <CFormLabel htmlFor="propertyFloor">Floor</CFormLabel>
+        <CFormSelect
+          id="propertyFloor"
+          value={property.floor}
+          onChange={(e) => setProperty({ ...property, floor: e.target.value })}
+          required
+        >
+          <option value="">Select Floor...</option>
+          {floorOptions.map((floor) => (
+            <option key={floor} value={floor}>
+              {floor}
+            </option>
+          ))}
+        </CFormSelect>
+        <CFormFeedback invalid>Please select floor.</CFormFeedback>
+      </CCol>
 
-// //           // Map status to colors
-// //           let bgColor = ''
-// //           let textColor = ''
+      <CCol md={4}>
+        <CFormLabel htmlFor="propertyUnit">Unit No.</CFormLabel>
+        <CFormInput
+          id="propertyUnit"
+          value={property.unit}
+          onChange={(e) => setProperty({ ...property, unit: e.target.value })}
+          required
+        />
+        <CFormFeedback invalid>Please enter unit number.</CFormFeedback>
+      </CCol>
 
-// //           switch (status) {
-// //             case 'Paid':
-// //               bgColor = '#10b981' // medium green
-// //               textColor = '#ffffff' // white text
-// //               break
-// //             case 'Unpaid':
-// //               bgColor = '#ef4444' // medium red
-// //               textColor = '#ffffff'
-// //               break
-// //             case 'Pending':
-// //               bgColor = '#f59e0b' // orange-yellow
-// //               textColor = '#ffffff'
-// //               break
-// //             case 'Partial':
-// //               bgColor = '#f97316' // stronger orange
-// //               textColor = '#ffffff'
-// //               break
-// //             case 'Overpaid':
-// //               bgColor = '#8b5cf6' // purple
-// //               textColor = '#ffffff'
-// //               break
-// //             default:
-// //               bgColor = '#d1d5db' // light gray
-// //               textColor = '#000000'
-// //           }
+      <CCol md={4}>
+        <CFormLabel htmlFor="propertyType">Type</CFormLabel>
+        <CFormSelect
+          id="propertyType"
+          value={property.type}
+          onChange={(e) => setProperty({ ...property, type: e.target.value })}
+          required
+        >
+          <option value="">Select Type...</option>
+          <option>Apartment</option>
+          <option>House</option>
+          <option>Office</option>
+          <option>Shop</option>
+        </CFormSelect>
+        <CFormFeedback invalid>Please select property type.</CFormFeedback>
+      </CCol>
 
-// //           return (
-// //             <span
-// //               style={{
-// //                 backgroundColor: bgColor,
-// //                 color: textColor,
-// //                 padding: '2px 8px',
-// //                 borderRadius: '4px',
-// //                 fontWeight: 500,
-// //                 display: 'inline-block',
-// //               }}
-// //             >
-// //               {status}
-// //             </span>
-// //           )
-// //         },
-// //       },
-// //     ],
-// //     [],
-// //   )
+      <CCol md={4}>
+        <CFormLabel htmlFor="propertyRent">Rent Amount</CFormLabel>
+        <CFormInput
+          type="number"
+          id="propertyRent"
+          value={property.rent}
+          onChange={(e) => setProperty({ ...property, rent: e.target.value })}
+          required
+        />
+        <CFormFeedback invalid>Please enter rent amount.</CFormFeedback>
+      </CCol>
 
-// //   const table = useReactTable({
-// //     data: rentList,
-// //     columns,
-// //     getCoreRowModel: getCoreRowModel(),
-// //     getSortedRowModel: getSortedRowModel(),
-// //   })
+      <CCol md={4}>
+        <CFormLabel htmlFor="propertyCity">City</CFormLabel>
+        <CFormInput
+          id="propertyCity"
+          value={property.city}
+          onChange={(e) => setProperty({ ...property, city: e.target.value })}
+          required
+        />
+        <CFormFeedback invalid>Please enter city.</CFormFeedback>
+      </CCol>
 
-// //   return (
-// //     <>
-// //       {loading && <Loader />}
-// //       <CCard className="mb-4">
-// //         <CCardHeader className="d-flex justify-content-between align-items-center">
-// //           <strong>Rent Collection</strong>
-// //           <CButton color="success" onClick={openNewPayment}>
-// //             + New Payment
-// //           </CButton>
-// //         </CCardHeader>
-// //         <CCardBody>
-// //           <RentListTable
-// //             table={table}
-// //             handleEdit={openEditPayment}
-// //             handleDelete={handleDeletePayment}
-// //           />
-// //         </CCardBody>
-// //       </CCard>
+      <CCol md={4}>
+        <CFormLabel htmlFor="propertyStatus">Status</CFormLabel>
+        <CFormSelect
+          id="propertyStatus"
+          value={property.status}
+          onChange={(e) => setProperty({ ...property, status: e.target.value })}
+          required
+        >
+          <option value="">Select Status...</option>
+          <option>Available</option>
+          <option>Rented</option>
+          <option>Maintenance</option>
+        </CFormSelect>
+        <CFormFeedback invalid>Please select status.</CFormFeedback>
+      </CCol>
 
-// //       <PaymentModal
-// //         visible={isModalOpen}
-// //         onClose={closeModal}
-// //         // Pass ALL needed values from the SINGLE hook instance
-// //         rentForm={rentForm}
-// //         setRentForm={setRentForm}
-// //         tenants={tenants}
-// //         isEditMode={isEditMode}
-// //         openFrom={openFrom}
-// //         totals={totals}
-// //         handleTenantChange={handleTenantChange}
-// //         handleToggleSelectAll={handleToggleSelectAll}
-// //         handleToggleInvoiceSelect={handleToggleInvoiceSelect}
-// //         handleUpdateInvoiceField={handleUpdateInvoiceField}
-// //         handleApplyGlobalDiscountAmount={handleApplyGlobalDiscountAmount}
-// //         handleApplyGlobalDiscountPercent={handleApplyGlobalDiscountPercent}
-// //         handleGlobalWaveChange={handleGlobalWaveChange}
-// //         handleSubmitPayments={handleSubmitPayments}
-// //         // ── Add these 3 if not already present ──
-// //         handleApplyGlobalPaymentMethod={handleApplyGlobalPaymentMethod}
-// //         handleApplyGlobalPaymentDate={handleApplyGlobalPaymentDate}
-// //         handleApplyGlobalNotes={handleApplyGlobalNotes}
-// //       />
-// //     </>
-// //   )
-// // }
+      <CCol md={12}>
+        <CFormLabel htmlFor="propertyAddress">Address</CFormLabel>
+        <CFormInput
+          id="propertyAddress"
+          value={property.address}
+          onChange={(e) => setProperty({ ...property, address: e.target.value })}
+          required
+        />
+        <CFormFeedback invalid>Please enter address.</CFormFeedback>
+      </CCol>
 
-// // export default RentCollection
+      <CCol xs={12}>
+        <CFormLabel htmlFor="propertyNotes">Notes</CFormLabel>
+        <CFormTextarea
+          id="propertyNotes"
+          value={property.notes}
+          onChange={(e) => setProperty({ ...property, notes: e.target.value })}
+          placeholder="Optional notes"
+        />
+      </CCol>
 
-// // src/pages/rent/RentCollection.page.jsx
-// import React, { useMemo, useState } from 'react'
-// import { CButton, CCard, CCardBody, CCardHeader, CRow, CCol } from '@coreui/react'
-// import {
-//   useReactTable,
-//   getCoreRowModel,
-//   getSortedRowModel,
-//   getFilteredRowModel,
-// } from '@tanstack/react-table'
+      <CCol xs={12}>
+        <CButton color="primary" type="submit">
+          {initialData ? 'Update Property' : 'Add Property'}
+        </CButton>
+      </CCol>
+    </CForm>
+  )
+}
 
-// import Loader from '../../components/Loader'
-// import RentListTable from '../../components/rent/RentListTable'
-// import PaymentModal from '../../components/rent/PaymentModal'
-// import BulkDueDateUpdateModal from '../../components/rent/BulkDueDateUpdateModal'
+// 🔹 CSV Export Helper
+const exportCSV = (columns, data, filename = 'properties.csv') => {
+  const headers = columns.map((col) => col.header).join(',')
+  const rows = data.map((row) => columns.map((col) => row[col.accessorKey]).join(','))
+  const csv = [headers, ...rows].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
-// import { useRentCollection } from '../../hooks/useRentCollection'
-// import { fmt, formatDate } from '../../utils/rentUtils'
-// import { exportCSV } from '../../utils/exportUtils'
-// import { useIsDarkMode } from '../../hooks/useIsDarkMode'
+const Properties = () => {
+  const [properties, setProperties] = useState([
+    { id: 1, name: 'Sunrise Apartments', unit: '101', floor: '1', type: 'Apartment', rent: '25000', address: 'Street 1', city: 'Karachi', status: 'Available', notes: '' },
+    { id: 2, name: 'Green Villa', unit: 'A2', floor: 'G', type: 'House', rent: '40000', address: 'Street 2', city: 'Lahore', status: 'Rented', notes: '' },
+  ])
 
-// const RentCollection = () => {
-//   const {
-//     loading,
-//     rentList,
-//     tenants,
-//     rentForm,
-//     setRentForm,
-//     isModalOpen,
-//     isEditMode,
-//     openFrom,
-//     totals,
-//     openNewPayment,
-//     openEditPayment,
-//     handleDeletePayment,
-//     closeModal,
-//     handleTenantChange,
-//     handleToggleSelectAll,
-//     handleToggleInvoiceSelect,
-//     handleUpdateInvoiceField,
-//     handleApplyGlobalDiscountAmount,
-//     handleApplyGlobalDiscountPercent,
-//     handleGlobalWaveChange,
-//     handleSubmitPayments,
-//     handleApplyGlobalPaymentMethod,
-//     handleApplyGlobalPaymentDate,
-//     handleApplyGlobalNotes,
-//   } = useRentCollection()
+  const [visible, setVisible] = useState(false)
+  const [editData, setEditData] = useState(null)
+  const [globalFilter, setGlobalFilter] = useState('')
 
-//   const isDark = useIsDarkMode()
-//   const [selectedIds, setSelectedIds] = useState([])
-//   const [bulkDueDateState, setBulkDueDateState] = useState({
-//     visible: false,
-//     newDueDate: '',
-//   })
+  const handleAddProperty = (property) => {
+    if (editData) {
+      // Update existing property
+      setProperties((prev) =>
+        prev.map((p) => (p.id === editData.id ? { ...property, id: editData.id } : p))
+      )
+      setEditData(null)
+    } else {
+      // Add new property
+      const newProperty = { ...property, id: properties.length + 1 }
+      setProperties([...properties, newProperty])
+    }
+    setVisible(false)
+  }
 
-//   // const handleBulkDueDateUpdate = async () => {
-//   //   if (selectedIds.length === 0) return
+  const handleEdit = (property) => {
+    setEditData(property)
+    setVisible(true)
+  }
 
-//   //   const newDueDate = prompt('Enter new due date (YYYY-MM-DD):')
-//   //   if (!newDueDate) return
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure you want to delete this property?')) {
+      setProperties((prev) => prev.filter((p) => p.id !== id))
+    }
+  }
 
-//   //   try {
-//   //     await api.patch('/Rent/BulkUpdateDueDate', { ids: selectedIds, dueDate: newDueDate })
-//   //     alert('Due dates updated!')
-//   //     setSelectedIds([]) // clear
-//   //     // Optional: refresh rentList
-//   //   } catch {
-//   //     alert('Failed to update')
-//   //   }
-//   // }
+  const columns = useMemo(
+    () => [
+      { accessorKey: 'id', header: 'ID' },
+      { accessorKey: 'name', header: 'Property Name' },
+      { accessorKey: 'floor', header: 'Floor' },
+      { accessorKey: 'unit', header: 'Unit' },
+      { accessorKey: 'type', header: 'Type' },
+      { accessorKey: 'rent', header: 'Rent' },
+      { accessorKey: 'city', header: 'City' },
+      { accessorKey: 'status', header: 'Status' },
+      {
+        accessorKey: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => (
+          <>
+            <CButton size="sm" color="info" className="me-2" onClick={() => handleEdit(row.original)}>
+              Edit
+            </CButton>
+            <CButton size="sm" color="danger" onClick={() => handleDelete(row.original.id)}>
+              Delete
+            </CButton>
+          </>
+        ),
+      },
+    ],
+    []
+  )
 
-//   const handleBulkDueDateSubmit = async () => {
-//     if (!bulkDueDateState.newDueDate || selectedIds.length === 0) return
+  const table = useReactTable({
+    data: properties,
+    columns,
+    state: { globalFilter },
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  })
 
-//     try {
-//       await api.patch('/Rent/BulkUpdateDueDate', {
-//         ids: selectedIds,
-//         dueDate: bulkDueDateState.newDueDate,
-//       })
-//       // success
-//       setBulkDueDateState({ visible: false, newDueDate: '' }) // ← closes modal
-//       setSelectedIds([])
-//       // refresh list if you have such function
-//     } catch {
-//       alert('Failed')
-//       // modal stays open so user can correct date or retry
-//     }
-//   }
+  return (
+    <CRow>
+      <CCol xs={12}>
+        <CCard className="mb-4">
+          <CCardHeader className="d-flex justify-content-between align-items-center">
+            <strong>Properties</strong>
+            <div>
+              <input
+                type="text"
+                placeholder="Search..."
+                value={globalFilter ?? ''}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+                style={{ width: '200px', display: 'inline-block', marginRight: '10px' }}
+              />
+              <CButton color="success" onClick={() => exportCSV(columns, properties)} className="me-2">
+                Export CSV
+              </CButton>
+              <CButton color="primary" onClick={() => setVisible(true)}>
+                + Add Property
+              </CButton>
+            </div>
+          </CCardHeader>
+          <CCardBody>
+            <table className="table table-bordered table-striped">
+              <thead>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <th
+                        key={header.id}
+                        onClick={header.column.getToggleSortingHandler()}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}{' '}
+                        {{
+                          asc: '🔼',
+                          desc: '🔽',
+                        }[header.column.getIsSorted()] ?? null}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody>
+                {table.getRowModel().rows.map((row) => (
+                  <tr key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="d-flex justify-content-between align-items-center mt-3">
+              <div>
+                <CButton
+                  color="secondary"
+                  size="sm"
+                  onClick={() => table.previousPage()}
+                  disabled={!table.getCanPreviousPage()}
+                >
+                  Previous
+                </CButton>{' '}
+                <CButton
+                  color="secondary"
+                  size="sm"
+                  onClick={() => table.nextPage()}
+                  disabled={!table.getCanNextPage()}
+                >
+                  Next
+                </CButton>
+              </div>
+              <span>
+                Page <strong>{table.getState().pagination.pageIndex + 1}</strong> of {table.getPageCount()}
+              </span>
+            </div>
+          </CCardBody>
+        </CCard>
+      </CCol>
 
-//   const [globalFilter, setGlobalFilter] = useState('')
-//   const [expandedRows, setExpandedRows] = useState({})
+      {/* ✅ Modal with PropertyForm */}
+      <CModal visible={visible} onClose={() => setVisible(false)} size="xl">
+        <CModalHeader>
+          <CModalTitle>{editData ? 'Edit Property' : 'Add Property'}</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          <PropertyForm onSubmit={handleAddProperty} initialData={editData} />
+        </CModalBody>
+      </CModal>
+    </CRow>
+  )
+}
 
-//   const toggleExpand = (id) => {
-//     setExpandedRows((prev) => ({
-//       ...prev,
-//       [id]: !prev[id],
-//     }))
-//   }
-
-//   const columns = useMemo(
-//     () => [
-//       { accessorKey: 'tenantName', header: 'Tenant' },
-//       { accessorKey: 'buildingName', header: 'Building' },
-//       { accessorKey: 'floorNumber', header: 'Floor' },
-//       { accessorKey: 'unitNumber', header: 'Unit' },
-//       {
-//         accessorKey: 'monthlyRent',
-//         header: 'Monthly Rent',
-//         cell: ({ getValue }) => fmt(getValue() || 0),
-//       },
-//       {
-//         accessorKey: 'dueDate',
-//         header: 'Due Date',
-//         cell: ({ row }) => formatDate(row.original.dueDate),
-//       },
-//       {
-//         accessorKey: 'invoiceDate',
-//         header: 'Invoice Date',
-//         cell: ({ row }) => formatDate(row.original.invoiceDate),
-//       },
-//       {
-//         accessorKey: 'statusName',
-//         header: 'Status',
-//         cell: ({ row }) => {
-//           const status = row.original.statusName || 'Unknown'
-//           const variants = {
-//             Paid: 'success',
-//             Unpaid: 'danger',
-//             Pending: 'warning',
-//             Partial: 'info',
-//             Overpaid: 'purple',
-//           }
-//           const variant = variants[status] || 'secondary'
-
-//           return (
-//             <span className={`badge bg-${variant} text-white px-2 py-1 rounded-pill`}>
-//               {status}
-//             </span>
-//           )
-//         },
-//       },
-//       {
-//         id: 'actions',
-//         header: 'Actions',
-//         cell: ({ row }) => (
-//           <div className="d-flex gap-2">
-//             <CButton
-//               color="primary"
-//               size="sm"
-//               variant="outline"
-//               onClick={() => openEditPayment(row.original)}
-//             >
-//               Update
-//             </CButton>
-//             <CButton
-//               color="danger"
-//               size="sm"
-//               variant="outline"
-//               onClick={() => handleDeletePayment(row.original)}
-//             >
-//               Delete
-//             </CButton>
-//           </div>
-//         ),
-//       },
-//     ],
-//     [openEditPayment, handleDeletePayment, toggleExpand, expandedRows],
-//   )
-
-//   const table = useReactTable({
-//     data: rentList || [],
-//     columns,
-//     state: {
-//       globalFilter,
-//     },
-//     onGlobalFilterChange: setGlobalFilter,
-//     globalFilterFn: 'includesString',
-//     getCoreRowModel: getCoreRowModel(),
-//     getSortedRowModel: getSortedRowModel(),
-//     getFilteredRowModel: getFilteredRowModel(), // ← THIS IS REQUIRED FOR FILTERING
-//   })
-
-//   return (
-//     <>
-//       {loading && <Loader />}
-//       <CRow>
-//         <CCol xs={12}>
-//           <CCard className="border-0 shadow-sm mb-4">
-//             <CCardHeader
-//               className={`d-flex justify-content-between align-items-center ${isDark ? '' : 'bg-white'}`}
-//             >
-//               <strong className="fs-5 me-2">Rent Collection</strong>
-//               <div className="d-flex align-items-center gap-2 flex-wrap">
-//                 {/* Search Textbox - LEFT SIDE */}
-//                 <input
-//                   type="text"
-//                   placeholder="Search..."
-//                   className="form-control me-2"
-//                   style={{ width: '220px', border: '2px #7b7b7b solid' }}
-//                   value={globalFilter ?? ''}
-//                   onChange={(e) => setGlobalFilter(e.target.value)}
-//                 />
-
-//                 {/* Export CSV */}
-//                 <CButton
-//                   color="success"
-//                   onClick={() => exportCSV(columns, rentList)}
-//                   className="me-2"
-//                 >
-//                   Export CSV
-//                 </CButton>
-
-//                 {/* + New Payment */}
-//                 <CButton color="primary" onClick={openNewPayment} className="me-2">
-//                   + New Payment
-//                 </CButton>
-
-//                 {/* Update Due Date */}
-//                 {/* <CButton
-//                   color="warning"
-//                   onClick={handleBulkDueDateUpdate}
-//                   disabled={selectedIds.length === 0}
-//                 >
-//                   Update Due Date for Selected
-//                 </CButton> */}
-
-//                 <CButton
-//                   color="warning"
-//                   onClick={() => setBulkDueDateState({ visible: true, newDueDate: '' })}
-//                   disabled={selectedIds.length === 0}
-//                 >
-//                   Update Due Date for Selected
-//                 </CButton>
-//               </div>
-//             </CCardHeader>
-
-//             <CCardBody>
-//               <RentListTable
-//                 table={table}
-//                 selectedIds={selectedIds}
-//                 setSelectedIds={setSelectedIds}
-//                 expandedRows={expandedRows}
-//                 toggleExpand={toggleExpand}
-//               />
-//             </CCardBody>
-//           </CCard>
-
-//           <BulkDueDateUpdateModal
-//             visible={bulkDueDateState.visible}
-//             onClose={() => setBulkDueDateState({ visible: false, newDueDate: '' })}
-//             selectedCount={selectedIds.length}
-//             newDueDate={bulkDueDateState.newDueDate}
-//             onDateChange={(value) =>
-//               setBulkDueDateState((prev) => ({ ...prev, newDueDate: value }))
-//             }
-//             onSubmit={handleBulkDueDateSubmit}
-//             isDark={isDark}
-//           />
-
-//           <PaymentModal
-//             visible={isModalOpen}
-//             onClose={closeModal}
-//             rentForm={rentForm}
-//             setRentForm={setRentForm}
-//             tenants={tenants}
-//             isEditMode={isEditMode}
-//             openFrom={openFrom}
-//             totals={totals}
-//             handleTenantChange={handleTenantChange}
-//             handleToggleSelectAll={handleToggleSelectAll}
-//             handleToggleInvoiceSelect={handleToggleInvoiceSelect}
-//             handleUpdateInvoiceField={handleUpdateInvoiceField}
-//             handleApplyGlobalDiscountAmount={handleApplyGlobalDiscountAmount}
-//             handleApplyGlobalDiscountPercent={handleApplyGlobalDiscountPercent}
-//             handleGlobalWaveChange={handleGlobalWaveChange}
-//             handleSubmitPayments={handleSubmitPayments}
-//             handleApplyGlobalPaymentMethod={handleApplyGlobalPaymentMethod}
-//             handleApplyGlobalPaymentDate={handleApplyGlobalPaymentDate}
-//             handleApplyGlobalNotes={handleApplyGlobalNotes}
-//           />
-//         </CCol>
-//       </CRow>
-//     </>
-//   )
-// }
-
-// export default RentCollection
+export default Properties
