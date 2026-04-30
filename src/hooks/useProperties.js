@@ -820,7 +820,6 @@
 
 
 
-
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'react-toastify'
 import { propertyService } from '../services/property.service'
@@ -831,7 +830,7 @@ export const useProperties = () => {
   const [floors, setFloors] = useState([])
   const [loading, setLoading] = useState(false)
 
-  // Lookups
+  // Lookups — always default to [] so .map() never fails
   const [cities, setCities] = useState([])
   const [buildingTypes, setBuildingTypes] = useState([])
   const [unitStatuses, setUnitStatuses] = useState([])
@@ -849,20 +848,23 @@ export const useProperties = () => {
   const [editFloor, setEditFloor] = useState(null)
   const [selectedBuildingForFloor, setSelectedBuildingForFloor] = useState(null)
 
-  // ---------------- LOAD LOOKUPS (once) ----------------
+  // ---------------- LOAD LOOKUPS ----------------
+  // Each lookup is fetched independently so one 404 doesn't block others
   const loadLookups = useCallback(async () => {
-    try {
-      const [c, bt, us] = await Promise.all([
-        propertyService.getCities(),
-        propertyService.getBuildingTypes(),
-        propertyService.getUnitStatuses(),
-      ])
-      setCities(c)
-      setBuildingTypes(bt)
-      setUnitStatuses(us)
-    } catch {
-      toast.error('Failed to load lookup data')
+    const safe = async (fn, setter) => {
+      try {
+        const res = await fn()
+        setter(Array.isArray(res) ? res : [])
+      } catch {
+        setter([]) // silently fallback — API not ready yet
+      }
     }
+
+    await Promise.all([
+      safe(propertyService.getCities, setCities),
+      safe(propertyService.getBuildingTypes, setBuildingTypes),
+      safe(propertyService.getUnitStatuses, setUnitStatuses),
+    ])
   }, [])
 
   // ---------------- LOAD PROPERTIES ----------------
@@ -870,7 +872,7 @@ export const useProperties = () => {
     setLoading(true)
     try {
       const data = await propertyService.getAllProperties()
-      setProperties(data || [])
+      setProperties(Array.isArray(data) ? data : [])
     } catch {
       toast.error('Failed to load properties')
     } finally {
@@ -882,8 +884,9 @@ export const useProperties = () => {
   const loadBuildings = useCallback(async () => {
     try {
       const res = await propertyService.getBuildings()
-      setBuildings(res)
-      return res
+      const list = Array.isArray(res) ? res : []
+      setBuildings(list)
+      return list
     } catch {
       toast.error('Failed to load buildings')
       return []
@@ -892,11 +895,12 @@ export const useProperties = () => {
 
   // ---------------- LOAD FLOORS ----------------
   const loadFloors = useCallback(async (buildingId) => {
-    if (!buildingId) return
+    if (!buildingId) return []
     try {
       const res = await propertyService.getFloors(buildingId)
-      setFloors(res)
-      return res
+      const list = Array.isArray(res) ? res : []
+      setFloors(list)
+      return list
     } catch {
       toast.error('Failed to load floors')
       return []
@@ -911,18 +915,34 @@ export const useProperties = () => {
 
   // ===================== PROPERTY CRUD =====================
 
-  const openAddModal = async () => {
-    setEditData(null)
-    await loadBuildings()
-    setFloors([])
-    setModalOpen(true)
+  const openAddModal = async (preselectedBuildingId = null) => {
+    setLoading(true)
+    try {
+      await Promise.all([loadBuildings(), loadLookups()])
+
+      if (preselectedBuildingId) {
+        await loadFloors(preselectedBuildingId)
+        setEditData({ buildingId: preselectedBuildingId })
+      } else {
+        setFloors([])
+        setEditData(null)
+      }
+      setModalOpen(true)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const openEditModal = async (property) => {
-    setEditData(property)
-    await loadBuildings()
-    await loadFloors(property.buildingId)
-    setModalOpen(true)
+    setLoading(true)
+    try {
+      await Promise.all([loadBuildings(), loadLookups()])
+      await loadFloors(property.buildingId)
+      setEditData(property)
+      setModalOpen(true)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const closeModal = () => {
@@ -934,8 +954,8 @@ export const useProperties = () => {
   const handleSubmit = async (data, keepOpen = false) => {
     setLoading(true)
     try {
-      if (editData) {
-        await propertyService.updateProperty(editData.id, data)
+      if (data.id) {
+        await propertyService.updateProperty(data.id, data)
         toast.success('Property updated successfully')
         closeModal()
       } else {
@@ -1062,18 +1082,13 @@ export const useProperties = () => {
   }
 
   return {
-    // Data
     properties,
     buildings,
     floors,
     loading,
-
-    // Lookups
     cities,
     buildingTypes,
     unitStatuses,
-
-    // Property modal
     modalOpen,
     editData,
     openAddModal,
@@ -1084,8 +1099,6 @@ export const useProperties = () => {
     loadFloors,
     loadBuildings,
     loadProperties,
-
-    // Building modal
     buildingModalOpen,
     editBuilding,
     openAddBuildingModal,
@@ -1093,8 +1106,6 @@ export const useProperties = () => {
     closeBuildingModal,
     handleBuildingSubmit,
     handleBuildingDelete,
-
-    // Floor modal
     floorModalOpen,
     editFloor,
     selectedBuildingForFloor,
