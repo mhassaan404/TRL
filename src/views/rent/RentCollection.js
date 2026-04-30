@@ -186,7 +186,9 @@ const RentCollection = () => {
               className={`d-flex justify-content-between align-items-center ${isDark ? '' : 'bg-white'}`}
             >
               <strong className="fs-5 me-2">Rent Collection</strong>
-              <div className="d-flex align-items-center gap-2 flex-wrap">
+
+              {/* 🔥 Filters UI */}
+              <div className="d-flex flex-column flex-sm-row align-items-stretch gap-2 justify-content-md-end">
                 {/* Search Textbox - LEFT SIDE */}
                 <input
                   type="text"
