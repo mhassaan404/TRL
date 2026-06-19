@@ -236,10 +236,6 @@
 
 // export default PropertyForm
 
-
-
-
-
 // import React, { useState, useEffect } from 'react'
 // import {
 //   CForm,
@@ -655,8 +651,6 @@
 
 // export default PropertyForm
 
-
-
 // import React, { useState, useEffect } from 'react'
 // import {
 //   CForm,
@@ -941,9 +935,6 @@
 // }
 
 // export default PropertyForm
-
-
-
 
 // import React, { useState, useEffect } from 'react'
 // import {
@@ -1277,10 +1268,6 @@
 
 // export default PropertyForm
 
-
-
-
-
 import React, { useState, useEffect } from 'react'
 import {
   CForm,
@@ -1301,13 +1288,13 @@ const PropertyForm = ({
   editData,
   handleSubmit,
   closeModal,
-  buildings = [],       // default [] — prevents .map() crash if undefined
-  floors = [],          // default []
+  buildings = [], // default [] — prevents .map() crash if undefined
+  floors = [], // default []
   loadFloors,
   onBuildingCreated,
-  unitStatuses = [],    // default []
+  unitStatuses = [], // default []
 }) => {
-  const isEditMode = !!(editData?.id)
+  const isEditMode = !!editData?.id
 
   const defaultForm = {
     buildingId: '',
@@ -1376,7 +1363,10 @@ const PropertyForm = ({
 
   const onAddAnother = (e) => {
     e.preventDefault()
-    if (!isFormValid()) { setValidated(true); return }
+    if (!isFormValid()) {
+      setValidated(true)
+      return
+    }
     const { buildingId, floorId } = formData
     handleSubmit(formData, true)
     setValidated(false)
@@ -1385,6 +1375,8 @@ const PropertyForm = ({
 
   const handleBuildingChange = (e) => {
     const val = e.target.value
+    console.log('Building selected:', val) //temp added
+
     setFormData({ ...formData, buildingId: val, floorId: '' })
     setShowNewFloor(false)
     setNewFloorNumber('')
@@ -1392,10 +1384,16 @@ const PropertyForm = ({
   }
 
   const saveNewBuilding = async () => {
-    if (!newBuildingName.trim()) { toast.error('Building name is required'); return }
+    if (!newBuildingName.trim()) {
+      toast.error('Building name is required')
+      return
+    }
     setSavingBuilding(true)
     try {
-      const created = await propertyService.createBuilding({ name: newBuildingName.trim(), isActive: true })
+      const created = await propertyService.createBuilding({
+        name: newBuildingName.trim(),
+        isActive: true,
+      })
       toast.success('Building created')
       setShowNewBuilding(false)
       setNewBuildingName('')
@@ -1404,13 +1402,22 @@ const PropertyForm = ({
         setFormData((prev) => ({ ...prev, buildingId: created.id, floorId: '' }))
         if (loadFloors) loadFloors(created.id)
       }
-    } catch { toast.error('Failed to create building') }
-    finally { setSavingBuilding(false) }
+    } catch {
+      toast.error('Failed to create building')
+    } finally {
+      setSavingBuilding(false)
+    }
   }
 
   const saveNewFloor = async () => {
-    if (!newFloorNumber.toString().trim()) { toast.error('Floor number is required'); return }
-    if (!formData.buildingId) { toast.error('Select a building first'); return }
+    if (!newFloorNumber.toString().trim()) {
+      toast.error('Floor number is required')
+      return
+    }
+    if (!formData.buildingId) {
+      toast.error('Select a building first')
+      return
+    }
     setSavingFloor(true)
     try {
       const created = await propertyService.createFloor({
@@ -1423,47 +1430,81 @@ const PropertyForm = ({
       setNewFloorNumber('')
       if (loadFloors) await loadFloors(formData.buildingId)
       if (created?.id) setFormData((prev) => ({ ...prev, floorId: created.id }))
-    } catch { toast.error('Failed to create floor') }
-    finally { setSavingFloor(false) }
+    } catch {
+      toast.error('Failed to create floor')
+    } finally {
+      setSavingFloor(false)
+    }
   }
 
   return (
-    <CForm className="row g-3 needs-validation" noValidate validated={validated} onSubmit={onSubmit}>
+    <CForm
+      className="row g-3 needs-validation"
+      noValidate
+      validated={validated}
+      onSubmit={onSubmit}
+    >
       <CRow>
-
         {/* ── Building Dropdown ── */}
         <CCol md={6}>
           <CFormLabel className="fw-semibold">
             Building <span className="text-danger">*</span>
           </CFormLabel>
+
           <CInputGroup>
             <CFormSelect value={formData.buildingId} onChange={handleBuildingChange} required>
               <option value="">Select Building...</option>
               {buildings.map((b) => (
-                <option key={b.id} value={b.id}>{b.name || b.buildingName}</option>
+                <option key={b.buildingId} value={b.buildingId}>
+                  {b.buildingName}
+                </option>
               ))}
             </CFormSelect>
-            <CButton type="button" color="outline-primary" onClick={() => setShowNewBuilding((v) => !v)}>+</CButton>
+
+            <CButton
+              type="button"
+              color="outline-primary"
+              onClick={() => setShowNewBuilding((v) => !v)}
+            >
+              +
+            </CButton>
           </CInputGroup>
 
           {showNewBuilding && (
             <div className="border rounded p-2 mt-2 bg-light">
               <small className="fw-semibold text-muted d-block mb-2">New Building</small>
+
               <CFormInput
                 placeholder="Building name *"
                 value={newBuildingName}
                 onChange={(e) => setNewBuildingName(e.target.value)}
-                className="mb-2" size="sm"
+                className="mb-2"
+                size="sm"
               />
+
               <small className="text-muted d-block mb-2">
                 💡 City & Type can be set by editing the building later.
               </small>
+
               <div className="d-flex gap-2">
-                <CButton size="sm" color="primary" onClick={saveNewBuilding} disabled={savingBuilding}>
+                <CButton
+                  size="sm"
+                  color="primary"
+                  onClick={saveNewBuilding}
+                  disabled={savingBuilding}
+                >
                   {savingBuilding ? <CSpinner size="sm" /> : 'Save Building'}
                 </CButton>
-                <CButton size="sm" color="secondary" variant="outline"
-                  onClick={() => { setShowNewBuilding(false); setNewBuildingName('') }}>
+
+                <CButton
+                  size="sm"
+                  color="secondary"
+                  variant="outline"
+                  onClick={() => {
+                    setShowNewBuilding(false)
+                    setNewBuildingName('')
+                  }}
+                >
                   Cancel
                 </CButton>
               </div>
@@ -1476,6 +1517,7 @@ const PropertyForm = ({
           <CFormLabel className="fw-semibold">
             Floor <span className="text-danger">*</span>
           </CFormLabel>
+
           <CInputGroup>
             <CFormSelect
               value={formData.floorId}
@@ -1486,29 +1528,51 @@ const PropertyForm = ({
               <option value="">
                 {formData.buildingId ? 'Select Floor...' : 'Select building first'}
               </option>
+
               {floors.map((f) => (
-                <option key={f.id} value={f.id}>Floor {f.floorNumber}</option>
+                <option key={f.floorId} value={f.floorId}>
+                  Floor {f.floorNumber}
+                </option>
               ))}
             </CFormSelect>
-            <CButton type="button" color="outline-primary" disabled={!formData.buildingId}
-              onClick={() => setShowNewFloor((v) => !v)}>+</CButton>
+
+            <CButton
+              type="button"
+              color="outline-primary"
+              disabled={!formData.buildingId}
+              onClick={() => setShowNewFloor((v) => !v)}
+            >
+              +
+            </CButton>
           </CInputGroup>
 
           {showNewFloor && (
             <div className="border rounded p-2 mt-2 bg-light">
               <small className="fw-semibold text-muted d-block mb-2">New Floor</small>
+
               <CFormInput
-                type="number" placeholder="Floor number *"
+                type="number"
+                placeholder="Floor number *"
                 value={newFloorNumber}
                 onChange={(e) => setNewFloorNumber(e.target.value)}
-                className="mb-2" size="sm"
+                className="mb-2"
+                size="sm"
               />
+
               <div className="d-flex gap-2">
                 <CButton size="sm" color="primary" onClick={saveNewFloor} disabled={savingFloor}>
                   {savingFloor ? <CSpinner size="sm" /> : 'Save Floor'}
                 </CButton>
-                <CButton size="sm" color="secondary" variant="outline"
-                  onClick={() => { setShowNewFloor(false); setNewFloorNumber('') }}>
+
+                <CButton
+                  size="sm"
+                  color="secondary"
+                  variant="outline"
+                  onClick={() => {
+                    setShowNewFloor(false)
+                    setNewFloorNumber('')
+                  }}
+                >
                   Cancel
                 </CButton>
               </div>
@@ -1524,7 +1588,8 @@ const PropertyForm = ({
           <CFormInput
             value={formData.unitNumber}
             onChange={(e) => setFormData({ ...formData, unitNumber: e.target.value })}
-            placeholder="e.g. 101" required
+            placeholder="e.g. 101"
+            required
           />
         </CCol>
 
@@ -1554,10 +1619,12 @@ const PropertyForm = ({
           <CInputGroup>
             <CInputGroupText>PKR</CInputGroupText>
             <CFormInput
-              type="number" min="0"
+              type="number"
+              min="0"
               value={formData.baseRent}
               onChange={(e) => setFormData({ ...formData, baseRent: e.target.value })}
-              placeholder="0" required
+              placeholder="0"
+              required
             />
           </CInputGroup>
         </CCol>
@@ -1574,7 +1641,9 @@ const PropertyForm = ({
           >
             <option value="">Select Status...</option>
             {unitStatuses.map((s) => (
-              <option key={s.id} value={s.id}>{s.name}</option>
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
             ))}
           </CFormSelect>
         </CCol>
@@ -1588,12 +1657,13 @@ const PropertyForm = ({
             placeholder="Any additional note..."
           />
         </CCol>
-
       </CRow>
 
       <CRow className="mt-4">
         <CCol xs={12} className="d-flex justify-content-end gap-2 flex-wrap">
-          <CButton color="secondary" variant="outline" onClick={closeModal}>Cancel</CButton>
+          <CButton color="secondary" variant="outline" onClick={closeModal}>
+            Cancel
+          </CButton>
           {!isEditMode && (
             <CButton color="secondary" type="button" onClick={onAddAnother}>
               + Add Another
