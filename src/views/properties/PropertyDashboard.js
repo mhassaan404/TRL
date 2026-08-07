@@ -35,7 +35,7 @@ const Properties = () => {
             setLoading(true);
             setError(null);
 
-            const res = await api.get("/Properties");
+            const res = await api.get("/Properties/GetProperties");
             setProperties(res.data);
         } catch (err) {
             console.error(err);
@@ -67,11 +67,11 @@ const Properties = () => {
                     </CButton>
                 ),
             },
-            { accessorKey: "BuildingName", header: "Building Name" },
-            { accessorKey: "FloorNumber", header: "Floor Number" },
-            { accessorKey: "UnitNumber", header: "Unit Number" },
-            { accessorKey: "BaseRent", header: "Base Rent" },
-            { accessorKey: "BuildingType", header: "Building Type" },
+            { accessorKey: "buildingName", header: "Building Name" },
+            { accessorKey: "floorNumber", header: "Floor Number" },
+            { accessorKey: "unitNumber", header: "Unit Number" },
+            { accessorKey: "baseRent", header: "Base Rent" },
+            { accessorKey: "buildingType", header: "Building Type" },
             {
                 accessorKey: "IsActive",
                 header: "Status",
