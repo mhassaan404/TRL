@@ -42,8 +42,8 @@ const FloorModal = ({ visible, editData, handleSubmit, closeModal, buildingName 
   }
 
   return (
-    <CModal visible={visible} backdrop="static" alignment="center">
-      <CModalHeader onClick={closeModal}>
+    <CModal visible={visible} backdrop="static" alignment="center" onClose={closeModal}>
+      <CModalHeader>
         <CModalTitle>
           {editData ? 'Edit Floor' : 'Add Floor'}
           {buildingName && <small className="text-muted ms-2 fs-6">— {buildingName}</small>}

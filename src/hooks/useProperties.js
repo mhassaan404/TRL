@@ -27,6 +27,7 @@ export const useProperties = () => {
   const [selectedBuildingForFloor, setSelectedBuildingForFloor] = useState(null)
 
   // ---------------- LOAD LOOKUPS ----------------
+
   const loadLookups = useCallback(async () => {
     const safe = async (fn, setter) => {
       try {
@@ -36,6 +37,7 @@ export const useProperties = () => {
         setter([])
       }
     }
+
     await Promise.all([
       safe(propertyService.getCities, setCities),
       safe(propertyService.getBuildingTypes, setBuildingTypes),
@@ -44,8 +46,10 @@ export const useProperties = () => {
   }, [])
 
   // ---------------- LOAD PROPERTIES ----------------
+
   const loadProperties = useCallback(async () => {
     setLoading(true)
+
     try {
       const data = await propertyService.getAllProperties()
       setProperties(Array.isArray(data) ? data : [])
@@ -57,11 +61,14 @@ export const useProperties = () => {
   }, [])
 
   // ---------------- LOAD BUILDINGS ----------------
+
   const loadBuildings = useCallback(async () => {
     try {
       const res = await propertyService.getBuildings()
       const list = Array.isArray(res) ? res : []
+
       setBuildings(list)
+
       return list
     } catch {
       toast.error('Failed to load buildings')
@@ -70,15 +77,23 @@ export const useProperties = () => {
   }, [])
 
   // ---------------- LOAD FLOORS ----------------
+
   const loadFloors = useCallback(async (buildingId) => {
-    if (!buildingId) return []
+    if (!buildingId) {
+      setFloors([])
+      return []
+    }
+
     try {
       const res = await propertyService.getFloors(buildingId)
       const list = Array.isArray(res) ? res : []
+
       setFloors(list)
+
       return list
     } catch {
       toast.error('Failed to load floors')
+      setFloors([])
       return []
     }
   }, [])
@@ -93,15 +108,24 @@ export const useProperties = () => {
 
   const openAddModal = async (preselectedBuildingId = null) => {
     setLoading(true)
+
     try {
-      await Promise.all([loadBuildings(), loadLookups()])
+      await Promise.all([
+        loadBuildings(),
+        loadLookups(),
+      ])
+
       if (preselectedBuildingId) {
         await loadFloors(preselectedBuildingId)
-        setEditData({ buildingId: preselectedBuildingId })
+
+        setEditData({
+          buildingId: preselectedBuildingId,
+        })
       } else {
         setFloors([])
         setEditData(null)
       }
+
       setModalOpen(true)
     } finally {
       setLoading(false)
@@ -110,9 +134,15 @@ export const useProperties = () => {
 
   const openEditModal = async (property) => {
     setLoading(true)
+
     try {
-      await Promise.all([loadBuildings(), loadLookups()])
+      await Promise.all([
+        loadBuildings(),
+        loadLookups(),
+      ])
+
       await loadFloors(property.buildingId)
+
       setEditData(property)
       setModalOpen(true)
     } finally {
@@ -128,17 +158,25 @@ export const useProperties = () => {
 
   const handleSubmit = async (data, keepOpen = false) => {
     setLoading(true)
+
     try {
       if (data.id) {
         await propertyService.updateProperty(data.id, data)
+
         toast.success('Property updated successfully')
+
         closeModal()
       } else {
         await propertyService.createProperty(data)
+
         toast.success('Property added')
-        if (!keepOpen) closeModal()
+
+        if (!keepOpen) {
+          closeModal()
+        }
       }
-      loadProperties()
+
+      await loadProperties()
     } catch {
       toast.error('Operation failed')
     } finally {
@@ -148,10 +186,13 @@ export const useProperties = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this property?')) return
+
     try {
       await propertyService.deleteProperty(id)
+
       toast.success('Property deleted')
-      loadProperties()
+
+      await loadProperties()
     } catch {
       toast.error('Delete failed')
     }
@@ -176,16 +217,24 @@ export const useProperties = () => {
 
   const handleBuildingSubmit = async (data) => {
     setLoading(true)
+
     try {
       if (editBuilding) {
         await propertyService.updateBuilding(editBuilding.id, data)
+
         toast.success('Building updated')
       } else {
         await propertyService.createBuilding(data)
+
         toast.success('Building added')
       }
+
       closeBuildingModal()
-      await Promise.all([loadBuildings(), loadProperties()])
+
+      await Promise.all([
+        loadBuildings(),
+        loadProperties(),
+      ])
     } catch {
       toast.error('Building operation failed')
     } finally {
@@ -194,11 +243,23 @@ export const useProperties = () => {
   }
 
   const handleBuildingDelete = async (id) => {
-    if (!window.confirm('Delete this building? All associated properties will be affected.')) return
+    if (
+      !window.confirm(
+        'Delete this building? All associated properties will be affected.',
+      )
+    ) {
+      return
+    }
+
     try {
       await propertyService.deleteBuilding(id)
+
       toast.success('Building deleted')
-      await Promise.all([loadBuildings(), loadProperties()])
+
+      await Promise.all([
+        loadBuildings(),
+        loadProperties(),
+      ])
     } catch {
       toast.error('Delete failed')
     }
@@ -212,9 +273,9 @@ export const useProperties = () => {
     setFloorModalOpen(true)
   }
 
-  const openEditFloorModal = (floor) => {
+  const openEditFloorModal = (floor, buildingId) => {
     setEditFloor(floor)
-    setSelectedBuildingForFloor(floor.buildingId)
+    setSelectedBuildingForFloor(buildingId || floor.buildingId || null)
     setFloorModalOpen(true)
   }
 
@@ -226,16 +287,28 @@ export const useProperties = () => {
 
   const handleFloorSubmit = async (data) => {
     setLoading(true)
+
     try {
       if (editFloor) {
         await propertyService.updateFloor(editFloor.id, data)
+
         toast.success('Floor updated')
       } else {
-        await propertyService.createFloor({ ...data, buildingId: selectedBuildingForFloor })
+        await propertyService.createFloor({
+          ...data,
+          buildingId: selectedBuildingForFloor,
+        })
+
         toast.success('Floor added')
       }
+
+      const buildingId = selectedBuildingForFloor
+
       closeFloorModal()
-      if (selectedBuildingForFloor) await loadFloors(selectedBuildingForFloor)
+
+      if (buildingId) {
+        await loadFloors(buildingId)
+      }
     } catch {
       toast.error('Floor operation failed')
     } finally {
@@ -245,10 +318,15 @@ export const useProperties = () => {
 
   const handleFloorDelete = async (id, buildingId) => {
     if (!window.confirm('Delete this floor?')) return
+
     try {
       await propertyService.deleteFloor(id)
+
       toast.success('Floor deleted')
-      if (buildingId) await loadFloors(buildingId)
+
+      if (buildingId) {
+        await loadFloors(buildingId)
+      }
     } catch {
       toast.error('Delete failed')
     }
@@ -276,7 +354,7 @@ export const useProperties = () => {
     handleDelete,
     loadFloors,
     loadBuildings,
-    loadProperties,   // ← exported correctly
+    loadProperties,
 
     // Building modal
     buildingModalOpen,

@@ -3,6 +3,10 @@
 // Format number as string with commas
 export const fmt = (v) => Number(v || 0).toLocaleString()
 
+// Add near the top, after `fmt`
+export const getStatusName = (property, unitStatuses) =>
+  unitStatuses.find((s) => s.id === property.statusId)?.name || property.status || ''
+
 // Use API-provided remainingAmount (no calculation)
 export const getRemainingRent = (invoice) => {
   return Number(invoice.remainingAmount || 0)
