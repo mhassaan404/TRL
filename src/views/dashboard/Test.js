@@ -974,7 +974,6 @@ const Properties = () => {
                         handleSelectFloor(floor)
                       }
                     >
-
                       <div
                         style={{
                           height: '110px',
