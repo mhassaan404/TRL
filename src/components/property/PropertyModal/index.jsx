@@ -12,6 +12,8 @@ const PropertyModal = ({
   loadFloors,
   onBuildingCreated,
   unitStatuses,
+  cities,
+  buildingTypes,
 }) => {
   return (
     <CModal visible={visible} size="xl" backdrop="static" alignment="center" onClose={closeModal}>
@@ -28,6 +30,8 @@ const PropertyModal = ({
           loadFloors={loadFloors}
           onBuildingCreated={onBuildingCreated}
           unitStatuses={unitStatuses}
+          cities={cities}
+          buildingTypes={buildingTypes}
         />
       </CModalBody>
     </CModal>

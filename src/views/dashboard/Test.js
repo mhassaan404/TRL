@@ -215,7 +215,7 @@ const Properties = () => {
 
       const matchSearch = searchQuery
         ? p.unitNumber?.toLowerCase().includes(q) ||
-          p.propertyType?.toLowerCase().includes(q)
+        p.propertyType?.toLowerCase().includes(q)
         : true
 
       return matchStatus && matchType && matchSearch
@@ -364,9 +364,8 @@ const Properties = () => {
       <CCard className="border-0 shadow-sm mb-4">
 
         <CCardHeader
-          className={`d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 py-3 ${
-            isDark ? '' : 'bg-white'
-          }`}
+          className={`d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 py-3 ${isDark ? '' : 'bg-white'
+            }`}
         >
 
           <div className="d-flex align-items-center gap-2">
@@ -387,11 +386,10 @@ const Properties = () => {
               {!selectedBuilding
                 ? 'Properties Management'
                 : selectedFloor
-                  ? `${selectedBuilding.buildingName} — Floor ${
-                      selectedFloor.floorNumber ??
-                      selectedFloor.number ??
-                      selectedFloor.name
-                    }`
+                  ? `${selectedBuilding.buildingName} — Floor ${selectedFloor.floorNumber ??
+                  selectedFloor.number ??
+                  selectedFloor.name
+                  }`
                   : `${selectedBuilding.buildingName} — Floors`}
 
             </strong>
@@ -926,8 +924,7 @@ const Properties = () => {
 
               {filteredFloors.map((floor, i) => {
 
-                const floorUnits =
-                  getFloorUnits(floor)
+                const floorUnits = getFloorUnits(floor)
 
                 const available =
                   floorUnits.filter((p) => {
@@ -935,9 +932,7 @@ const Properties = () => {
                       unitStatuses.find(
                         (s) =>
                           s.id === p.statusId,
-                      )?.name ||
-                      p.status ||
-                      ''
+                      )?.name || p.status || ''
 
                     return status === 'Available'
                   }).length
@@ -946,11 +941,9 @@ const Properties = () => {
                   floorUnits.filter((p) => {
                     const status =
                       unitStatuses.find(
-                        (s) =>
-                          s.id === p.statusId,
+                        (s) => s.id === p.statusId,
                       )?.name ||
-                      p.status ||
-                      ''
+                      p.status || ''
 
                     return status === 'Rented'
                   }).length
@@ -1204,7 +1197,7 @@ const Properties = () => {
                           <CBadge
                             color={
                               statusColor[
-                                statusName
+                              statusName
                               ] || 'secondary'
                             }
                           >
@@ -1292,6 +1285,8 @@ const Properties = () => {
         loadFloors={loadFloors}
         onBuildingCreated={loadBuildings}
         unitStatuses={unitStatuses}
+        cities={cities}
+        buildingTypes={buildingTypes}
       />
 
       <BuildingModal

@@ -161,12 +161,13 @@ export const useProperties = () => {
 
     try {
       if (data.id) {
-        await propertyService.updateProperty(data.id, data)
+        await propertyService.updateProperty(data)
 
         toast.success('Property updated successfully')
 
         closeModal()
-      } else {
+      }
+      else {
         await propertyService.createProperty(data)
 
         toast.success('Property added')
