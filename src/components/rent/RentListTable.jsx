@@ -1,176 +1,5 @@
-// // src/components/rent/RentListTable.jsx
-// import React from 'react'
-// import { CButton } from '@coreui/react'
-// import { flexRender } from '@tanstack/react-table'
-
-// const RentListTable = ({ table, handleEdit, handleDelete }) => {
-//   const columnsLength = table.getHeaderGroups()[0]?.headers.length || 1
-
-//   return (
-//     <div
-//       className="table-responsive"
-//       style={{ maxHeight: '380px', overflowY: 'auto', marginTop: '8px' }}
-//     >
-//       <table className="table table-bordered table-hover">
-//         <thead>
-//           {table.getHeaderGroups().map((hg) => (
-//             <tr key={hg.id}>
-//               {hg.headers.map((header) => (
-//                 <th key={header.id} onClick={header.column.getToggleSortingHandler()}>
-//                   {flexRender(header.column.columnDef.header, header.getContext())}
-//                   {header.column.getIsSorted()
-//                     ? header.column.getIsSorted() === 'asc'
-//                       ? ' 🔼'
-//                       : ' 🔽'
-//                     : null}
-//                 </th>
-//               ))}
-//               <th>Actions</th>
-//             </tr>
-//           ))}
-//         </thead>
-//         <tbody>
-//           {table.getRowModel().rows.length === 0 && (
-//             <tr>
-//               <td colSpan={columnsLength + 1} className="text-center">
-//                 No records found.
-//               </td>
-//             </tr>
-//           )}
-//           {table.getRowModel().rows.map((row) => (
-//             <tr key={row.original.invoiceId}>
-//               {row.getVisibleCells().map((cell) => (
-//                 <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-//               ))}
-//               <td>
-//                 <CButton size="sm" color="info" onClick={() => handleEdit(row.original)}>
-//                   Update
-//                 </CButton>{' '}
-//                 <CButton size="sm" color="danger" onClick={() => handleDelete(row.original)}>
-//                   Delete
-//                 </CButton>
-//               </td>
-//             </tr>
-//           ))}
-//         </tbody>
-//       </table>
-//     </div>
-//   )
-// }
-
-// export default RentListTable
-
 // src/components/rent/RentListTable.jsx
-// import React from 'react'
-// import { flexRender } from '@tanstack/react-table'
-// import { useIsDarkMode } from '../../hooks/useIsDarkMode'
-// import { CFormCheck } from '@coreui/react'
-
-// const RentListTable = ({ table, selectedIds, setSelectedIds }) => {
-//   const isDark = useIsDarkMode()
-//   const columnsLength = table.getHeaderGroups()[0]?.headers.length || 1
-
-//   return (
-//     <div className="table-responsive" style={{ maxHeight: '500px', overflowY: 'auto' }}>
-//       <table className="table table-bordered table-hover mb-0">
-//         <thead
-//           className={`position-sticky top-0 ${isDark ? 'bg-[#3e4655] text-white' : 'table-light text-dark'}`}
-//         >
-//           {table.getHeaderGroups().map((headerGroup) => (
-//             <tr key={headerGroup.id}>
-//               {/* Select All Checkbox */}
-//               <th className="text-center" style={{ width: '50px' }}>
-//                 <CFormCheck
-//                   checked={
-//                     table.getRowModel().rows.length > 0 &&
-//                     table.getRowModel().rows.every((row) => selectedIds.includes(row.original.invoiceId))
-//                   }
-//                   indeterminate={
-//                     selectedIds.length > 0 && selectedIds.length < table.getRowModel().rows.length
-//                   }
-//                   onChange={(e) => {
-//                     const checked = e.target.checked
-//                     if (checked) {
-//                       // Select ALL
-//                       const allIds = table.getRowModel().rows.map((row) => row.original.invoiceId)
-//                       setSelectedIds(allIds)
-//                     } else {
-//                       // Uncheck ALL
-//                       setSelectedIds([])
-//                     }
-//                   }}
-//                 />
-//               </th>
-
-//               {/* Other headers */}
-//               {headerGroup.headers.map((header) => (
-//                 <th
-//                   key={header.id}
-//                   onClick={header.column.getToggleSortingHandler()}
-//                   style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }}
-//                   className="text-center" // change to text-end for numeric columns if needed
-//                 >
-//                   {flexRender(header.column.columnDef.header, header.getContext())}
-//                   {header.column.getIsSorted()
-//                     ? header.column.getIsSorted() === 'asc'
-//                       ? ' 🔼'
-//                       : ' 🔽'
-//                     : null}
-//                 </th>
-//               ))}
-//             </tr>
-//           ))}
-//         </thead>
-
-//         <tbody>
-//           {table.getRowModel().rows.length === 0 ? (
-//             <tr>
-//               <td colSpan={columnsLength + 1} className="text-center py-4 text-muted">
-//                 No records found.
-//               </td>
-//             </tr>
-//           ) : (
-//             table.getRowModel().rows.map((row) => {
-//               const rowId = row.original.invoiceId
-//               const isSelected = selectedIds.includes(rowId)
-
-//               return (
-//                 <tr key={row.id}>
-//                   <td className="text-center" style={{ width: '50px' }}>
-//                     <CFormCheck
-//                       checked={isSelected}
-//                       onChange={(e) => {
-//                         setSelectedIds((prev) => {
-//                           if (e.target.checked) {
-//                             return [...prev, rowId]
-//                           } else {
-//                             return prev.filter((id) => id !== rowId)
-//                           }
-//                         })
-//                       }}
-//                     />
-//                   </td>
-
-//                   {/* Other cells */}
-//                   {row.getVisibleCells().map((cell) => (
-//                     <td key={cell.id}>
-//                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
-//                     </td>
-//                   ))}
-//                 </tr>
-//               )
-//             })
-//           )}
-//         </tbody>
-//       </table>
-//     </div>
-//   )
-// }
-
-// export default RentListTable
-
-// src/components/rent/RentListTable.jsx
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { flexRender } from '@tanstack/react-table'
 import { useIsDarkMode } from '../../hooks/useIsDarkMode'
 import { CFormCheck, CButton } from '@coreui/react'
@@ -178,6 +7,17 @@ import { CFormCheck, CButton } from '@coreui/react'
 const RentListTable = ({ table, selectedIds, setSelectedIds, expandedRows, toggleExpand }) => {
   const isDark = useIsDarkMode()
   const columnsLength = table.getHeaderGroups()[0]?.headers.length || 1
+
+  const selectAllRef = useRef(null)
+  const rows = table.getRowModel().rows
+  const allSelected = rows.length > 0 && rows.every((row) => selectedIds.includes(row.original.invoiceId))
+  const someSelected = selectedIds.length > 0 && selectedIds.length < rows.length
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someSelected
+    }
+  }, [someSelected])
 
   return (
     <div className="table-responsive" style={{ maxHeight: '500px', overflowY: 'auto' }}>
@@ -192,7 +32,7 @@ const RentListTable = ({ table, selectedIds, setSelectedIds, expandedRows, toggl
               <th className="text-center" style={{ width: '50px' }}></th>
 
               {/* Select All Checkbox */}
-              <th className="text-center" style={{ width: '50px' }}>
+              {/* <th className="text-center" style={{ width: '50px' }}>
                 <CFormCheck
                   checked={
                     table.getRowModel().rows.length > 0 &&
@@ -206,6 +46,22 @@ const RentListTable = ({ table, selectedIds, setSelectedIds, expandedRows, toggl
                   onChange={(e) => {
                     if (e.target.checked) {
                       const allIds = table.getRowModel().rows.map((row) => row.original.invoiceId)
+                      setSelectedIds(allIds)
+                    } else {
+                      setSelectedIds([])
+                    }
+                  }}
+                />
+              </th> */}
+
+              {/* Select All Checkbox */}
+              <th className="text-center" style={{ width: '50px' }}>
+                <CFormCheck
+                  ref={selectAllRef}
+                  checked={allSelected}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      const allIds = rows.map((row) => row.original.invoiceId)
                       setSelectedIds(allIds)
                     } else {
                       setSelectedIds([])
@@ -311,6 +167,35 @@ const RentListTable = ({ table, selectedIds, setSelectedIds, expandedRows, toggl
           )}
         </tbody>
       </table>
+
+      <div className="d-flex justify-content-between align-items-center mt-3">
+        <div className="text-muted small">
+          Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+        </div>
+
+        <div className="d-flex gap-2">
+          <CButton
+            color="secondary"
+            variant="outline"
+            size="sm"
+            disabled={!table.getCanPreviousPage()}
+            onClick={() => table.previousPage()}
+          >
+            Previous
+          </CButton>
+
+          <CButton
+            color="secondary"
+            variant="outline"
+            size="sm"
+            disabled={!table.getCanNextPage()}
+            onClick={() => table.nextPage()}
+          >
+            Next
+          </CButton>
+        </div>
+      </div>
+
     </div>
   )
 }

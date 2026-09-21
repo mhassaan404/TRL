@@ -9,6 +9,7 @@ export const useRentHistory = () => {
 
   const loadRentHistory = useCallback(async () => {
     setLoading(true)
+
     try {
       const data = await rentService.getRentHistory()
       setHistoryRecords(data || [])
@@ -20,43 +21,49 @@ export const useRentHistory = () => {
     }
   }, [])
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete?')) return
+  const handleCancel = async (id) => {
+    if (!window.confirm('Cancel this invoice?')) return
+
     try {
-      const res = await rentService.deleteHistoryRecord(id)
-      if (res.data?.isSuccess !== false) {
-        // adjust based on your API response
-        toast.success('Deleted')
-        refresh() // or loadRentHistory()
+      const res = await rentService.cancelInvoice(id)
+
+      if (res.data?.isSuccess) {
+        toast.success(res.data.message || 'Invoice cancelled')
+        await loadRentHistory()
+      } else {
+        toast.error(res.data?.errorMessage || 'Invoice could not be cancelled')
       }
     } catch (err) {
-      toast.error('Delete failed')
+      toast.error(err?.message || 'Failed to cancel invoice')
     }
   }
-
+  
   const handleReinstate = async (id) => {
-    if (!window.confirm('Reinstate?')) return
+    if (!window.confirm('Reinstate this invoice?')) return
+
     try {
-      const res = await rentService.reinstateTenant(id)
-      if (res.data?.isSuccess !== false) {
-        toast.success('Reinstated')
-        refresh()
+      const res = await rentService.reinstateInvoice(id)
+
+      if (res.data?.isSuccess) {
+        toast.success(res.data.message || 'Invoice reinstated')
+        await loadRentHistory()
+      } else {
+        toast.error(
+          res.data?.errorMessage || 'Invoice could not be reinstated'
+        )
       }
     } catch (err) {
-      toast.error('Reinstate failed')
+      toast.error(err?.message || 'Failed to reinstate invoice')
     }
   }
-
-  // Optional: helper to refresh after mutations
-  const refresh = loadRentHistory
 
   return {
     loading,
     historyRecords,
     loadRentHistory,
-    refresh,
+    refresh: loadRentHistory,
     setHistoryRecords,
-    handleDelete,
+    handleCancel,
     handleReinstate,
   }
 }

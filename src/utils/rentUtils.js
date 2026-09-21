@@ -46,23 +46,25 @@ export const computeTotals = (invoices, globalWaveLateFee = false) => {
   let sumPayAmount = 0
   let sumLateFees = 0
   let sumDiscounts = 0
+  let anyWaived = false
 
   selectedInvoices.forEach((i) => {
-    // Use local discountAmount + any appliedDiscount from API
     sumDiscounts += Number(i.discountAmount || 0) + Number(i.appliedDiscount || 0)
     sumPayAmount += Number(i.payAmount || 0)
-    const effectiveLate = globalWaveLateFee || i.waveLateFee ? 0 : Number(i.lateFee || 0)
-    sumLateFees += effectiveLate
+    const waived = globalWaveLateFee || i.waveLateFee
+    if (waived) anyWaived = true
+    sumLateFees += waived ? 0 : Number(i.lateFee || 0)
   })
 
-  const grandTotal = sumPayAmount + sumLateFees - sumDiscounts // discounts subtract
+  const grandTotal = Math.max(0, sumPayAmount - sumDiscounts) // late fee excluded — not part of this submission
 
   return {
     selectedCount: selectedInvoices.length,
     sumSelectedPayAmount: sumPayAmount,
     sumSelectedLateFees: sumLateFees,
     sumSelectedDiscounts: sumDiscounts,
-    grandTotal: Math.max(0, grandTotal), // prevent negative
+    anyWaived,
+    grandTotal,
     anySelected: selectedInvoices.length > 0,
   }
 }

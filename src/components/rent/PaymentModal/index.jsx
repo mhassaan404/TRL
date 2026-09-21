@@ -12,7 +12,7 @@
 
 // import TenantSelector from './TenantSelector'
 // import SummaryCards from './SummaryCards'
-// import GlobalActionsSection from './GlobalActions'  // corrected import name
+// import GlobalActionsSection from './GlobalActions' // ← corrected import (assuming file name)
 // import InvoicePaymentTable from './InvoicePaymentTable'
 // import TotalsFooter from './TotalsFooter'
 // import Loader from '../../../components/Loader'
@@ -39,7 +39,7 @@
 //   handleApplyGlobalPaymentDate,
 //   handleApplyGlobalNotes,
 // }) => {
-//   const isDark = useIsDarkMode()  // ← now correctly inside the component
+//   const isDark = useIsDarkMode()
 
 //   return (
 //     <CModal
@@ -47,11 +47,10 @@
 //       onClose={onClose}
 //       alignment="center"
 //       scrollable
-//       // size="xl"          // commented out - using fullscreen as you set
-//       fullscreen              // your current preference
+//       fullscreen
 //       className="payment-modal"
 //     >
-//       <CModalHeader closeButton>
+//       <CModalHeader className={isDark ? 'bg-body-secondary' : 'bg-body-tertiary'} closeButton>
 //         <CModalTitle>
 //           {isEditMode ? 'Edit Payment' : 'New Rent Payment'}
 //         </CModalTitle>
@@ -81,29 +80,26 @@
 //             {/* Global Actions */}
 //             <CCol xs={12}>
 //               <div
-//                 className={`rounded p-3 border ${
-//                   isDark ? 'bg-dark-subtle text-white' : 'bg-light text-dark'
-//                 }`}
+//                 className={`rounded p-4 border shadow-sm ${isDark ? 'bg-dark-subtle text-white' : 'bg-white text-dark'
+//                   }`}
 //               >
-//                 <h6 className="mb-3 fw-semibold">Global Actions</h6>
-//                 <CRow className="g-3">
-//                   <GlobalActionsSection
-//                     rentForm={rentForm}
-//                     setRentForm={setRentForm}
-//                     handleApplyGlobalDiscountAmount={handleApplyGlobalDiscountAmount}
-//                     handleApplyGlobalDiscountPercent={handleApplyGlobalDiscountPercent}
-//                     handleGlobalWaveChange={handleGlobalWaveChange}
-//                     handleApplyGlobalPaymentMethod={handleApplyGlobalPaymentMethod}
-//                     handleApplyGlobalPaymentDate={handleApplyGlobalPaymentDate}
-//                     handleApplyGlobalNotes={handleApplyGlobalNotes}
-//                   />
-//                 </CRow>
+//                 <h5 className="mb-4 fw-semibold">Global Actions</h5>
+//                 <GlobalActionsSection
+//                   rentForm={rentForm}
+//                   setRentForm={setRentForm}
+//                   handleApplyGlobalDiscountAmount={handleApplyGlobalDiscountAmount}
+//                   handleApplyGlobalDiscountPercent={handleApplyGlobalDiscountPercent}
+//                   handleGlobalWaveChange={handleGlobalWaveChange}
+//                   handleApplyGlobalPaymentMethod={handleApplyGlobalPaymentMethod}
+//                   handleApplyGlobalPaymentDate={handleApplyGlobalPaymentDate}
+//                   handleApplyGlobalNotes={handleApplyGlobalNotes}
+//                 />
 //               </div>
 //             </CCol>
 
 //             {/* Invoice Table */}
 //             <CCol xs={12}>
-//               <div className="border rounded overflow-hidden">
+//               <div className={`border rounded overflow-hidden ${isDark ? 'bg-dark' : 'bg-white'}`}>
 //                 <InvoicePaymentTable
 //                   invoices={rentForm.invoices || []}
 //                   rentForm={rentForm}
@@ -113,6 +109,7 @@
 //                   updateInvoiceField={handleUpdateInvoiceField}
 //                   handleTenantChange={handleTenantChange}
 //                   setRentForm={setRentForm}
+//                   handleChargeLateFee={handleChargeLateFee}
 //                 />
 //               </div>
 //             </CCol>
@@ -135,6 +132,7 @@
 // export default PaymentModal
 
 
+
 // src/components/rent/PaymentModal/index.jsx
 import React from 'react'
 import {
@@ -149,7 +147,7 @@ import {
 
 import TenantSelector from './TenantSelector'
 import SummaryCards from './SummaryCards'
-import GlobalActionsSection from './GlobalActions' // ← corrected import (assuming file name)
+import GlobalActionsSection from './GlobalActions'
 import InvoicePaymentTable from './InvoicePaymentTable'
 import TotalsFooter from './TotalsFooter'
 import Loader from '../../../components/Loader'
@@ -175,6 +173,7 @@ const PaymentModal = ({
   handleApplyGlobalPaymentMethod,
   handleApplyGlobalPaymentDate,
   handleApplyGlobalNotes,
+  handleChargeLateFee, // FIX: was missing — used below but never received as a prop
 }) => {
   const isDark = useIsDarkMode()
 
@@ -247,6 +246,7 @@ const PaymentModal = ({
                   updateInvoiceField={handleUpdateInvoiceField}
                   handleTenantChange={handleTenantChange}
                   setRentForm={setRentForm}
+                  handleChargeLateFee={handleChargeLateFee}
                 />
               </div>
             </CCol>

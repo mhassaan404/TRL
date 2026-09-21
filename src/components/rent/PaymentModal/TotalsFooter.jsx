@@ -57,11 +57,10 @@ import { CButton } from '@coreui/react'
 import { fmt } from '../../../utils/rentUtils'
 
 const TotalsFooter = ({ totals, isEditMode, onSubmit }) => {
+
   const isDisabled =
     totals.selectedCount === 0 ||
-    (totals.sumSelectedPayAmount <= 0 &&
-      totals.sumSelectedLateFees <= 0 &&
-      totals.sumSelectedDiscounts <= 0)
+    (totals.sumSelectedPayAmount <= 0 && totals.sumSelectedDiscounts <= 0 && !totals.anyWaived)
 
   return (
     <div className="d-flex flex-wrap align-items-center justify-content-end gap-4 mt-4 pt-3 border-top">
@@ -87,8 +86,13 @@ const TotalsFooter = ({ totals, isEditMode, onSubmit }) => {
         </div>
 
         <div className="ps-3 border-start">
-          <small className="text-muted d-block fw-semibold">Grand Total</small>
+          <small className="text-muted d-block fw-semibold">Amount Being Recorded</small>
           <strong className="fs-5">{fmt(totals.grandTotal)}</strong>
+          {totals.sumSelectedLateFees > 0 && (
+            <small className="text-danger d-block">
+              + {fmt(totals.sumSelectedLateFees)} late fee not included — use "Charge Late Fee"
+            </small>
+          )}
         </div>
       </div>
 

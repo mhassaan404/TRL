@@ -226,7 +226,7 @@ const Invoices = () => {
 
   const columns = useMemo(
     () => [
-      { accessorKey: 'id', header: 'ID' },
+      // { accessorKey: 'id', header: 'ID' },
       { accessorKey: 'tenant', header: 'Tenant Name' },
       { accessorKey: 'unit', header: 'Property / Unit' },
       { accessorKey: 'invoiceNumber', header: 'Invoice #' },
