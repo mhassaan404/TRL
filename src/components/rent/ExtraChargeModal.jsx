@@ -20,7 +20,7 @@ const monthNames = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ]
 
-const chargeTypes = ['Maintenance', 'Late Fine', 'Security Deposit', 'Utility', 'Other']
+const chargeTypes = ['Maintenance', 'Security Deposit', 'Utility', 'Other']
 
 const ExtraChargeModal = ({
   visible,

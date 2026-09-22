@@ -24,8 +24,11 @@ export const useRentHistory = () => {
   const handleCancel = async (id) => {
     if (!window.confirm('Cancel this invoice?')) return
 
+    const reason = window.prompt('Reason for cancelling this invoice:')
+    if (!reason?.trim()) return
+
     try {
-      const res = await rentService.cancelInvoice(id)
+      const res = await rentService.cancelInvoice(id, reason.trim())
 
       if (res.data?.isSuccess) {
         toast.success(res.data.message || 'Invoice cancelled')
@@ -37,7 +40,7 @@ export const useRentHistory = () => {
       toast.error(err?.message || 'Failed to cancel invoice')
     }
   }
-  
+
   const handleReinstate = async (id) => {
     if (!window.confirm('Reinstate this invoice?')) return
 

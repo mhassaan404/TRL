@@ -8,38 +8,8 @@ export const getStatusName = (property, unitStatuses) =>
   unitStatuses.find((s) => s.id === property.statusId)?.name || property.status || ''
 
 // Use API-provided remainingAmount (no calculation)
-export const getRemainingRent = (invoice) => {
-  return Number(invoice.remainingAmount || 0)
-}
-
-// Compute totals using API-provided values where possible
-// export const computeTotals = (invoices, globalWaveLateFee = false) => {
-//   const selectedInvoices = invoices.filter((i) => i.selected)
-//   let sumPayAmount = 0
-//   let sumLateFees = 0
-//   let sumDiscounts = 0
-
-//   selectedInvoices.forEach((i) => {
-//     // Use API pre-calculated discount
-//     sumDiscounts += Number(i.appliedDiscount || 0)
-//     // Pay amount is user-entered or prefilled
-//     sumPayAmount += Number(i.payAmount || 0)
-//     // Late fee with waive logic
-//     const effectiveLate = globalWaveLateFee || i.waveLateFee ? 0 : Number(i.lateFee || 0)
-//     sumLateFees += effectiveLate
-//   })
-
-//   const grandTotal = sumPayAmount + sumLateFees
-
-//   return {
-//     selectedCount: selectedInvoices.length,
-//     sumSelectedPayAmount: sumPayAmount,
-//     sumSelectedLateFees: sumLateFees,
-//     sumSelectedDiscounts: sumDiscounts,
-//     grandTotal,
-//     anySelected: selectedInvoices.length > 0,
-//   }
-// }
+export const getRemainingRent = (inv) =>
+  Math.max(0, Number(inv.remainingAmount || 0) - Number(inv.discountAmount || 0) - Number(inv.computedDiscount || 0))
 
 export const computeTotals = (invoices, globalWaveLateFee = false) => {
   const selectedInvoices = invoices.filter((i) => i.selected)

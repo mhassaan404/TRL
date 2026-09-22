@@ -77,6 +77,11 @@ const _nav = [
         name: 'RentHistory',
         to: '/rent/RentHistory',
       },
+      {
+        component: CNavItem,
+        name: 'Lease Management',
+        to: '/rent/LeaseManagement',
+      },
     ],
   },
   {

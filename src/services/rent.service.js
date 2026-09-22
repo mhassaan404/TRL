@@ -138,8 +138,13 @@ export const rentService = {
     }
   },
 
-  cancelInvoice: async (id) => {
-    return api.patch(`/RentHistory/CancelInvoice`, id)
+  cancelInvoice: async (id, reason) => {
+    const res = await api.patch('/RentHistory/CancelInvoice', id, { params: { reason } })
+    if (res.data?.isSuccess === false) {
+      toast.error(res.data.errorMessage)
+      throw new Error(res.data.errorMessage)
+    }
+    return res.data
   },
 
   reinstateInvoice: async (id) => {
@@ -311,5 +316,92 @@ export const rentService = {
       toast.error(err?.response?.data?.ErrorMessage || err?.response?.data?.Message || 'Failed to add charge')
       throw err
     }
+  },
+
+  chargeLateFee: async (invoiceId) => {
+    try {
+      const res = await api.post(`/Rent/ChargeLateFee?invoiceId=${invoiceId}`)
+      return res.data
+    } catch (err) {
+      toast.error(err?.response?.data?.errorMessage || 'Failed to charge late fee')
+      throw err
+    }
+  },
+
+  getAllPayments: async (from, to) => {
+    try {
+      const res = await api.get('/Rent/GetAllPayments', { params: { from, to } })
+      return Array.isArray(res.data) ? res.data : []
+    } catch {
+      toast.error('Failed to load payments')
+      return []
+    }
+  },
+
+  reverseLateFee: async (invoiceId, reason) => {
+    try {
+      const res = await api.post('/Rent/ReverseLateFee', { InvoiceId: invoiceId, Reason: reason })
+      return res.data
+    } catch (err) {
+      toast.error(err?.response?.data?.errorMessage || 'Failed to reverse late fee')
+      throw err
+    }
+  },
+  getOccupancy: async () => {
+    try {
+      const res = await api.get('/Rent/GetOccupancy')
+      return Array.isArray(res.data) ? res.data : []
+    } catch { toast.error('Failed to load occupancy'); return [] }
+  },
+  getVacantUnits: async (includeUnitId) => {
+    try {
+      const res = await api.get('/Rent/GetVacantUnits', { params: { includeUnitId } })
+      return Array.isArray(res.data) ? res.data : []
+    } catch { toast.error('Failed to load units'); return [] }
+  },
+}
+
+export const leaseService = {
+  getAll: async () => {
+    try {
+      const res = await api.get('/Lease/GetAll')
+      return Array.isArray(res.data) ? res.data : []
+    } catch {
+      toast.error('Failed to load leases')
+      return []
+    }
+  },
+
+  create: async (payload) => {
+    const res = await api.post('/Lease/Create', payload)
+
+    if (res.data?.isSuccess === false) {
+      toast.error(res.data.errorMessage)
+      throw new Error(res.data.errorMessage)
+    }
+
+    return res.data
+  },
+
+  renew: async (payload) => {
+    const res = await api.post('/Lease/Renew', payload)
+
+    if (res.data?.isSuccess === false) {
+      toast.error(res.data.errorMessage)
+      throw new Error(res.data.errorMessage)
+    }
+
+    return res.data
+  },
+
+  terminate: async (payload) => {
+    const res = await api.post('/Lease/Terminate', payload)
+
+    if (res.data?.isSuccess === false) {
+      toast.error(res.data.errorMessage)
+      throw new Error(res.data.errorMessage)
+    }
+
+    return res.data
   },
 }
