@@ -78,7 +78,7 @@ const Tenants = () => {
                 CityId: tenant.cityId,
                 Notes: tenant.notes,
                 IsActive: tenant.isActive,
-            }, editData?.TenantId);
+            }, editData?.tenantId);
 
             toast.success(res.message);
             await loadTenants();
@@ -115,12 +115,12 @@ const Tenants = () => {
         setVisible(true);
 
         setTenant({
-            name: t.Name || "",
-            email: t.Email || "",
-            phone: t.Contact || "",
-            cityId: t.CityId || "",
-            notes: t.Notes || "",
-            isActive: !!t.IsActive,
+            name: t.name || "",
+            email: t.email || "",
+            phone: t.contact || "",
+            cityId: t.cityId || "",
+            notes: t.notes || "",
+            isActive: !!t.isActive,
         });
     };
 
@@ -141,22 +141,22 @@ const Tenants = () => {
                 <CButton
                     color="secondary"
                     size="sm"
-                    onClick={() => toggleExpand(row.original.TenantId)}
+                    onClick={() => toggleExpand(row.original.tenantId)}
                 >
-                    {expandedRows[row.original.TenantId] ? "-" : "+"}
+                    {expandedRows[row.original.tenantId] ? "-" : "+"}
                 </CButton>
             )
         },
         {
-            accessorKey: "Name",
+            accessorKey: "name",
             header: "Name"
         },
         {
-            accessorKey: "Email",
+            accessorKey: "email",
             header: "Email"
         },
         {
-            accessorKey: "IsActive",
+            accessorKey: "isActive",
             header: "Status",
             cell: ({ getValue }) => (
                 <span
@@ -190,7 +190,7 @@ const Tenants = () => {
                     <CButton
                         size="sm"
                         color="danger"
-                        onClick={() => handleDelete(row.original.TenantId)}
+                        onClick={() => handleDelete(row.original.tenantId)}
                     >
                         Delete
                     </CButton>
@@ -205,8 +205,8 @@ const Tenants = () => {
 
         return tenants.filter((p) =>
             statusFilter === "Active"
-                ? p.IsActive
-                : !p.IsActive
+                ? p.isActive
+                : !p.isActive
         );
     }, [tenants, statusFilter]);
 
@@ -390,7 +390,7 @@ const Tenants = () => {
                                     <tbody>
                                         {table.getRowModel().rows.map(row => (
                                             <React.Fragment
-                                                key={row.original.TenantId}
+                                                key={row.original.tenantId}
                                             >
                                                 <tr>
                                                     {row.getVisibleCells().map(cell => (
@@ -403,22 +403,22 @@ const Tenants = () => {
                                                     ))}
                                                 </tr>
 
-                                                {expandedRows[row.original.TenantId] && (
+                                                {expandedRows[row.original.tenantId] && (
                                                     <tr>
                                                         <td colSpan={columns.length}>
                                                             <div>
                                                                 <strong>Phone:</strong>{" "}
-                                                                {row.original.Contact}
+                                                                {row.original.contact}
                                                             </div>
 
                                                             <div>
                                                                 <strong>City:</strong>{" "}
-                                                                {row.original.CityName}
+                                                                {row.original.cityName}
                                                             </div>
 
                                                             <div>
                                                                 <strong>Notes:</strong>{" "}
-                                                                {row.original.Notes || "-"}
+                                                                {row.original.notes || "-"}
                                                             </div>
                                                         </td>
                                                     </tr>

@@ -1,51 +1,19 @@
-import React, { useEffect, useRef } from 'react'
+import React from 'react'
 import PropTypes from 'prop-types'
 
-import {
-  CRow,
-  CCol,
-  CDropdown,
-  CDropdownMenu,
-  CDropdownItem,
-  CDropdownToggle,
-  CWidgetStatsA,
-} from '@coreui/react'
+import { CRow, CCol, CWidgetStatsA } from '@coreui/react'
 import { getStyle } from '@coreui/utils'
-import { CChartBar, CChartLine } from '@coreui/react-chartjs'
+import { CChartLine } from '@coreui/react-chartjs'
 import CIcon from '@coreui/icons-react'
-import { cilArrowBottom, cilArrowTop, cilOptions } from '@coreui/icons'
+import { cilArrowBottom, cilArrowTop } from '@coreui/icons'
+
+// Latest value of a series (back = 2 for the one before); 0 while data is still loading, so no NaN
+const last = (arr, back = 1) => Number(arr?.[arr.length - back] ?? 0)
 
 const WidgetsDropdown = ({ className, tenants, rentDue, collected, pending }) => {
-  const widgetChartRef1 = useRef(null)
-  const widgetChartRef2 = useRef(null)
-  const diff = tenants[tenants.length - 1] - tenants[tenants.length - 2]
+  const diff = last(tenants) - last(tenants, 2)
   const isPositive = diff >= 0
-  let changeText = ''
-  if (diff > 0) {
-    changeText = `+${diff}`
-  } else if (diff < 0) {
-    changeText = `${diff}`
-  } else {
-    changeText = '0' // nothing for 0
-  }
-
-  useEffect(() => {
-    document.documentElement.addEventListener('ColorSchemeChange', () => {
-      if (widgetChartRef1.current) {
-        setTimeout(() => {
-          widgetChartRef1.current.data.datasets[0].pointBackgroundColor = getStyle('--cui-primary')
-          widgetChartRef1.current.update()
-        })
-      }
-
-      if (widgetChartRef2.current) {
-        setTimeout(() => {
-          widgetChartRef2.current.data.datasets[0].pointBackgroundColor = getStyle('--cui-info')
-          widgetChartRef2.current.update()
-        })
-      }
-    })
-  }, [widgetChartRef1, widgetChartRef2])
+  const changeText = diff > 0 ? `+${diff}` : `${diff}`
 
   return (
     <CRow className={className} xs={{ gutter: 4 }}>
@@ -55,7 +23,7 @@ const WidgetsDropdown = ({ className, tenants, rentDue, collected, pending }) =>
           color="primary"
           value={
             <>
-              {`${Number(tenants[tenants.length - 1]).toLocaleString('en-US')}`}{' '}
+              {`${last(tenants).toLocaleString('en-US')}`}{' '}
               <span className="fs-6 fw-normal">
                 ({changeText}{' '}
                 <CIcon icon={isPositive ? cilArrowTop : cilArrowBottom} />)
@@ -96,7 +64,7 @@ const WidgetsDropdown = ({ className, tenants, rentDue, collected, pending }) =>
           color="info"
           value={
             <>
-              {`${Number(rentDue[rentDue.length - 1]).toLocaleString('en-US')}`}
+              {`${last(rentDue).toLocaleString('en-US')}`}
             </>
           }
           title="Total Rent Due (This Month)"
@@ -128,7 +96,7 @@ const WidgetsDropdown = ({ className, tenants, rentDue, collected, pending }) =>
           color="success"
           value={
             <>
-              {`${Number(collected[collected.length - 1]).toLocaleString('en-US')}`}
+              {`${last(collected).toLocaleString('en-US')}`}
             </>
           }
           title="Collected Amount"
@@ -160,7 +128,7 @@ const WidgetsDropdown = ({ className, tenants, rentDue, collected, pending }) =>
           color="danger"
           value={
             <>
-              {`${Number(pending[pending.length - 1]).toLocaleString('en-US')}`}
+              {`${last(pending).toLocaleString('en-US')}`}
             </>
           }
           title="Pending Amount"
@@ -191,7 +159,10 @@ const WidgetsDropdown = ({ className, tenants, rentDue, collected, pending }) =>
 
 WidgetsDropdown.propTypes = {
   className: PropTypes.string,
-  withCharts: PropTypes.bool,
+  tenants: PropTypes.array,
+  rentDue: PropTypes.array,
+  collected: PropTypes.array,
+  pending: PropTypes.array,
 }
 
 const getPastMonths = (numMonths) => {

@@ -27,10 +27,10 @@ const Dashboard = () => {
   }, []);
 
   // Derived data for widgets/charts
-  const tenants = useMemo(() => data.map(x => x.TotalTenants), [data]);
-  const totalRent = useMemo(() => data.map(x => x.TotalRentDue), [data]);
-  const collected = useMemo(() => data.map(x => x.CollectedAmount), [data]);
-  const pending = useMemo(() => data.map(x => x.PendingAmount), [data]);
+  const tenants = useMemo(() => data.map(x => x.totalTenants), [data]);
+  const totalRent = useMemo(() => data.map(x => x.totalRentDue), [data]);
+  const collected = useMemo(() => data.map(x => x.collectedAmount), [data]);
+  const pending = useMemo(() => data.map(x => x.pendingAmount), [data]);
 
   return (
     <>
@@ -48,8 +48,8 @@ const Dashboard = () => {
         <CCardBody>
           <CRow>
             <CCol sm={5}>
-              <h4 id="traffic" className="card-title mb-0">
-                Traffic
+              <h4 id="rent-overview" className="card-title mb-0">
+                Rent Overview
               </h4>
               <div className="small text-body-secondary">
                 {getPastMonthsRange(7)}

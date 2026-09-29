@@ -7,7 +7,7 @@ const MainChart = ({ tenants, totalRent, collected, pending }) => {
   const chartRef = useRef(null)
 
   useEffect(() => {
-    document.documentElement.addEventListener('ColorSchemeChange', () => {
+    const onSchemeChange = () => {
       if (chartRef.current) {
         setTimeout(() => {
           chartRef.current.options.scales.x.grid.borderColor = getStyle(
@@ -23,8 +23,10 @@ const MainChart = ({ tenants, totalRent, collected, pending }) => {
           chartRef.current.update()
         })
       }
-    })
-  }, [chartRef])
+    }
+    document.documentElement.addEventListener('ColorSchemeChange', onSchemeChange)
+    return () => document.documentElement.removeEventListener('ColorSchemeChange', onSchemeChange)
+  }, [])
 
   return (
     <CChartLine

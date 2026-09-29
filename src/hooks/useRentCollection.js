@@ -30,14 +30,15 @@ const emptyRentForm = {
   globalDiscountPercent: '',
 }
 
-const emptyExtraChargeForm = {
+// A function so month/year are "now" each time the form opens, not when the app was loaded
+const emptyExtraChargeForm = () => ({
   tenantIds: [],
   month: new Date().getMonth() + 1,
   year: new Date().getFullYear(),
   chargeType: '',
   description: '',
   amount: '',
-}
+})
 
 export const useRentCollection = () => {
   const [loading, setLoading] = useState(false)
@@ -96,15 +97,15 @@ export const useRentCollection = () => {
   }
 
   // ── Extra Charges ────────────────────────────────────────────────────────
-  const [extraChargeModal, setExtraChargeModal] = useState({ visible: false, form: { ...emptyExtraChargeForm } })
+  const [extraChargeModal, setExtraChargeModal] = useState({ visible: false, form: emptyExtraChargeForm() })
   const [isAddingCharge, setIsAddingCharge] = useState(false)
 
   const openExtraCharge = () => {
-    setExtraChargeModal({ visible: true, form: { ...emptyExtraChargeForm } })
+    setExtraChargeModal({ visible: true, form: emptyExtraChargeForm() })
   }
 
   const closeExtraCharge = () => {
-    setExtraChargeModal({ visible: false, form: { ...emptyExtraChargeForm } })
+    setExtraChargeModal({ visible: false, form: emptyExtraChargeForm() })
   }
 
   const setExtraChargeForm = (updater) => {

@@ -15,9 +15,9 @@ const TenantSelector = ({ tenantId, tenants, onChange, disabled }) => {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const selectedTenant = tenants.find((t) => String(t.TenantId) === String(tenantId))
+  const selectedTenant = tenants.find((t) => String(t.tenantId) === String(tenantId))
   const filtered = tenants.filter((t) =>
-    (t.TenantName || '').toLowerCase().includes(search.toLowerCase()),
+    (t.tenantName || '').toLowerCase().includes(search.toLowerCase()),
   )
 
   return (
@@ -29,7 +29,7 @@ const TenantSelector = ({ tenantId, tenants, onChange, disabled }) => {
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
       >
-        {selectedTenant ? selectedTenant.TenantName : 'Select a tenant...'}
+        {selectedTenant ? selectedTenant.tenantName : 'Select a tenant...'}
       </button>
 
       {open && !disabled && (
@@ -53,16 +53,16 @@ const TenantSelector = ({ tenantId, tenants, onChange, disabled }) => {
           ) : (
             filtered.map((t) => (
               <div
-                key={t.TenantId}
+                key={t.tenantId}
                 className="px-2 py-1 rounded"
                 style={{ cursor: 'pointer' }}
                 onMouseDown={() => {
-                  onChange(t.TenantId)
+                  onChange(t.tenantId)
                   setOpen(false)
                   setSearch('')
                 }}
               >
-                {t.TenantName}
+                {t.tenantName}
               </div>
             ))
           )}
