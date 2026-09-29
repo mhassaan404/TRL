@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react'
+import { exportCSV } from '../../utils/exportUtils'
 import {
     CButton,
     CCard,
@@ -26,18 +27,6 @@ const tenantsList = [
     { id: 4, name: 'Hina Raza', building: 'Green Villa', floor: '1', unit: 'A2', dueDate: '2025-09-20', paymentDate: '2025-09-20', status: 'Paid' },
 ]
 
-const exportCSV = (columns, data, filename = 'reminder_list.csv') => {
-    const headers = columns.map((col) => col.header).join(',')
-    const rows = data.map((row) => columns.map((col) => row[col.accessorKey] ?? '').join(','))
-    const csv = [headers, ...rows].join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    a.click()
-    URL.revokeObjectURL(url)
-}
 
 const Reminder = () => {
     const [tenants, setTenants] = useState(tenantsList)
@@ -186,7 +175,7 @@ const Reminder = () => {
                             </CButton>
                             <CButton
                                 color="success"
-                                onClick={() => exportCSV(columns, filteredTenants)}
+                                onClick={() => exportCSV(columns, filteredTenants, 'reminder_list.csv')}
                             >
                                 Export CSV
                             </CButton>

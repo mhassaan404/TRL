@@ -59,26 +59,13 @@ const AdjustmentModal = ({
       }
 
       const result = await rentService.createPaymentAdjustment(payload)
-
-      if (result?.isSuccess) {
-        toast.success(result.message || 'Adjustment recorded successfully')
-
-        setAmount('')
-        setNotes('')
-
-        // ── KEY CHANGE ──
-        // Instead of complicated logic — just call parent's refresh function
-        if (typeof onAdjustmentSuccess === 'function') {
-          onAdjustmentSuccess(numAmount)
-        }
-
-        onClose()
-      } else {
-        toast.error(result?.errorMessage || 'Adjustment failed')
-      }
+      toast.success(result.message || 'Adjustment recorded successfully')
+      setAmount('')
+      setNotes('')
+      if (typeof onAdjustmentSuccess === 'function') onAdjustmentSuccess(numAmount)
+      onClose()
     } catch (err) {
-      console.error(err)
-      toast.error('Failed to process adjustment')
+      toast.error(err.message)
     }
   }
 
@@ -94,32 +81,6 @@ const AdjustmentModal = ({
         <CForm>
           <CFormInput label="Invoice ID" value={invoiceId || ''} readOnly className="mb-3" />
 
-          {/* <CFormInput
-            label="Adjustment Amount"
-            type="number"
-            placeholder={`Max: ${maxAdjustment}`}
-            min="0"
-            max={maxAdjustment}
-            value={amount}
-            onChange={(e) => {
-              const inputVal = e.target.value
-
-              if (inputVal === '') {
-                setAmount('')
-                return
-              }
-
-              if (/^\d*$/.test(inputVal)) {
-                const numVal = Number(inputVal)
-                if (numVal <= maxAdjustment) {
-                  setAmount(inputVal)
-                } else {
-                  setAmount(maxAdjustment.toString())
-                }
-              }
-            }}
-            className="mb-3"
-          /> */}
 
           <CFormInput
             label="Adjustment Amount"

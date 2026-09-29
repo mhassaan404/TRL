@@ -27,36 +27,6 @@ const InvoiceHistoryModal = ({
           <div className="text-center py-5 text-muted">No payment history found</div>
         ) : (
           <div style={{ maxHeight: '380px', overflowY: 'auto' }}>
-            {/* <table className="table table-bordered">
-              <thead className={`${isDark ? 'table-head-dark' : 'table-light'}`}>
-                <tr>
-                  <th>Date</th>
-                  <th>Rent</th>
-                  <th>Paid</th>
-                  <th>Disc</th>
-                  <th>%</th>
-                  <th>Rem</th>
-                  <th>Waive</th>
-                  <th>Method</th>
-                  <th>Notes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((item, index) => (
-                  <tr key={index}>
-                    <td>{formatDate(item.paymentDate)}</td>
-                    <td>{fmt(item.monthlyRent)}</td>
-                    <td>{fmt(item.paidAmount)}</td>
-                    <td>{fmt(item.discountAmount)}</td>
-                    <td>{item.discountPercent || 0}%</td>
-                    <td>{fmt(item.remainingAmount)}</td>
-                    <td>{item.waveLateFee ? 'Yes' : '—'}</td>
-                    <td>{item.paymentMethod || '—'}</td>
-                    <td>{item.notes || '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table> */}
 
             <table className="table table-bordered table-hover table-sm">
               <thead className={isDark ? 'table-head-dark' : 'table-light'}>

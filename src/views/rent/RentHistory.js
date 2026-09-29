@@ -22,30 +22,10 @@ import {
 } from '@tanstack/react-table'
 
 import { useRentHistory } from '../../hooks/useRentHistory'
+import { toLocalDateString } from '../../utils/dates'
+import { exportCSV } from '../../utils/exportUtils'
 
 // CSV Export Helper
-const exportToCSV = (columns, data, filename = 'rent_history.csv') => {
-  const exportableColumns = columns.filter((col) => col.accessorKey)
-
-  const headers = exportableColumns.map((col) => `"${col.header}"`).join(',')
-
-  const rows = data.map((row) =>
-    exportableColumns
-      .map((col) => `"${String(row[col.accessorKey] ?? '').replace(/"/g, '""')}"`)
-      .join(','),
-  )
-
-  const csv = [headers, ...rows].join('\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-
-  URL.revokeObjectURL(url)
-}
 
 // Normalize dates to YYYY-MM-DD
 const normalizeDate = (value) => {
@@ -56,7 +36,7 @@ const normalizeDate = (value) => {
   }
 
   if (value instanceof Date && !isNaN(value)) {
-    return value.toISOString().split('T')[0]
+    return toLocalDateString(value)
   }
 
   return null
@@ -95,22 +75,20 @@ const RentHistory = () => {
     }
 
     const today = new Date()
-    const todayStr = today.toISOString().split('T')[0]
+    const todayStr = toLocalDateString(today)
 
     let from = ''
 
     if (preset === 'thisMonth') {
-      from = new Date(today.getFullYear(), today.getMonth(), 1)
-        .toISOString()
-        .split('T')[0]
+      from = toLocalDateString(new Date(today.getFullYear(), today.getMonth(), 1))
     } else if (preset === 'last3') {
       const d = new Date()
       d.setMonth(d.getMonth() - 3)
-      from = d.toISOString().split('T')[0]
+      from = toLocalDateString(d)
     } else if (preset === 'lastYear') {
       const d = new Date()
       d.setFullYear(d.getFullYear() - 1)
-      from = d.toISOString().split('T')[0]
+      from = toLocalDateString(d)
     }
 
     setDateFrom(from)
@@ -309,7 +287,7 @@ const RentHistory = () => {
             <CButton
               color="success"
               onClick={() =>
-                exportToCSV(columns, filteredData)
+                exportCSV(columns, filteredData, 'rent_history.csv')
               }
             >
               Export CSV

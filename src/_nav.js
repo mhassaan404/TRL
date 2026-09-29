@@ -25,16 +25,6 @@ const _nav = [
     },
   },
   {
-    component: CNavItem,
-    name: 'Test',
-    to: '/test',
-    icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
-    badge: {
-      color: 'info',
-      text: 'NEW',
-    },
-  },
-  {
     component: CNavTitle,
     name: 'Operations',
   },
@@ -106,53 +96,6 @@ const _nav = [
     to: '/reports',
     icon: <CIcon icon={cilClipboard} customClassName="nav-icon" />,
   },
-  // {
-  //   component: CNavItem,
-  //   name: 'Tenant',
-  //   to: '/forms/operations',
-  //   icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
-  // },
-  // {
-  //   component: CNavItem,
-  //   name: 'Maintenance',
-  //   to: '/forms/operations',
-  //   icon: <CIcon icon={cilClipboard} customClassName="nav-icon" />,
-  // },
-  // {
-  //   component: CNavItem,
-  //   name: 'Rent Collection',
-  //   to: '/forms/operations',
-  //   icon: <CIcon icon={cilBarChart} customClassName="nav-icon" />,
-  // },
-
-  // ******* Others *******
-  // {
-  //   component: CNavGroup,
-  //   name: 'Pages',
-  //   icon: <CIcon icon={cilStar} customClassName="nav-icon" />,
-  //   items: [
-  //     {
-  //       component: CNavItem,
-  //       name: 'Login',
-  //       to: '/login',
-  //     },
-  //     {
-  //       component: CNavItem,
-  //       name: 'Register',
-  //       to: '/register',
-  //     },
-  //     {
-  //       component: CNavItem,
-  //       name: 'Error 404',
-  //       to: '/404',
-  //     },
-  //     {
-  //       component: CNavItem,
-  //       name: 'Error 500',
-  //       to: '/500',
-  //     },
-  //   ],
-  // },
 ]
 
 export default _nav

@@ -18,6 +18,7 @@ import AdjustmentModal from '../AdjustmentModal'
 import { fmt, formatDate, getRemainingRent } from '../../../utils/rentUtils'
 import { rentService } from '../../../services/rent.service'
 import { useIsDarkMode } from '../../../hooks/useIsDarkMode'
+import { todayLocal } from '../../../utils/dates'
 
 const InvoicePaymentTable = ({
   invoices,
@@ -63,20 +64,6 @@ const InvoicePaymentTable = ({
     }
   }
 
-  const handleReverseLateFee = async (inv) => {
-    const reason = window.prompt('Reason for reversing the late fee:')
-    if (!reason?.trim()) return
-    try {
-      const res = await rentService.reverseLateFee(inv.invoiceId, reason.trim())
-      toast.success(res?.message || 'Late fee reversed')
-      await handleTenantChange(rentForm.tenantId)
-      setRentForm((latest) => {
-        if (openFrom !== 'ROW_CLICK') return latest
-        const u = latest.invoices.find((i) => i.invoiceId === inv.invoiceId)
-        return { ...latest, invoices: u ? [u] : [] }
-      })
-    } catch { /* toast shown by service */ }
-  }
 
   const handleOpenAdjustment = () => {
     if (historyState.invoice) {
@@ -176,14 +163,6 @@ const InvoicePaymentTable = ({
                   <CTableDataCell className="text-end text-danger fw-bold">
                     {fmt(inv.lateFee)}
                     
-                    {/* {Number(inv.lateFeeCharged) > 0 && (
-                      <div>
-                        <span className="badge bg-secondary me-1">Charged {fmt(inv.lateFeeCharged)}</span>
-                        <CButton color="link" size="sm" className="p-0 text-danger" onClick={() => handleReverseLateFee(inv)}>
-                          Reverse
-                        </CButton>
-                      </div>
-                    )} */}
 
                     {Number(inv.lateFeeCharged) > 0 && (
                       <div>
@@ -213,15 +192,6 @@ const InvoicePaymentTable = ({
                         }
                       />
                       {Number(inv.lateFee) > 0 && !inv.waveLateFee && (
-                        // <CButton
-                        //   color="warning"
-                        //   size="sm"
-                        //   variant="outline"
-                        //   style={{ fontSize: '0.7rem', padding: '1px 6px' }}
-                        //   onClick={() => handleChargeLateFee(inv)}
-                        // >
-                        //   Charge
-                        // </CButton>
 
                         <CButton
                           color="warning"
@@ -275,7 +245,7 @@ const InvoicePaymentTable = ({
                       size="sm"
                       value={inv.paymentDate || ''}
                       disabled={!!rentForm.globalPaymentDate}
-                      max={new Date().toISOString().split('T')[0]}
+                      max={todayLocal()}
                       onChange={(e) =>
                         updateInvoiceField(inv.invoiceId, 'paymentDate', e.target.value)
                       }

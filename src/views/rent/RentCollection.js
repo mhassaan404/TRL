@@ -8,7 +8,7 @@ import {
   getFilteredRowModel,
 } from '@tanstack/react-table'
 
-import api from '../../api/axios'
+import { rentService } from '../../services/rent.service'
 import { toast } from 'react-toastify'
 import Loader from '../../components/Loader'
 import RentListTable from '../../components/rent/RentListTable'
@@ -21,6 +21,7 @@ import { useRentCollection } from '../../hooks/useRentCollection'
 import { fmt, formatDate } from '../../utils/rentUtils'
 import { exportCSV } from '../../utils/exportUtils'
 import { useIsDarkMode } from '../../hooks/useIsDarkMode'
+import { todayLocal } from '../../utils/dates'
 
 const RentCollection = () => {
   const {
@@ -84,21 +85,13 @@ const RentCollection = () => {
     setIsSubmittingDueDate(true)
 
     try {
-      const res = await api.put('/Rent/BulkUpdateDueDate', {
-        InvoiceIds: selectedIds,
-        NewDueDate: bulkDueDateState.newDueDate,
-      })
-
-      if (res.data.isSuccess) {
-        toast.success(res.data.message)
-        setBulkDueDateState({ visible: false, newDueDate: '' })
-        setSelectedIds([])
-        await loadRentCollection()
-      } else {
-        toast.error(res.data.errorMessage)
-      }
+      const res = await rentService.bulkUpdateDueDate(selectedIds, bulkDueDateState.newDueDate)
+      toast.success(res.message)
+      setBulkDueDateState({ visible: false, newDueDate: '' })
+      setSelectedIds([])
+      await loadRentCollection()
     } catch (error) {
-      toast.error(error.response?.data?.errorMessage || 'Something went wrong')
+      toast.error(error.message)
     } finally {
       setIsSubmittingDueDate(false)
     }
@@ -181,14 +174,6 @@ const RentCollection = () => {
             >
               Record Payment
             </CButton>
-            {/* <CButton
-              color="danger"
-              size="sm"
-              variant="outline"
-              onClick={() => handleDeletePayment(row.original)}
-            >
-              Delete
-            </CButton> */}
           </div>
         ),
       },
@@ -198,18 +183,6 @@ const RentCollection = () => {
       toggleExpand, expandedRows],
   )
 
-  // const table = useReactTable({
-  //   data: rentList || [],
-  //   columns,
-  //   initialState: {
-  //     globalFilter,
-  //   },
-  //   onGlobalFilterChange: setGlobalFilter,
-  //   globalFilterFn: 'includesString',
-  //   getCoreRowModel: getCoreRowModel(),
-  //   getSortedRowModel: getSortedRowModel(),
-  //   getFilteredRowModel: getFilteredRowModel(),
-  // })
 
   const table = useReactTable({
     data: rentList || [],
@@ -244,7 +217,7 @@ const RentCollection = () => {
                 <CButton
                   color="success"
                   variant="outline"
-                  onClick={() => exportCSV(columns, rentList)}
+                  onClick={() => exportCSV(columns, rentList, 'rent_collection.csv')}
                 >
                   Export CSV
                 </CButton>
@@ -284,7 +257,7 @@ const RentCollection = () => {
                     variant="outline"
                     disabled={selectedIds.length === 0}
                     onClick={() => {
-                      let prefill = new Date().toISOString().split('T')[0]
+                      let prefill = todayLocal()
                       if (selectedIds.length === 1) {
                         const invoice = rentList.find(
                           (r) => r.invoiceId === selectedIds[0]

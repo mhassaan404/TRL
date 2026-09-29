@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect } from 'react'
-import { HashRouter, Route, Routes } from 'react-router-dom'
-import { Provider, useSelector } from 'react-redux'
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -10,7 +10,12 @@ import './scss/style.scss'
 // We use those styles to show code examples, you should remove them in your application.
 import './scss/examples.scss'
 import './App.css';
-import { store } from './store/store';
+import authService from './services/auth.service'
+
+// Sends logged-out users to the login page. The session itself lives in HttpOnly cookies the page can't read,
+// so this checks the user saved at login; an expired session is still caught by the API's 401 + refresh flow.
+const RequireAuth = ({ children }) =>
+  authService.isAuthenticated() ? children : <Navigate to="/login" replace />
 
 // Containers
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
@@ -40,7 +45,6 @@ const App = () => {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <Provider store={store}>
       <HashRouter>
         <Suspense
           fallback={
@@ -58,11 +62,10 @@ const App = () => {
             <Route exact path="/register" name="Register Page" element={<Register />} />
             <Route exact path="/404" name="Page 404" element={<Page404 />} />
             <Route exact path="/500" name="Page 500" element={<Page500 />} />
-            <Route path="*" name="Home" element={<DefaultLayout />} />
+            <Route path="*" name="Home" element={<RequireAuth><DefaultLayout /></RequireAuth>} />
           </Routes>
         </Suspense>
       </HashRouter>
-    </Provider>
   )
 }
 

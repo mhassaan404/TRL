@@ -1,3 +1,4 @@
+import { todayLocal } from '../utils/dates'
 // src/hooks/useRentCollection.js
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { toast } from 'react-toastify'
@@ -72,6 +73,11 @@ export const useRentCollection = () => {
   }
 
   const handleGenerateInvoices = async () => {
+    // [] would reach the API as "all active tenants", so an empty selection is rejected here.
+    if (generateModal.tenantIds !== 'ALL' && !generateModal.tenantIds?.length) {
+      toast.error('Select at least one tenant, or choose All.')
+      return
+    }
     setIsGenerating(true)
     try {
       const result = await rentService.generateInvoices({
@@ -82,8 +88,8 @@ export const useRentCollection = () => {
       toast.success(result?.message || 'Invoices generated')
       closeGenerateInvoices()
       await loadRentCollection()
-    } catch {
-      // toast already shown by rentService
+    } catch (err) {
+      toast.error(err.message)
     } finally {
       setIsGenerating(false)
     }
@@ -120,8 +126,8 @@ export const useRentCollection = () => {
       toast.success(result?.message || 'Charge added')
       closeExtraCharge()
       await loadRentCollection()
-    } catch {
-      // toast already shown by rentService
+    } catch (err) {
+      toast.error(err.message)
     } finally {
       setIsAddingCharge(false)
     }
@@ -142,12 +148,7 @@ export const useRentCollection = () => {
   }, [])
 
   const loadTenants = useCallback(async () => {
-    try {
-      const data = await rentService.getTenants()
-      setTenants(Array.isArray(data) ? data : [])
-    } catch (err) {
-      toast.error('Failed to load tenants')
-    }
+    setTenants(await rentService.getTenants()) // the service shows load errors and returns []
   }, [])
 
   const loadActiveTenants = useCallback(async () => {
@@ -247,7 +248,7 @@ export const useRentCollection = () => {
       })
       setOpenFrom('TENANT_CHANGE')
     } catch {
-      toast.error('Failed to load invoices for tenant')
+      // already shown by rentService.getUnpaidInvoicesByTenant
     } finally {
       setLoading(false)
     }
@@ -342,7 +343,7 @@ export const useRentCollection = () => {
 
     setLoading(true)
     try {
-      const today = new Date().toISOString().split('T')[0]
+      const today = todayLocal()
       const payload = rentForm.invoices
         .filter((i) => i.selected)
         .map((i) => ({
@@ -356,16 +357,13 @@ export const useRentCollection = () => {
           IsLateFeeWaived: !!i.waveLateFee,
         }))
 
-      if (isEditMode) {
-        await rentService.updatePayments(payload)
-        toast.success('Payments updated successfully')
-      } else {
-        await rentService.submitPayments(payload)
-        toast.success('Payment recorded successfully')
-      }
+      // Both the "New Rent Payment" and the row "Record Payment" flows add a new payment;
+      // /Rent/UpdatePayments is only for editing an existing payment by its Id.
+      await rentService.submitPayments(payload)
+      toast.success('Payment recorded successfully')
       closeModal()
-    } catch {
-      toast.error('Failed to record payment')
+    } catch (err) {
+      toast.error(err.message)
     } finally {
       setLoading(false)
     }
@@ -378,47 +376,12 @@ export const useRentCollection = () => {
       await rentService.deletePayment(row.invoiceId)
       toast.success('Payment deleted successfully')
       loadRentCollection()
-    } catch {
-      toast.error('Failed to delete payment')
+    } catch (err) {
+      toast.error(err.message)
     } finally {
       setLoading(false)
     }
   }
-
-  // Formally charges the live-computed late fee as its own separate invoice
-  // (chargeType "Late Fine"), then marks the original invoice's late fee as
-  // waived so it stops being recalculated/shown there once it's been charged.
-  // const handleChargeLateFee = async (invoice) => {
-  //   if (!invoice?.lateFee || invoice.lateFee <= 0) return
-  //   if (!window.confirm(`Charge ${fmt(invoice.lateFee)} as a formal Late Fine invoice for this tenant?`)) return
-
-  //   try {
-  //     const invDate = new Date(invoice.invoiceDate)
-  //     await rentService.createExtraCharge({
-  //       tenantIds: [rentForm.tenantId],
-  //       month: invDate.getMonth() + 1,
-  //       year: invDate.getFullYear(),
-  //       chargeType: 'Late Fine',
-  //       description: `Late fee for invoice #${invoice.invoiceId}`,
-  //       amount: invoice.lateFee,
-  //     })
-
-  //     await rentService.createPaymentAdjustment({
-  //       RentInvoiceId: invoice.invoiceId,
-  //       TenantId: rentForm.tenantId,
-  //       PaymentAmount: 0,
-  //       PaymentMethod: 'Adjustment',
-  //       Notes: 'Late fee formally charged as a separate invoice',
-  //       IsLateFeeWaived: true,
-  //     })
-
-  //     toast.success('Late fee charged as a separate invoice')
-  //     await handleTenantChange(rentForm.tenantId)
-  //     await loadRentCollection()
-  //   } catch {
-  //     toast.error('Failed to charge late fee')
-  //   }
-  // }
 
 
   const handleChargeLateFee = async (invoice) => {
@@ -444,7 +407,8 @@ export const useRentCollection = () => {
         remainingAmount: fresh?.remainingAmount ?? invoice.remainingAmount,
       })
       loadRentCollection()
-    } catch {
+    } catch (err) {
+      if (!err.toasted) toast.error(err.message)
       patch(invoice.invoiceId, { charging: false })
     }
   }
@@ -470,7 +434,8 @@ export const useRentCollection = () => {
         remainingAmount: fresh?.remainingAmount ?? invoice.remainingAmount,
       })
       loadRentCollection()
-    } catch {
+    } catch (err) {
+      if (!err.toasted) toast.error(err.message)
       patch(invoice.invoiceId, { reversing: false })
     }
   }

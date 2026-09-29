@@ -1,5 +1,5 @@
 import React from 'react'
-import { API_BASE_URL } from "../../config";
+import authService from '../../services/auth.service'
 import {
   CAvatar,
   CDropdown,
@@ -37,22 +37,7 @@ const AppHeaderDropdown = () => {
         </CDropdownItem>
         <CDropdownItem
           style={{ cursor: 'pointer' }}
-          onClick={async () => {
-            try {
-              const res = await fetch(`${API_BASE_URL}/Auth/logout`, {
-                method: 'POST',
-                credentials: 'include',
-              });
-              
-              if (res.ok) {
-                window.location.replace('#/login');
-              } else {
-                console.error('Logout failed');
-              }
-            } catch (err) {
-              console.error(err);
-            }
-          }}
+          onClick={() => authService.logout()}
         >
           <CIcon icon={cilAccountLogout} className="me-2" />
           Logout

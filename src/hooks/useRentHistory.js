@@ -29,15 +29,10 @@ export const useRentHistory = () => {
 
     try {
       const res = await rentService.cancelInvoice(id, reason.trim())
-
-      if (res.data?.isSuccess) {
-        toast.success(res.data.message || 'Invoice cancelled')
-        await loadRentHistory()
-      } else {
-        toast.error(res.data?.errorMessage || 'Invoice could not be cancelled')
-      }
+      toast.success(res.message || 'Invoice cancelled')
+      await loadRentHistory()
     } catch (err) {
-      toast.error(err?.message || 'Failed to cancel invoice')
+      toast.error(err.message)
     }
   }
 
@@ -46,17 +41,10 @@ export const useRentHistory = () => {
 
     try {
       const res = await rentService.reinstateInvoice(id)
-
-      if (res.data?.isSuccess) {
-        toast.success(res.data.message || 'Invoice reinstated')
-        await loadRentHistory()
-      } else {
-        toast.error(
-          res.data?.errorMessage || 'Invoice could not be reinstated'
-        )
-      }
+      toast.success(res.message || 'Invoice reinstated')
+      await loadRentHistory()
     } catch (err) {
-      toast.error(err?.message || 'Failed to reinstate invoice')
+      toast.error(err.message)
     }
   }
 

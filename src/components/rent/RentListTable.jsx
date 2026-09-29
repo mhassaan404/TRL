@@ -32,27 +32,6 @@ const RentListTable = ({ table, selectedIds, setSelectedIds, expandedRows, toggl
               <th className="text-center" style={{ width: '50px' }}></th>
 
               {/* Select All Checkbox */}
-              {/* <th className="text-center" style={{ width: '50px' }}>
-                <CFormCheck
-                  checked={
-                    table.getRowModel().rows.length > 0 &&
-                    table
-                      .getRowModel()
-                      .rows.every((row) => selectedIds.includes(row.original.invoiceId))
-                  }
-                  indeterminate={
-                    selectedIds.length > 0 && selectedIds.length < table.getRowModel().rows.length
-                  }
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      const allIds = table.getRowModel().rows.map((row) => row.original.invoiceId)
-                      setSelectedIds(allIds)
-                    } else {
-                      setSelectedIds([])
-                    }
-                  }}
-                />
-              </th> */}
 
               {/* Select All Checkbox */}
               <th className="text-center" style={{ width: '50px' }}>

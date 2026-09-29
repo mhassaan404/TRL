@@ -8,8 +8,14 @@ export const getStatusName = (property, unitStatuses) =>
   unitStatuses.find((s) => s.id === property.statusId)?.name || property.status || ''
 
 // Use API-provided remainingAmount (no calculation)
-export const getRemainingRent = (inv) =>
-  Math.max(0, Number(inv.remainingAmount || 0) - Number(inv.discountAmount || 0) - Number(inv.computedDiscount || 0))
+// Balance still owed on the invoice (from the server, already net of earlier payments/discounts).
+export const getInvoiceBalance = (inv) => Math.max(0, Number(inv.remainingAmount || 0))
+
+// Discount entered in this submission: fixed amount + percentage-based amount.
+export const getSubmissionDiscount = (inv) => Number(inv.discountAmount || 0) + Number(inv.computedDiscount || 0)
+
+// Maximum cash that can still be paid on the invoice after this submission's discount.
+export const getRemainingRent = (inv) => Math.max(0, getInvoiceBalance(inv) - getSubmissionDiscount(inv))
 
 export const computeTotals = (invoices, globalWaveLateFee = false) => {
   const selectedInvoices = invoices.filter((i) => i.selected)
@@ -19,14 +25,17 @@ export const computeTotals = (invoices, globalWaveLateFee = false) => {
   let anyWaived = false
 
   selectedInvoices.forEach((i) => {
-    sumDiscounts += Number(i.discountAmount || 0) + Number(i.appliedDiscount || 0)
+    // appliedDiscount is a past discount from the server, not part of this submission
+    sumDiscounts += getSubmissionDiscount(i)
     sumPayAmount += Number(i.payAmount || 0)
     const waived = globalWaveLateFee || i.waveLateFee
     if (waived) anyWaived = true
     sumLateFees += waived ? 0 : Number(i.lateFee || 0)
   })
 
-  const grandTotal = Math.max(0, sumPayAmount - sumDiscounts) // late fee excluded — not part of this submission
+  // payAmount is already net of discounts, so the cash being recorded is just the pay amounts.
+  // Late fee excluded — not part of this submission.
+  const grandTotal = Math.max(0, sumPayAmount)
 
   return {
     selectedCount: selectedInvoices.length,
@@ -39,35 +48,6 @@ export const computeTotals = (invoices, globalWaveLateFee = false) => {
   }
 }
 
-// Apply global discount amount (oldest first) — updates discountAmount
-// export const applyGlobalDiscountAmount = (invoices, discountAmount) => {
-//   let amt = Number(discountAmount) || 0
-//   if (amt <= 0) return invoices
-
-//   const target = invoices
-//     .filter((i) => i.selected)
-//     .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
-
-//   const updated = invoices.map((inv) => ({ ...inv }))
-
-//   for (let t of target) {
-//     if (amt <= 0) break
-
-//     const tKey = t.invoiceId
-//     const idx = updated.findIndex((u) => u.invoiceId === tKey)
-//     if (idx === -1) continue
-
-//     const remainingBefore = getRemainingRent(updated[idx])
-
-//     if (remainingBefore <= 0) continue
-
-//     const take = Math.min(amt, remainingBefore)
-//     updated[idx].discountAmount = (updated[idx].discountAmount || 0) + take
-//     amt -= take
-//   }
-
-//   return updated
-// }
 export const applyGlobalDiscountAmount = (invoices, discountAmount) => {
   let amt = Number(discountAmount) || 0;
   if (amt <= 0) return invoices;
@@ -99,6 +79,11 @@ export const applyGlobalDiscountAmount = (invoices, discountAmount) => {
     amt -= take;
   }
 
+  // Cash can't exceed what's left after the new discounts
+  updated.forEach((inv) => {
+    if (inv.selected) inv.payAmount = Math.min(Number(inv.payAmount || 0), getRemainingRent(inv));
+  });
+
   return updated;
 };
 
@@ -114,11 +99,12 @@ export const applyGlobalDiscountPercent = (invoices, percent) => {
     if (!inv.selected) return copy
 
     copy.discountPercent = pct
-    if (pct === 0) {
-      copy.computedDiscount = 0
-    } else {
-      copy.computedDiscount = Math.round(Number(copy.monthlyRent || 0) * (pct / 100))
-    }
+    const balance = getInvoiceBalance(copy)
+    // Percentage of the balance still owed (not the full monthly rent), so it can't exceed what's due
+    copy.computedDiscount = pct === 0 ? 0 : Math.round(balance * (Math.min(pct, 100) / 100))
+    // Keep fixed discount + percentage discount within the balance, and cash within what's left
+    copy.discountAmount = Math.min(Number(copy.discountAmount || 0), Math.max(0, balance - copy.computedDiscount))
+    copy.payAmount = Math.min(Number(copy.payAmount || 0), getRemainingRent(copy))
 
     return copy
   })
@@ -154,59 +140,21 @@ export const toggleInvoiceSelect = (invoices, invoiceId, checked) => {
   })
 }
 
-// Update single field — safe, no isEditMode dependency
-// export const updateInvoiceField = (invoices, invoiceId, field, value) => {
-//   return invoices.map((inv) => {
-//     const rowKey = inv.invoiceId
-//     if (rowKey !== invoiceId) return inv
-
-//     const copy = { ...inv }
-
-//     if (field === 'discountAmount') {
-//       // let amt = Math.max(0, Number(value) || 0)
-//       // copy.discountAmount = Math.min(amt, copy.monthlyRent || 0)
-//       let amt = Number(value) || 0
-//       copy.discountAmount = Math.min(amt, getRemainingRent(copy))
-//     } else if (field === 'payAmount') {
-//       let amt = Number(value) || 0
-//       copy.payAmount = Math.min(amt, getRemainingRent(copy))
-//     } else if (field === 'waveLateFee') {
-//       copy.waveLateFee = !!value
-//     } else {
-//       copy[field] = value
-//     }
-
-//     if (copy.selected && field === 'discountAmount') {
-//       copy.payAmount = getRemainingRent(copy)
-//     }
-
-//     return copy
-//   })
-// }
-
-// Update single field — safe, no isEditMode dependency
 export const updateInvoiceField = (invoices, invoiceId, field, value) => {
   return invoices.map((inv) => {
     const rowKey = inv.invoiceId
     if (rowKey !== invoiceId) return inv
 
     const copy = { ...inv }
-    const remaining = getRemainingRent(copy)
 
     if (field === 'discountAmount') {
       let amt = Math.max(0, Number(value) || 0)
-
-      // ── This is the key change ──
-      copy.discountAmount = Math.min(amt, getRemainingRent(copy)) // ← was monthlyRent before
-
-      // Optional: adjust payAmount if it would now exceed (remaining - new discount)
-      if (copy.payAmount > getRemainingRent(copy) - copy.discountAmount) {
-        copy.payAmount = Math.max(0, getRemainingRent(copy) - copy.discountAmount)
-      }
+      // Fixed discount can use whatever the percentage discount hasn't; cash is then capped to what's left.
+      // getRemainingRent already subtracts discounts, so they must not be subtracted again.
+      copy.discountAmount = Math.min(amt, Math.max(0, getInvoiceBalance(copy) - Number(copy.computedDiscount || 0)))
+      copy.payAmount = Math.min(Number(copy.payAmount || 0), getRemainingRent(copy))
     } else if (field === 'payAmount') {
-      let amt = Number(value) || 0
-      // Pay amount cannot exceed (remaining - discountAmount)
-      copy.payAmount = Math.min(amt, remaining - (copy.discountAmount || 0))
+      copy.payAmount = Math.max(0, Math.min(Number(value) || 0, getRemainingRent(copy)))
     } else if (field === 'waveLateFee') {
       copy.waveLateFee = !!value
     } else {

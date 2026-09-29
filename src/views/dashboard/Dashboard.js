@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { format } from 'date-fns'
 import Loader from "../../components/Loader";
-import api from "../../api/axios";
+import { rentService } from "../../services/rent.service";
 
 import {
   CCard,
@@ -16,22 +16,13 @@ import MainChart from './MainChart'
 const Dashboard = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   // Fetch dashboard data
   useEffect(() => {
     (async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await api.get("/Dashboard/dashboard");
-        setData(res.data || []);
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load dashboard data");
-      } finally {
-        setLoading(false);
-      }
+      setLoading(true);
+      setData(await rentService.getDashboard()); // the service shows load errors and returns []
+      setLoading(false);
     })();
   }, []);
 
@@ -44,7 +35,6 @@ const Dashboard = () => {
   return (
     <>
       {loading && <Loader />}
-      {error && <div className="text-danger mb-3">{error}</div>}
 
       <WidgetsDropdown
         className="mb-4"

@@ -1,4 +1,6 @@
+import { todayLocal } from '../../utils/dates'
 import React, { useState, useMemo } from 'react'
+import { exportCSV } from '../../utils/exportUtils'
 import {
   CButton,
   CCard,
@@ -190,18 +192,6 @@ const MaintenanceForm = ({ onSubmit, initialData }) => {
 }
 
 // 🔹 CSV Export Helper
-const exportCSV = (columns, data, filename = 'maintenance_requests.csv') => {
-  const headers = columns.map((col) => col.header).join(',')
-  const rows = data.map((row) => columns.map((col) => row[col.accessorKey] ?? '').join(','))
-  const csv = [headers, ...rows].join('\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
-}
 
 const Maintenance = () => {
   const [requests, setRequests] = useState([
@@ -246,7 +236,7 @@ const Maintenance = () => {
         ...request,
         id: Date.now(),
         status: 'Open',
-        createdAt: new Date().toISOString().slice(0, 10),
+        createdAt: todayLocal(),
       }
       setRequests([newRequest, ...requests])
     }
@@ -328,7 +318,7 @@ const Maintenance = () => {
                 onChange={(e) => setGlobalFilter(e.target.value)}
                 style={{ width: '200px', display: 'inline-block', marginRight: '10px' }}
               />
-              <CButton color="success" onClick={() => exportCSV(columns, requests)} className="me-2">
+              <CButton color="success" onClick={() => exportCSV(columns, requests, 'maintenance_requests.csv')} className="me-2">
                 Export CSV
               </CButton>
               <CButton color="primary" onClick={() => setVisible(true)}>

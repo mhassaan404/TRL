@@ -1,40 +1,24 @@
-// src/utils/csvUtils.js
 import { formatDate } from './rentUtils'
 
-export const exportCSV = (columns, data) => {
-  // 1. Build headers from columns
-  const headerRow = columns.map((col) => col.header || col.accessorKey || col.id).join(',')
+// Downloads table rows as a CSV file. `columns` are react-table style column defs; only data columns are
+// exported (action/selection/expand columns are skipped). Values are always quoted so commas and quotes in
+// the data can't break the file; *Date fields are formatted for reading.
+const NON_DATA_COLUMNS = ['actions', 'select', 'expand']
 
-  // 2. Build data rows
-  const csvRows = data.map((row) => {
-    return columns
-      .map((col) => {
-        const key = col.accessorKey || col.id
-        let value = row[key] ?? ''
-        
-        // Handle date formatting safely
-        if (key === 'dueDate' || key === 'invoiceDate') {
-          value = row[key] ? formatDate(row[key]) : ''
-        }
+export const exportCSV = (columns, data, filename = 'export.csv') => {
+  const cols = columns
+    .map((col) => ({ key: col.accessorKey || col.id, header: typeof col.header === 'string' ? col.header : col.accessorKey || col.id }))
+    .filter((col) => col.key && !NON_DATA_COLUMNS.includes(col.key))
 
-        // Escape quotes and commas
-        if (typeof value === 'string') {
-          value = `"${value.replace(/"/g, '""')}"`
-        }
-        return value
-      })
-      .join(',')
-  })
+  const quote = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`
+  const cell = (row, key) => (/Date$/i.test(key) && row[key] ? formatDate(row[key]) : row[key])
 
-  // 3. Combine
-  const csvContent = [headerRow, ...csvRows].join('\n')
+  const csv = [cols.map((c) => quote(c.header)).join(','), ...data.map((row) => cols.map((c) => quote(cell(row, c.key))).join(','))].join('\n')
 
-  // 4. Download
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
   const link = document.createElement('a')
   link.href = url
-  link.setAttribute('download', 'rent_collection.csv')
+  link.download = filename
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)

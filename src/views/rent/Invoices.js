@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react'
+import { exportCSV } from '../../utils/exportUtils'
 import {
   CButton,
   CCard,
@@ -157,18 +158,6 @@ const InvoiceForm = ({ onSubmit, initialData }) => {
 }
 
 /* 🔹 CSV Export */
-const exportCSV = (columns, data, filename = 'invoices.csv') => {
-  const headers = columns.map((col) => col.header).join(',')
-  const rows = data.map((row) => columns.map((col) => row[col.accessorKey]).join(','))
-  const csv = [headers, ...rows].join('\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
-}
 
 /* 🔹 Main Invoices Page */
 const Invoices = () => {
@@ -341,7 +330,7 @@ const Invoices = () => {
                 onChange={(e) => setGlobalFilter(e.target.value)}
                 style={{ width: '200px', display: 'inline-block', marginRight: '10px' }}
               />
-              <CButton color="success" onClick={() => exportCSV(columns, invoiceRecords)} className="me-2">
+              <CButton color="success" onClick={() => exportCSV(columns, invoiceRecords, 'invoices.csv')} className="me-2">
                 Export CSV
               </CButton>
               <CButton color="primary" onClick={() => setVisible(true)}>

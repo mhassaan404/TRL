@@ -3,8 +3,9 @@ import { CCard, CCardBody, CCardHeader, CFormInput, CTable, CTableHead, CTableRo
   CTableHeaderCell, CTableBody, CTableDataCell } from '@coreui/react'
 import { rentService } from '../../services/rent.service'
 import { fmt, formatDate } from '../../utils/rentUtils'
+import { toLocalDateString } from '../../utils/dates'
 
-const iso = (d) => d.toISOString().split('T')[0]
+const iso = toLocalDateString
 
 const typeOf = (r) =>
   Number(r.paymentAmount) > 0 ? 'Payment'

@@ -1,407 +1,117 @@
-// // src/features/rent/services/rent.service.js
-// import api from '../api/axios'
-// import { toast } from 'react-toastify'
-
-// export const rentService = {
-//   getRentHistory: async () => {
-//     try {
-//       const res = await api.get('/RentHistory/History')
-//       return Array.isArray(res.data) ? res.data : []
-//     } catch (err) {
-//       toast.error('Failed to load rent hsitory')
-//       console.error('[rentService] getRentHistory failed:', err)
-//       return []
-//     }
-//   },
-
-//   cancelInvoice: async (id) => {
-//     return api.patch(`/RentHistory/CancelInvoice`, id)
-//   },
-
-//   reinstateInvoice: async (id) => {
-//     return api.patch(`/RentHistory/ReinstateInvoice`, id)
-//   },
-
-//   getRentCollection: async () => {
-//     try {
-//       const res = await api.get('/Rent/GetRentCollection')
-//       return Array.isArray(res.data) ? res.data : []
-//     } catch (err) {
-//       toast.error('Failed to load rent collection')
-//       console.error('[rentService] getRentCollection failed:', err)
-//       return []
-//     }
-//   },
-
-//   getTenants: async () => {
-//     try {
-//       const res = await api.get('/Rent/GetTenants')
-//       return Array.isArray(res.data) ? res.data : []
-//     } catch (err) {
-//       toast.error('Failed to load tenants')
-//       console.error('[rentService] getTenants failed:', err)
-//       return []
-//     }
-//   },
-
-//   getUnpaidInvoicesByTenant: async (tenantId) => {
-//     try {
-//       const res = await api.get(`/Rent/GetUnpaidInvoiceByTenant?tenantId=${tenantId}`)
-//       return {
-//         invoices: res.data?.invoices || [],
-//         summary: res.data?.summary || {},
-//       }
-//     } catch (err) {
-//       toast.error('Failed to load invoices for tenant')
-//       throw err
-//     }
-//   },
-
-//   submitPayments: async (payload) => {
-//     try {
-//       await api.post('/Rent/SubmitPayments', payload)
-//     } catch (err) {
-//       toast.error('Payment submission failed')
-//       throw err
-//     }
-//   },
-
-//   updatePayments: async (payload) => {
-//     try {
-//       await api.put('/Rent/UpdatePayments', payload)
-//     } catch (err) {
-//       toast.error('Payment update failed')
-//       throw err
-//     }
-//   },
-
-//   // deletePayment: async (paymentId) => {
-//   //   try {
-//   //     await api.delete(`/Rent/DeletePayment?paymentId=${paymentId}`)
-//   //   } catch (err) {
-//   //     toast.error('Failed to delete payment')
-//   //     throw err
-//   //   }
-//   // },
-
-//   getPaymentHistory: async (invoiceId) => {
-//     try {
-//       const res = await api.get(`/Rent/GetPaymentHistoryById?invoiceId=${invoiceId}`)
-//       return res.data || []
-//     } catch (err) {
-//       toast.error('Failed to load payment history')
-//       return []
-//     }
-//   },
-
-//   createPaymentAdjustment: async (payload) => {
-//     try {
-//       const res = await api.post('/Rent/CreatePaymentAdjustment', payload)
-//       return res.data
-//     } catch (err) {
-//       toast.error('Adjustment failed')
-//       throw err
-//     }
-//   },
-
-//   // Manual invoice generation — no scheduled service required.
-//   // month is 1-12, year is e.g. 2026. dueInDays defaults to 5 on the backend.
-//   generateInvoices: async (month, year, dueInDays) => {
-//     try {
-//       const params = new URLSearchParams()
-//       if (month) params.append('month', month)
-//       if (year) params.append('year', year)
-//       if (dueInDays) params.append('dueInDays', dueInDays)
-
-//       const res = await api.post(`/Rent/GenerateInvoices?${params.toString()}`)
-//       return res.data
-//     } catch (err) {
-//       toast.error(err?.response?.data?.Message || 'Failed to generate invoices')
-//       throw err
-//     }
-//   },
-// }
-
-
-// src/features/rent/services/rent.service.js
-import api from '../api/axios'
 import { toast } from 'react-toastify'
+import api, { getErrorMessage, request } from '../api/axios'
+
+// Conventions for all services:
+//  - loading data: on failure, show the error and return an empty result, so the page still renders
+//  - changing data: use request(); it throws an Error with the API's message and the screen shows it once
+const load = async (call, empty, fallback) => {
+  try {
+    return await call()
+  } catch (err) {
+    toast.error(getErrorMessage(err, fallback))
+    return empty
+  }
+}
+const list = (res) => (Array.isArray(res.data) ? res.data : [])
 
 export const rentService = {
-  getRentHistory: async () => {
-    try {
-      const res = await api.get('/RentHistory/History')
-      return Array.isArray(res.data) ? res.data : []
-    } catch (err) {
-      toast.error('Failed to load rent hsitory')
-      return []
-    }
-  },
+  // ── Reads ──────────────────────────────────────────────────────────────
+  getRentHistory: () => load(async () => list(await api.get('/RentHistory/History')), [], 'Failed to load rent history'),
 
-  cancelInvoice: async (id, reason) => {
-    const res = await api.patch('/RentHistory/CancelInvoice', id, { params: { reason } })
-    if (res.data?.isSuccess === false) {
-      toast.error(res.data.errorMessage)
-      throw new Error(res.data.errorMessage)
-    }
-    return res.data
-  },
+  getRentCollection: () =>
+    load(async () => list(await api.get('/Rent/GetRentCollection')), [], 'Failed to load rent collection'),
 
-  reinstateInvoice: async (id) => {
-    return api.patch(`/RentHistory/ReinstateInvoice`, id)
-  },
+  getTenants: () => load(async () => list(await api.get('/Rent/GetTenants')), [], 'Failed to load tenants'),
 
-  deleteHistoryRecord: async (id) => api.delete(`/Rent/History/${id}`),
-  reinstateTenant: async (id) => api.patch(`/Rent/History/Reinstate/${id}`, {}),
+  getActiveTenants: () =>
+    load(
+      async () => list(await api.get('/Rent/GetActiveTenants')).map((t) => ({ id: t.tenantId, name: t.name })),
+      [],
+      'Failed to load tenants',
+    ),
 
-  getRentCollection: async () => {
-    try {
-      const res = await api.get('/Rent/GetRentCollection')
-      return Array.isArray(res.data) ? res.data : []
-    } catch (err) {
-      toast.error('Failed to load rent collection')
-      return []
-    }
-  },
-
-  getTenants: async () => {
-    try {
-      const res = await api.get('/Rent/GetTenants')
-      return Array.isArray(res.data) ? res.data : []
-    } catch (err) {
-      toast.error('Failed to load tenants')
-      return []
-    }
-  },
-
-  // Full active-tenant list (not filtered to "has an unpaid invoice") — used
-  // to populate the Generate Invoices / Add Extra Charge multiselects.
-  getActiveTenants: async () => {
-    try {
-      const res = await api.get('/Rent/GetActiveTenants')
-      const list = Array.isArray(res.data) ? res.data : []
-      return list.map((t) => ({ id: t.tenantId, name: t.name }))
-    } catch (err) {
-      toast.error('Failed to load tenants')
-      return []
-    }
-  },
-
+  // Throws (the payment modal needs to know the load failed); the error is shown here
   getUnpaidInvoicesByTenant: async (tenantId) => {
     try {
-      const res = await api.get(`/Rent/GetUnpaidInvoiceByTenant?tenantId=${tenantId}`)
-      return {
-        invoices: res.data?.invoices || [],
-        summary: res.data?.summary || {},
-      }
+      const res = await api.get('/Rent/GetUnpaidInvoiceByTenant', { params: { tenantId } })
+      return { invoices: res.data?.invoices || [], summary: res.data?.summary || {} }
     } catch (err) {
-      toast.error('Failed to load invoices for tenant')
+      toast.error(getErrorMessage(err, 'Failed to load invoices for tenant'))
+      err.toasted = true // already shown: callers must not show it again
       throw err
     }
   },
 
-  // submitPayments: async (payload) => {
-  //   try {
-  //     await api.post('/Rent/SubmitPayments', payload)
-  //   } catch (err) {
-  //     toast.error('Payment submission failed')
-  //     throw err
-  //   }
-  // },
+  getPaymentHistory: (invoiceId) =>
+    load(async () => list(await api.get('/Rent/GetPaymentHistoryById', { params: { invoiceId } })), [], 'Failed to load payment history'),
 
-  // updatePayments: async (payload) => {
-  //   try {
-  //     await api.put('/Rent/UpdatePayments', payload)
-  //   } catch (err) {
-  //     toast.error('Payment update failed')
-  //     throw err
-  //   }
-  // },
+  getAllPayments: (from, to) =>
+    load(async () => list(await api.get('/Rent/GetAllPayments', { params: { from, to } })), [], 'Failed to load payments'),
 
-  submitPayments: async (payload) => {
-    try {
-      const res = await api.post('/Rent/SubmitPayments', payload)
-      if (res.data?.isSuccess === false) {
-        throw new Error(res.data.errorMessage || res.data.message || 'Payment submission failed')
-      }
-      return res.data
-    } catch (err) {
-      const msg = err?.response?.data?.errorMessage || err?.response?.data?.message || err.message || 'Payment submission failed'
-      toast.error(msg)
-      throw err
-    }
-  },
+  getVacantUnits: (includeUnitId) =>
+    load(async () => list(await api.get('/Rent/GetVacantUnits', { params: { includeUnitId } })), [], 'Failed to load units'),
 
-  updatePayments: async (payload) => {
-    try {
-      const res = await api.put('/Rent/UpdatePayments', payload)
-      if (res.data?.isSuccess === false) {
-        throw new Error(res.data.errorMessage || res.data.message || 'Payment update failed')
-      }
-      return res.data
-    } catch (err) {
-      const msg = err?.response?.data?.errorMessage || err?.response?.data?.message || err.message || 'Payment update failed'
-      toast.error(msg)
-      throw err
-    }
-  },
+  getDashboard: () => load(async () => list(await api.get('/Dashboard/dashboard')), [], 'Failed to load dashboard'),
 
-  getTenantsWithRent: async () => {
-    const res = await api.get('/Rent/GetTenantsWithRent')
-    return Array.isArray(res.data) ? res.data : []
-  },
-  updateTenantMonthlyRent: async (tenantId, monthlyRent) => {
-    const res = await api.put('/Rent/UpdateTenantMonthlyRent', { TenantId: tenantId, MonthlyRent: monthlyRent })
-    return res.data
-  },
+  // ── Changes (throw Error(message) on failure) ──────────────────────────
+  cancelInvoice: (id, reason) =>
+    request(() => api.patch('/RentHistory/CancelInvoice', id, { params: { reason } }), 'Invoice could not be cancelled'),
 
-  deletePayment: async (paymentId) => {
-    try {
-      await api.delete(`/Rent/DeletePayment?paymentId=${paymentId}`)
-    } catch (err) {
-      toast.error('Failed to delete payment')
-      throw err
-    }
-  },
+  reinstateInvoice: (id) => request(() => api.patch('/RentHistory/ReinstateInvoice', id), 'Invoice could not be reinstated'),
 
-  getPaymentHistory: async (invoiceId) => {
-    try {
-      const res = await api.get(`/Rent/GetPaymentHistoryById?invoiceId=${invoiceId}`)
-      return res.data || []
-    } catch (err) {
-      toast.error('Failed to load payment history')
-      return []
-    }
-  },
+  submitPayments: (payload) => request(() => api.post('/Rent/SubmitPayments', payload), 'Payment submission failed'),
 
-  createPaymentAdjustment: async (payload) => {
-    try {
-      const res = await api.post('/Rent/CreatePaymentAdjustment', payload)
-      return res.data
-    } catch (err) {
-      toast.error('Adjustment failed')
-      throw err
-    }
-  },
+  // The API deletes the most recent payment on the given invoice (its query param is named paymentId, but takes an invoice id)
+  deletePayment: (invoiceId) =>
+    request(() => api.delete('/Rent/DeletePayment', { params: { paymentId: invoiceId } }), 'Failed to delete payment'),
 
-  // tenantIds: null/[] = all active tenants. Otherwise only those tenants.
-  generateInvoices: async ({ tenantIds, month, year, dueInDays = 5 }) => {
-    try {
-      const res = await api.post('/Rent/GenerateInvoices', {
-        TenantIds: tenantIds && tenantIds.length ? tenantIds : null,
-        Month: month,
-        Year: year,
-        DueInDays: dueInDays,
-      })
-      return res.data
-    } catch (err) {
-      toast.error(err?.response?.data?.Message || 'Failed to generate invoices')
-      throw err
-    }
-  },
+  createPaymentAdjustment: (payload) =>
+    request(() => api.post('/Rent/CreatePaymentAdjustment', payload), 'Adjustment failed'),
 
-  createExtraCharge: async ({ tenantIds, month, year, chargeType, description, amount, dueInDays = 5 }) => {
-    try {
-      const res = await api.post('/Rent/CreateExtraCharge', {
-        TenantIds: tenantIds,
-        Month: month,
-        Year: year,
-        ChargeType: chargeType,
-        Description: description,
-        Amount: amount,
-        DueInDays: dueInDays,
-      })
-      return res.data
-    } catch (err) {
-      toast.error(err?.response?.data?.ErrorMessage || err?.response?.data?.Message || 'Failed to add charge')
-      throw err
-    }
-  },
+  // tenantIds: null = all tenants; otherwise only those tenants (an empty list is rejected by the caller)
+  generateInvoices: ({ tenantIds, month, year, dueInDays = 5 }) =>
+    request(
+      () =>
+        api.post('/Rent/GenerateInvoices', {
+          TenantIds: tenantIds && tenantIds.length ? tenantIds : null,
+          Month: month,
+          Year: year,
+          DueInDays: dueInDays,
+        }),
+      'Failed to generate invoices',
+    ),
 
-  chargeLateFee: async (invoiceId) => {
-    try {
-      const res = await api.post(`/Rent/ChargeLateFee?invoiceId=${invoiceId}`)
-      return res.data
-    } catch (err) {
-      toast.error(err?.response?.data?.errorMessage || 'Failed to charge late fee')
-      throw err
-    }
-  },
+  createExtraCharge: ({ tenantIds, month, year, chargeType, description, amount, dueInDays = 5 }) =>
+    request(
+      () =>
+        api.post('/Rent/CreateExtraCharge', {
+          TenantIds: tenantIds,
+          Month: month,
+          Year: year,
+          ChargeType: chargeType,
+          Description: description,
+          Amount: amount,
+          DueInDays: dueInDays,
+        }),
+      'Failed to add charge',
+    ),
 
-  getAllPayments: async (from, to) => {
-    try {
-      const res = await api.get('/Rent/GetAllPayments', { params: { from, to } })
-      return Array.isArray(res.data) ? res.data : []
-    } catch {
-      toast.error('Failed to load payments')
-      return []
-    }
-  },
+  chargeLateFee: (invoiceId) =>
+    request(() => api.post('/Rent/ChargeLateFee', null, { params: { invoiceId } }), 'Failed to charge late fee'),
 
-  reverseLateFee: async (invoiceId, reason) => {
-    try {
-      const res = await api.post('/Rent/ReverseLateFee', { InvoiceId: invoiceId, Reason: reason })
-      return res.data
-    } catch (err) {
-      toast.error(err?.response?.data?.errorMessage || 'Failed to reverse late fee')
-      throw err
-    }
-  },
-  getOccupancy: async () => {
-    try {
-      const res = await api.get('/Rent/GetOccupancy')
-      return Array.isArray(res.data) ? res.data : []
-    } catch { toast.error('Failed to load occupancy'); return [] }
-  },
-  getVacantUnits: async (includeUnitId) => {
-    try {
-      const res = await api.get('/Rent/GetVacantUnits', { params: { includeUnitId } })
-      return Array.isArray(res.data) ? res.data : []
-    } catch { toast.error('Failed to load units'); return [] }
-  },
+  reverseLateFee: (invoiceId, reason) =>
+    request(() => api.post('/Rent/ReverseLateFee', { InvoiceId: invoiceId, Reason: reason }), 'Failed to reverse late fee'),
+
+  bulkUpdateDueDate: (invoiceIds, newDueDate) =>
+    request(() => api.put('/Rent/BulkUpdateDueDate', { InvoiceIds: invoiceIds, NewDueDate: newDueDate }), 'Failed to update due dates'),
 }
 
 export const leaseService = {
-  getAll: async () => {
-    try {
-      const res = await api.get('/Lease/GetAll')
-      return Array.isArray(res.data) ? res.data : []
-    } catch {
-      toast.error('Failed to load leases')
-      return []
-    }
-  },
+  getAll: () => load(async () => list(await api.get('/Lease/GetAll')), [], 'Failed to load leases'),
 
-  create: async (payload) => {
-    const res = await api.post('/Lease/Create', payload)
+  create: (payload) => request(() => api.post('/Lease/Create', payload), 'Failed to create lease'),
 
-    if (res.data?.isSuccess === false) {
-      toast.error(res.data.errorMessage)
-      throw new Error(res.data.errorMessage)
-    }
+  renew: (payload) => request(() => api.post('/Lease/Renew', payload), 'Failed to renew lease'),
 
-    return res.data
-  },
-
-  renew: async (payload) => {
-    const res = await api.post('/Lease/Renew', payload)
-
-    if (res.data?.isSuccess === false) {
-      toast.error(res.data.errorMessage)
-      throw new Error(res.data.errorMessage)
-    }
-
-    return res.data
-  },
-
-  terminate: async (payload) => {
-    const res = await api.post('/Lease/Terminate', payload)
-
-    if (res.data?.isSuccess === false) {
-      toast.error(res.data.errorMessage)
-      throw new Error(res.data.errorMessage)
-    }
-
-    return res.data
-  },
+  terminate: (payload) => request(() => api.post('/Lease/Terminate', payload), 'Failed to end lease'),
 }

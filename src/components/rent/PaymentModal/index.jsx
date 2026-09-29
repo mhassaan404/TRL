@@ -54,7 +54,7 @@ const PaymentModal = ({
     >
       <CModalHeader className={isDark ? 'bg-body-secondary' : 'bg-body-tertiary'} closeButton>
         <CModalTitle>
-          {isEditMode ? 'Edit Payment' : 'New Rent Payment'}
+          {isEditMode ? 'Record Payment' : 'New Rent Payment'}
         </CModalTitle>
       </CModalHeader>
 

@@ -14,17 +14,15 @@ import {
 } from '@coreui/react'
 
 const FloorModal = ({ visible, editData, handleSubmit, closeModal, buildingName }) => {
-  const [formData, setFormData] = useState({ floorNumber: '', description: '' })
+  const [formData, setFormData] = useState({ floorNumber: '' })
   const [validated, setValidated] = useState(false)
 
   useEffect(() => {
     if (editData) {
-      setFormData({
-        floorNumber: editData.floorNumber || '',
-        description: editData.description || '',
-      })
+      // ?? keeps a ground floor "0"; floor numbers are text ("G", "1", "Mezzanine")
+      setFormData({ floorNumber: String(editData.floorNumber ?? '') })
     } else {
-      setFormData({ floorNumber: '', description: '' })
+      setFormData({ floorNumber: '' })
     }
     setValidated(false)
   }, [editData, visible])
@@ -57,19 +55,11 @@ const FloorModal = ({ visible, editData, handleSubmit, closeModal, buildingName 
                 Floor Number <span className="text-danger">*</span>
               </CFormLabel>
               <CFormInput
-                type="number"
                 value={formData.floorNumber}
+                maxLength={50}
                 onChange={(e) => setFormData({ ...formData, floorNumber: e.target.value })}
-                placeholder="e.g. 1"
+                placeholder="e.g. G, 1, 2, Mezzanine"
                 required
-              />
-            </CCol>
-            <CCol md={12}>
-              <CFormLabel className="fw-semibold">Description</CFormLabel>
-              <CFormInput
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Optional description"
               />
             </CCol>
           </CRow>
