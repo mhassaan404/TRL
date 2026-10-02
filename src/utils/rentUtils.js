@@ -1,7 +1,11 @@
 // src/utils/rentUtils.js
 
-// Format number as string with commas
-export const fmt = (v) => Number(v || 0).toLocaleString()
+// Money for display: thousands separators, up to 2 decimals (20000 -> "20,000", 1500.5 -> "1,500.5").
+// Fixed to en-US grouping so it looks the same in every browser.
+export const fmt = (v) => {
+  const n = Number(v)
+  return (Number.isFinite(n) ? n : 0).toLocaleString('en-US', { maximumFractionDigits: 2 })
+}
 
 // Add near the top, after `fmt`
 export const getStatusName = (property, unitStatuses) =>

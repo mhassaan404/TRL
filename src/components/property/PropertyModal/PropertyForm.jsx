@@ -13,6 +13,7 @@ import {
   CSpinner,
 } from '@coreui/react'
 import { toast } from 'react-toastify'
+import CurrencyInput from '../../common/CurrencyInput'
 import { propertyService } from '../../../services/property.service'
 import { getErrorMessage } from '../../../api/axios'
 
@@ -391,11 +392,9 @@ const PropertyForm = ({
           </CFormLabel>
           <CInputGroup>
             <CInputGroupText>PKR</CInputGroupText>
-            <CFormInput
-              type="number"
-              min="0"
+            <CurrencyInput
               value={formData.baseRent}
-              onChange={(e) => setFormData({ ...formData, baseRent: e.target.value })}
+              onValueChange={(v) => setFormData({ ...formData, baseRent: v })}
               placeholder="0"
               required
             />

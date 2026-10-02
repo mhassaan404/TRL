@@ -1,8 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Loader from "../../components/Loader";
-import { getErrorMessage } from "../../api/axios";
 import { tenantService } from "../../services/tenant.service";
-import { propertyService } from "../../services/property.service";
 import {
     CDropdown, CDropdownToggle, CDropdownMenu, CDropdownItem,
     CButton, CCard, CCardBody, CCardHeader, CCol, CRow,
@@ -15,27 +13,56 @@ import {
     getPaginationRowModel, getFilteredRowModel, flexRender
 } from "@tanstack/react-table";
 import { toast } from "react-toastify";
+import { PageSizeSelect, TablePagination, tablePageProps, tablePageSizeProps, DEFAULT_PAGE_SIZE } from "../../components/common/TablePagination";
+import {
+    maskPhone, isValidPhone, PHONE_HINT,
+    maskCnicNtn, isValidCnicNtn, cnicNtnHint, isValidEmail
+} from "../../utils/validators";
+
+const TENANT_TYPES = ["Company", "Individual"];
+
+const emptyTenant = {
+    name: "",
+    tenantType: "",
+    contactPerson: "",
+    email: "",
+    phone: "",
+    cnicNtn: "",
+    address: "",
+    notes: "",
+    isActive: true
+};
+
+// Field checks shown under each input; the API runs the same rules
+const validateTenant = (t) => {
+    const errors = {};
+    if (!t.name.trim()) errors.name = "Enter the tenant or company name";
+    else if (t.name.trim().length > 150) errors.name = "At most 150 characters";
+    if (!TENANT_TYPES.includes(t.tenantType)) errors.tenantType = "Select Company or Individual";
+    if (t.contactPerson.trim().length > 150) errors.contactPerson = "At most 150 characters";
+    if (t.email.trim() && !isValidEmail(t.email)) errors.email = "Enter a valid email address, e.g. name@example.com";
+    if (t.phone.trim() && !isValidPhone(t.phone)) errors.phone = `Enter a valid Pakistani number, ${PHONE_HINT}`;
+    if (t.cnicNtn.trim() && !isValidCnicNtn(t.cnicNtn, t.tenantType))
+        errors.cnicNtn = `Enter ${cnicNtnHint(t.tenantType)}`;
+    if (t.address.trim().length > 500) errors.address = "At most 500 characters";
+    return errors;
+};
+
+const Required = () => <span className="text-danger">*</span>;
 
 const Tenants = () => {
-    const emptyTenant = {
-        name: "",
-        email: "",
-        phone: "",
-        notes: "",
-        cityId: "",
-        isActive: true
-    };
-
     const [tenants, setTenants] = useState([]);
     const [visible, setVisible] = useState(false);
     const [editData, setEditData] = useState(null);
     const [globalFilter, setGlobalFilter] = useState("");
-    const [validated, setValidated] = useState(false);
+    // Field errors are shown once the user has tried to save
+    const [submitted, setSubmitted] = useState(false);
     const [tenant, setTenant] = useState(emptyTenant);
     const [loading, setLoading] = useState(false);
     const [statusFilter, setStatusFilter] = useState("");
 
-    const [cities, setCities] = useState([]);
+    const errors = useMemo(() => (submitted ? validateTenant(tenant) : {}), [submitted, tenant]);
+    const set = (field, value) => setTenant((p) => ({ ...p, [field]: value }));
 
     // Load tenants (the service shows load errors and returns [])
     const loadTenants = async () => {
@@ -44,38 +71,26 @@ const Tenants = () => {
         setLoading(false);
     };
 
-    // Load cities
-    const loadCities = async () => {
-        try {
-            setCities(await propertyService.getCities());
-        } catch (err) {
-            toast.error(getErrorMessage(err, "Failed to load cities"));
-        }
-    };
-
     useEffect(() => {
         loadTenants();
-        loadCities();
     }, []);
 
     // Save or update tenant. The form only closes when the save succeeds, so nothing typed is lost on an error.
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const form = e.currentTarget;
-
-        if (form.checkValidity() === false) {
-            e.stopPropagation();
-            setValidated(true);
-            return;
-        }
+        setSubmitted(true);
+        if (Object.keys(validateTenant(tenant)).length) return;
 
         try {
             setLoading(true);
             const res = await tenantService.save({
-                Name: tenant.name,
-                Contact: tenant.phone,
-                Email: tenant.email,
-                CityId: tenant.cityId,
+                Name: tenant.name.trim(),
+                TenantType: tenant.tenantType,
+                ContactPerson: tenant.contactPerson.trim() || null,
+                Email: tenant.email.trim() || null,
+                Contact: tenant.phone.trim() || null,
+                CnicNtn: tenant.cnicNtn.trim() || null,
+                Address: tenant.address.trim() || null,
                 Notes: tenant.notes,
                 IsActive: tenant.isActive,
             }, editData?.tenantId);
@@ -85,7 +100,7 @@ const Tenants = () => {
             setVisible(false);
             setTenant(emptyTenant);
             setEditData(null);
-            setValidated(false);
+            setSubmitted(false);
         } catch (err) {
             toast.error(err.message);
         } finally {
@@ -109,16 +124,21 @@ const Tenants = () => {
         }
     };
 
-    // Edit tenant
+    // Edit tenant. Older records are shown in the new formats where they match (e.g. 03001234567 -> 0300-1234567).
     const handleEdit = (t) => {
+        const tenantType = TENANT_TYPES.includes(t.tenantType) ? t.tenantType : "Individual";
         setEditData(t);
+        setSubmitted(false);
         setVisible(true);
 
         setTenant({
             name: t.name || "",
+            tenantType,
+            contactPerson: t.contactPerson || "",
             email: t.email || "",
-            phone: t.contact || "",
-            cityId: t.cityId || "",
+            phone: t.contact ? (isValidPhone(t.contact) ? maskPhone(t.contact) : t.contact) : "",
+            cnicNtn: t.cnicNtn || "",
+            address: t.address || "",
             notes: t.notes || "",
             isActive: !!t.isActive,
         });
@@ -137,6 +157,7 @@ const Tenants = () => {
         {
             accessorKey: "expand",
             header: "",
+            enableGlobalFilter: false,
             cell: ({ row }) => (
                 <CButton
                     color="secondary"
@@ -149,15 +170,36 @@ const Tenants = () => {
         },
         {
             accessorKey: "name",
-            header: "Name"
+            header: "Tenant / Company"
+        },
+        {
+            accessorKey: "tenantType",
+            header: "Type",
+            cell: ({ getValue }) => (
+                <span className={`badge ${getValue() === "Company" ? "bg-info" : "bg-secondary"}`}>
+                    {getValue() || "Individual"}
+                </span>
+            )
+        },
+        {
+            accessorKey: "contactPerson",
+            header: "Contact Person",
+            cell: ({ getValue }) => getValue() || "-"
+        },
+        {
+            accessorKey: "contact",
+            header: "Phone",
+            cell: ({ getValue }) => getValue() || "-"
         },
         {
             accessorKey: "email",
-            header: "Email"
+            header: "Email",
+            cell: ({ getValue }) => getValue() || "-"
         },
         {
             accessorKey: "isActive",
             header: "Status",
+            enableGlobalFilter: false,
             cell: ({ getValue }) => (
                 <span
                     style={{
@@ -176,6 +218,8 @@ const Tenants = () => {
         {
             accessorKey: "actions",
             header: "Actions",
+            enableSorting: false,
+            enableGlobalFilter: false,
             cell: ({ row }) => (
                 <>
                     <CButton
@@ -219,12 +263,17 @@ const Tenants = () => {
         getSortedRowModel: getSortedRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
+        globalFilterFn: "includesString",
+        initialState: { pagination: { pageSize: DEFAULT_PAGE_SIZE } },
     });
+
+    // Rows left after the status filter and the search box
+    const shownCount = table.getFilteredRowModel().rows.length;
 
     const handleCancel = () => {
         setTenant(emptyTenant);
         setEditData(null);
-        setValidated(false);
+        setSubmitted(false);
         setVisible(false);
     };
 
@@ -249,6 +298,7 @@ const Tenants = () => {
                                     onClick={() => {
                                         setEditData(null);
                                         setTenant(emptyTenant);
+                                        setSubmitted(false);
                                         setVisible(true);
                                     }}
                                 >
@@ -267,27 +317,7 @@ const Tenants = () => {
                                     md={4}
                                     className="d-flex align-items-center gap-2 flex-wrap mb-2"
                                 >
-                                    <span>Show</span>
-
-                                    <select
-                                        className="form-select form-select-sm"
-                                        style={{
-                                            maxWidth: "70px",
-                                            flexGrow: 1
-                                        }}
-                                        value={table.getState().pagination.pageSize}
-                                        onChange={(e) =>
-                                            table.setPageSize(Number(e.target.value))
-                                        }
-                                    >
-                                        {[5, 10, 20, 50].map((size) => (
-                                            <option key={size} value={size}>
-                                                {size}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    <span>entries</span>
+                                    <PageSizeSelect {...tablePageSizeProps(table)} />
                                 </CCol>
 
                                 <CCol
@@ -369,7 +399,7 @@ const Tenants = () => {
                                                     <th
                                                         key={header.id}
                                                         onClick={header.column.getToggleSortingHandler()}
-                                                        style={{ cursor: "pointer" }}
+                                                        style={{ cursor: header.column.getCanSort() ? "pointer" : "default" }}
                                                     >
                                                         {flexRender(
                                                             header.column.columnDef.header,
@@ -407,14 +437,21 @@ const Tenants = () => {
                                                     <tr>
                                                         <td colSpan={columns.length}>
                                                             <div>
-                                                                <strong>Phone:</strong>{" "}
-                                                                {row.original.contact}
+                                                                <strong>CNIC / NTN:</strong>{" "}
+                                                                {row.original.cnicNtn || "-"}
                                                             </div>
 
                                                             <div>
-                                                                <strong>City:</strong>{" "}
-                                                                {row.original.cityName}
+                                                                <strong>Address:</strong>{" "}
+                                                                {row.original.address || "-"}
                                                             </div>
+
+                                                            {row.original.cityName && (
+                                                                <div>
+                                                                    <strong>City:</strong>{" "}
+                                                                    {row.original.cityName}
+                                                                </div>
+                                                            )}
 
                                                             <div>
                                                                 <strong>Notes:</strong>{" "}
@@ -425,71 +462,20 @@ const Tenants = () => {
                                                 )}
                                             </React.Fragment>
                                         ))}
+
+                                        {shownCount === 0 && (
+                                            <tr>
+                                                <td colSpan={columns.length} className="text-center text-muted py-3">
+                                                    No tenants found.
+                                                </td>
+                                            </tr>
+                                        )}
                                     </tbody>
 
                                 </table>
                             </div>
 
-                            <div className="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-2">
-
-                                <div>
-                                    Showing{" "}
-                                    {filteredData.length === 0
-                                        ? 0
-                                        : table.getState().pagination.pageIndex *
-                                              table.getState().pagination.pageSize +
-                                          1}{" "}
-                                    to{" "}
-                                    {Math.min(
-                                        (table.getState().pagination.pageIndex + 1) *
-                                            table.getState().pagination.pageSize,
-                                        filteredData.length
-                                    )}{" "}
-                                    of {filteredData.length} entries
-                                </div>
-
-                                <div className="d-flex gap-1 flex-wrap">
-
-                                    <CButton
-                                        color="secondary"
-                                        size="sm"
-                                        onClick={() => table.previousPage()}
-                                        disabled={!table.getCanPreviousPage()}
-                                    >
-                                        Previous
-                                    </CButton>
-
-                                    {Array.from({
-                                        length: table.getPageCount()
-                                    }).map((_, i) => (
-                                        <CButton
-                                            key={i}
-                                            color={
-                                                i ===
-                                                table.getState().pagination.pageIndex
-                                                    ? "primary"
-                                                    : "secondary"
-                                            }
-                                            size="sm"
-                                            onClick={() =>
-                                                table.setPageIndex(i)
-                                            }
-                                        >
-                                            {i + 1}
-                                        </CButton>
-                                    ))}
-
-                                    <CButton
-                                        color="secondary"
-                                        size="sm"
-                                        onClick={() => table.nextPage()}
-                                        disabled={!table.getCanNextPage()}
-                                    >
-                                        Next
-                                    </CButton>
-
-                                </div>
-                            </div>
+                            <TablePagination {...tablePageProps(table)} />
 
                         </CCardBody>
                     </CCard>
@@ -511,140 +497,157 @@ const Tenants = () => {
                     <CModalBody>
 
                         <CForm
-                            className="row g-3 needs-validation"
+                            className="row g-3"
                             noValidate
-                            validated={validated}
                             onSubmit={handleSubmit}
                         >
 
-                            <CCol md={4}>
-                                <CFormLabel>Name</CFormLabel>
-
+                            <CCol md={6}>
+                                <CFormLabel htmlFor="tenant-name">
+                                    Tenant / Company Name <Required />
+                                </CFormLabel>
                                 <CFormInput
+                                    id="tenant-name"
                                     value={tenant.name}
-                                    onChange={e =>
-                                        setTenant(p => ({
-                                            ...p,
-                                            name: e.target.value
-                                        }))
-                                    }
-                                    placeholder="Enter Name"
-                                    required
+                                    maxLength={150}
+                                    onChange={e => set("name", e.target.value)}
+                                    placeholder="e.g. Ali Khan or Al-Noor Traders"
+                                    invalid={!!errors.name}
                                 />
-
-                                <CFormFeedback invalid>
-                                    Enter tenant name
-                                </CFormFeedback>
+                                <CFormFeedback invalid>{errors.name}</CFormFeedback>
                             </CCol>
 
-                            <CCol md={4}>
-                                <CFormLabel>Email</CFormLabel>
-
-                                <CFormInput
-                                    type="email"
-                                    value={tenant.email}
-                                    onChange={e =>
-                                        setTenant(p => ({
-                                            ...p,
-                                            email: e.target.value
-                                        }))
-                                    }
-                                    placeholder="Enter Email"
-                                    required
-                                />
-                            </CCol>
-
-                            <CCol md={4}>
-                                <CFormLabel>Phone</CFormLabel>
-
-                                <CFormInput
-                                    value={tenant.phone}
-                                    onChange={e =>
-                                        setTenant(p => ({
-                                            ...p,
-                                            phone: e.target.value
-                                        }))
-                                    }
-                                    placeholder="Enter Phone"
-                                    required
-                                />
-                            </CCol>
-
-                            <CCol md={4}>
-                                <CFormLabel>City</CFormLabel>
-
+                            <CCol md={3}>
+                                <CFormLabel htmlFor="tenant-type">
+                                    Tenant Type <Required />
+                                </CFormLabel>
                                 <CFormSelect
-                                    value={tenant.cityId}
-                                    onChange={e =>
-                                        setTenant(p => ({
-                                            ...p,
-                                            cityId: e.target.value
-                                        }))
-                                    }
-                                    required
+                                    id="tenant-type"
+                                    value={tenant.tenantType}
+                                    onChange={e => {
+                                        const tenantType = e.target.value;
+                                        // Re-format an entered CNIC/NTN for the new type
+                                        setTenant(p => ({ ...p, tenantType, cnicNtn: maskCnicNtn(p.cnicNtn, tenantType) }));
+                                    }}
+                                    invalid={!!errors.tenantType}
                                 >
-                                    <option value="">
-                                        Select City
-                                    </option>
-
-                                    {cities.map(c => (
-                                        <option
-                                            key={c.id}
-                                            value={c.id}
-                                        >
-                                            {c.name}
-                                        </option>
+                                    <option value="">Select type...</option>
+                                    {TENANT_TYPES.map(t => (
+                                        <option key={t} value={t}>{t}</option>
                                     ))}
                                 </CFormSelect>
+                                <CFormFeedback invalid>{errors.tenantType}</CFormFeedback>
+                            </CCol>
+
+                            <CCol md={3}>
+                                <CFormLabel htmlFor="tenant-contact-person">Contact Person</CFormLabel>
+                                <CFormInput
+                                    id="tenant-contact-person"
+                                    value={tenant.contactPerson}
+                                    maxLength={150}
+                                    onChange={e => set("contactPerson", e.target.value)}
+                                    placeholder="Name of contact person"
+                                    invalid={!!errors.contactPerson}
+                                />
+                                <CFormFeedback invalid>{errors.contactPerson}</CFormFeedback>
+                            </CCol>
+
+                            <CCol md={4}>
+                                <CFormLabel htmlFor="tenant-email">Email</CFormLabel>
+                                <CFormInput
+                                    id="tenant-email"
+                                    type="email"
+                                    value={tenant.email}
+                                    maxLength={100}
+                                    onChange={e => set("email", e.target.value)}
+                                    placeholder="name@example.com"
+                                    invalid={!!errors.email}
+                                />
+                                <CFormFeedback invalid>{errors.email}</CFormFeedback>
+                            </CCol>
+
+                            <CCol md={4}>
+                                <CFormLabel htmlFor="tenant-phone">Phone</CFormLabel>
+                                <CFormInput
+                                    id="tenant-phone"
+                                    type="tel"
+                                    inputMode="tel"
+                                    value={tenant.phone}
+                                    onChange={e => set("phone", maskPhone(e.target.value))}
+                                    placeholder="0300-1234567"
+                                    invalid={!!errors.phone}
+                                />
+                                <CFormFeedback invalid>{errors.phone}</CFormFeedback>
+                            </CCol>
+
+                            <CCol md={4}>
+                                <CFormLabel htmlFor="tenant-cnic">CNIC / NTN</CFormLabel>
+                                <CFormInput
+                                    id="tenant-cnic"
+                                    inputMode="numeric"
+                                    value={tenant.cnicNtn}
+                                    onChange={e => set("cnicNtn", maskCnicNtn(e.target.value, tenant.tenantType))}
+                                    placeholder={tenant.tenantType === "Company" ? "1234567-8" : "12345-1234567-1"}
+                                    invalid={!!errors.cnicNtn}
+                                />
+                                <CFormFeedback invalid>{errors.cnicNtn}</CFormFeedback>
                             </CCol>
 
                             <CCol xs={12}>
-                                <CFormLabel>Notes</CFormLabel>
+                                <CFormLabel htmlFor="tenant-address">Address</CFormLabel>
+                                <CFormInput
+                                    id="tenant-address"
+                                    value={tenant.address}
+                                    maxLength={500}
+                                    onChange={e => set("address", e.target.value)}
+                                    placeholder="House / office, street, area, city"
+                                    invalid={!!errors.address}
+                                />
+                                <CFormFeedback invalid>{errors.address}</CFormFeedback>
+                            </CCol>
 
+                            <CCol xs={12}>
+                                <CFormLabel htmlFor="tenant-notes">Notes</CFormLabel>
                                 <CFormTextarea
+                                    id="tenant-notes"
                                     value={tenant.notes || ""}
-                                    onChange={e =>
-                                        setTenant(p => ({
-                                            ...p,
-                                            notes: e.target.value
-                                        }))
-                                    }
+                                    onChange={e => set("notes", e.target.value)}
                                     placeholder="Enter Notes"
                                 />
                             </CCol>
 
                             <CCol xs={12}>
                                 <CFormCheck
+                                    id="tenant-active"
                                     label="Is Active"
                                     checked={tenant.isActive}
-                                    onChange={e =>
-                                        setTenant(p => ({
-                                            ...p,
-                                            isActive: e.target.checked
-                                        }))
-                                    }
+                                    onChange={e => set("isActive", e.target.checked)}
                                 />
                             </CCol>
 
                             <CCol
                                 xs={12}
-                                className="d-flex justify-content-end gap-2"
+                                className="d-flex justify-content-between align-items-center gap-2"
                             >
-                                <CButton
-                                    color="warning"
-                                    onClick={handleCancel}
-                                >
-                                    Cancel
-                                </CButton>
+                                <small className="text-muted"><Required /> Required field</small>
 
-                                <CButton
-                                    color="primary"
-                                    type="submit"
-                                >
-                                    {editData
-                                        ? "Update Tenant"
-                                        : "Add Tenant"}
-                                </CButton>
+                                <div className="d-flex gap-2">
+                                    <CButton
+                                        color="warning"
+                                        onClick={handleCancel}
+                                    >
+                                        Cancel
+                                    </CButton>
+
+                                    <CButton
+                                        color="primary"
+                                        type="submit"
+                                    >
+                                        {editData
+                                            ? "Update Tenant"
+                                            : "Add Tenant"}
+                                    </CButton>
+                                </div>
                             </CCol>
 
                         </CForm>

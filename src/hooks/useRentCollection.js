@@ -1,6 +1,6 @@
 import { todayLocal } from '../utils/dates'
 // src/hooks/useRentCollection.js
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { rentService } from '../services/rent.service'
 import {
@@ -42,6 +42,9 @@ const emptyExtraChargeForm = () => ({
 
 export const useRentCollection = () => {
   const [loading, setLoading] = useState(false)
+  // Blocks a second "Record Payment" while one is saving (the ref also stops a double-click before re-render)
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false)
+  const submittingPaymentRef = useRef(false)
   const [rentList, setRentList] = useState([])
   const [tenants, setTenants] = useState([])
   const [activeTenants, setActiveTenants] = useState([])
@@ -310,6 +313,7 @@ export const useRentCollection = () => {
 
   // ── Submission ─────────────────────────────────────────────────────────────
   const handleSubmitPayments = async () => {
+    if (submittingPaymentRef.current) return
     if (!totals.anySelected) {
       toast.warn('No invoices selected')
       return
@@ -342,6 +346,8 @@ export const useRentCollection = () => {
       }
     }
 
+    submittingPaymentRef.current = true
+    setIsSubmittingPayment(true)
     setLoading(true)
     try {
       const today = todayLocal()
@@ -366,6 +372,8 @@ export const useRentCollection = () => {
     } catch (err) {
       toast.error(err.message)
     } finally {
+      submittingPaymentRef.current = false
+      setIsSubmittingPayment(false)
       setLoading(false)
     }
   }
@@ -495,6 +503,7 @@ export const useRentCollection = () => {
     handleApplyGlobalDiscountPercent,
     handleGlobalWaveChange,
     handleSubmitPayments,
+    isSubmittingPayment,
     handleDeletePayment,
     handleChargeLateFee,
     handleReverseLateFee,

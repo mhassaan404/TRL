@@ -20,20 +20,27 @@ const TenantMultiSelect = ({ tenants = [], selected, onChange, isDark }) => {
 
   const isAll = selected === 'ALL'
   const selectedIds = isAll ? [] : selected
+  // Every tenant ticked, either as 'ALL' or one by one
+  const everyoneTicked = isAll || (tenants.length > 0 && tenants.every((t) => selectedIds.includes(t.id)))
+  const someTicked = !everyoneTicked && selectedIds.length > 0
+  const allRef = useRef(null)
+  // Re-applied after every render: the checkbox can lose the partial state when it re-renders or is clicked
+  useEffect(() => {
+    if (allRef.current) allRef.current.indeterminate = someTicked
+  })
 
   const filteredTenants = tenants.filter((t) =>
     (t.name || '').toLowerCase().includes(search.toLowerCase()),
   )
 
   const toggleAll = () => {
-    onChange(isAll ? [] : 'ALL')
+    onChange(everyoneTicked ? [] : 'ALL')
   }
 
+  // Individual tenants stay selectable while "All" is on: unticking one turns 'ALL' into everyone else
   const toggleTenant = (id) => {
-    if (isAll) return // "All" already covers everyone; ignore individual clicks
-    const next = selectedIds.includes(id)
-      ? selectedIds.filter((x) => x !== id)
-      : [...selectedIds, id]
+    const current = isAll ? tenants.map((t) => t.id) : selectedIds
+    const next = current.includes(id) ? current.filter((x) => x !== id) : [...current, id]
     onChange(next)
   }
 
@@ -79,8 +86,9 @@ const TenantMultiSelect = ({ tenants = [], selected, onChange, isDark }) => {
           />
 
           <CFormCheck
+            ref={allRef}
             label={<strong>All Tenants</strong>}
-            checked={isAll}
+            checked={everyoneTicked}
             onChange={toggleAll}
             className="mb-2 pb-2 border-bottom"
           />
@@ -93,7 +101,6 @@ const TenantMultiSelect = ({ tenants = [], selected, onChange, isDark }) => {
                 key={t.id}
                 label={t.name}
                 checked={isAll || selectedIds.includes(t.id)}
-                disabled={isAll}
                 onChange={() => toggleTenant(t.id)}
               />
             ))

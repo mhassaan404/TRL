@@ -24,6 +24,7 @@ import {
 import { useRentHistory } from '../../hooks/useRentHistory'
 import { toLocalDateString } from '../../utils/dates'
 import { exportCSV } from '../../utils/exportUtils'
+import { PageSizeSelect, TablePagination, tablePageProps, tablePageSizeProps, DEFAULT_PAGE_SIZE } from '../../components/common/TablePagination'
 
 // CSV Export Helper
 
@@ -262,7 +263,7 @@ const RentHistory = () => {
 
   const [pagination, setPagination] = useState({
     pageIndex: 0,
-    pageSize: 10,
+    pageSize: DEFAULT_PAGE_SIZE,
   })
 
   const table = useReactTable({
@@ -386,6 +387,10 @@ const RentHistory = () => {
               )}
             </div>
 
+            <div className="mb-2">
+              <PageSizeSelect {...tablePageSizeProps(table)} />
+            </div>
+
             {loading ? (
               <div className="text-center py-5">
                 Loading rent history...
@@ -450,38 +455,7 @@ const RentHistory = () => {
                     </tbody>
                   </table>
 
-                  <div className="d-flex justify-content-between align-items-center mt-3">
-                    <div className="text-muted small">
-                      Showing {table.getRowModel().rows.length} of {filteredData.length} records
-                    </div>
-
-                    <div className="d-flex gap-2">
-                      <CButton
-                        color="secondary"
-                        variant="outline"
-                        size="sm"
-                        disabled={!table.getCanPreviousPage()}
-                        onClick={() => table.previousPage()}
-                      >
-                        Previous
-                      </CButton>
-
-                      <span className="align-self-center small">
-                        Page {table.getState().pagination.pageIndex + 1} of{' '}
-                        {table.getPageCount()}
-                      </span>
-
-                      <CButton
-                        color="secondary"
-                        variant="outline"
-                        size="sm"
-                        disabled={!table.getCanNextPage()}
-                        onClick={() => table.nextPage()}
-                      >
-                        Next
-                      </CButton>
-                    </div>
-                  </div>
+                  <TablePagination {...tablePageProps(table)} />
                 </div>
 
                 {filteredData.length === 0 && !loading && (

@@ -28,14 +28,10 @@ import FloorModal from '../../components/property/FloorModal'
 
 import { useProperties } from '../../hooks/useProperties'
 import { fmt } from '../../utils/rentUtils'
+import { UNIT_STATUS, unitStatusOf, unitStatusColor, countUnitStatuses } from '../../utils/unitStatus'
 import { useIsDarkMode } from '../../hooks/useIsDarkMode'
 
-const statusColor = {
-  Available: 'success',
-  Rented: 'primary',
-  Reserved: 'info',
-  Maintenance: 'warning',
-}
+const statusColor = unitStatusColor
 
 const typeIcon = {
   Apartment: '🏢',
@@ -220,10 +216,7 @@ const Properties = () => {
     }
 
     return units.filter((p) => {
-      const statusName =
-        unitStatuses.find((s) => s.id === p.statusId)?.name ||
-        p.status ||
-        ''
+      const statusName = unitStatusOf(p)
 
       const matchStatus = statusFilter
         ? statusName === statusFilter
@@ -248,37 +241,35 @@ const Properties = () => {
     statusFilter,
     typeFilter,
     searchQuery,
-    unitStatuses,
   ])
 
   // --------------------------------------------------
   // STATISTICS
   // --------------------------------------------------
 
+  // The cards cover what is being viewed: all buildings, the open building, or the open floor.
+  // Derived from the loaded lists, so they follow every add/edit/delete and lease change after a reload.
   const stats = useMemo(() => {
-    const allUnits = selectedBuilding?.items || properties
+    let units = properties
+    let buildingCount = buildings.length
+    let floorCount = buildings.reduce((sum, b) => sum + (b.floorCount || 0), 0)
 
-    const getStatusName = (p) =>
-      unitStatuses.find((s) => s.id === p.statusId)?.name ||
-      p.status ||
-      ''
-
-    return {
-      total: allUnits.length,
-
-      available: allUnits.filter(
-        (x) => getStatusName(x) === 'Available',
-      ).length,
-
-      rented: allUnits.filter(
-        (x) => getStatusName(x) === 'Rented',
-      ).length,
-
-      maintenance: allUnits.filter(
-        (x) => getStatusName(x) === 'Maintenance',
-      ).length,
+    if (selectedBuilding) {
+      units = selectedBuilding.items || []
+      buildingCount = 1
+      floorCount = floors.length
     }
-  }, [selectedBuilding, properties, unitStatuses])
+    if (selectedFloor) {
+      units = units.filter(
+        (p) =>
+          p.floorId === selectedFloor.id ||
+          p.floorNumber?.toString() === selectedFloor.floorNumber?.toString(),
+      )
+      floorCount = 1
+    }
+
+    return { buildings: buildingCount, floors: floorCount, ...countUnitStatuses(units) }
+  }, [properties, buildings, floors, selectedBuilding, selectedFloor])
 
   // --------------------------------------------------
   // SELECT BUILDING
@@ -549,32 +540,19 @@ const Properties = () => {
       <CRow className="mb-4 g-3">
 
         {[
-          {
-            label: 'Total Units',
-            value: stats.total,
-            color: 'muted',
-          },
-          {
-            label: 'Available',
-            value: stats.available,
-            color: 'success',
-          },
-          {
-            label: 'Rented',
-            value: stats.rented,
-            color: 'primary',
-          },
-          {
-            label: 'Maintenance',
-            value: stats.maintenance,
-            color: 'warning',
-          },
+          { label: 'Total Buildings', value: stats.buildings, color: 'body-secondary' },
+          { label: 'Total Floors', value: stats.floors, color: 'body-secondary' },
+          { label: 'Total Units', value: stats.total, color: 'body-secondary' },
+          { label: 'Occupied', value: stats.occupied, color: 'primary' },
+          { label: 'Available', value: stats.available, color: 'success' },
+          { label: 'Maintenance', value: stats.maintenance, color: 'warning' },
         ].map((s) => (
 
           <CCol
             key={s.label}
             xs={6}
-            sm={3}
+            sm={4}
+            lg={2}
           >
 
             <CCard className="p-3 shadow-sm border-0 text-center">
@@ -645,12 +623,9 @@ const Properties = () => {
                   All Status
                 </option>
 
-                {unitStatuses.map((s) => (
-                  <option
-                    key={s.id}
-                    value={s.name}
-                  >
-                    {s.name}
+                {Object.values(UNIT_STATUS).map((s) => (
+                  <option key={s} value={s}>
+                    {s}
                   </option>
                 ))}
 
@@ -735,24 +710,7 @@ const Properties = () => {
 
               {filteredBuildings.map((b, i) => {
 
-                const getStatusName = (p) =>
-                  unitStatuses.find(
-                    (s) => s.id === p.statusId,
-                  )?.name ||
-                  p.status ||
-                  ''
-
-                const available =
-                  b.items.filter(
-                    (x) =>
-                      getStatusName(x) === 'Available',
-                  ).length
-
-                const rented =
-                  b.items.filter(
-                    (x) =>
-                      getStatusName(x) === 'Rented',
-                  ).length
+                const { available, occupied: rented } = countUnitStatuses(b.items)
 
                 const bObj = buildings.find(
                   (x) => x.id === b.buildingId,
@@ -904,7 +862,7 @@ const Properties = () => {
                             </CBadge>
 
                             <CBadge color="primary">
-                              {rented} rented
+                              {rented} occupied
                             </CBadge>
 
                           </div>
@@ -973,31 +931,7 @@ const Properties = () => {
                 const floorUnits =
                   getFloorUnits(floor)
 
-                const available =
-                  floorUnits.filter((p) => {
-                    const status =
-                      unitStatuses.find(
-                        (s) =>
-                          s.id === p.statusId,
-                      )?.name ||
-                      p.status ||
-                      ''
-
-                    return status === 'Available'
-                  }).length
-
-                const rented =
-                  floorUnits.filter((p) => {
-                    const status =
-                      unitStatuses.find(
-                        (s) =>
-                          s.id === p.statusId,
-                      )?.name ||
-                      p.status ||
-                      ''
-
-                    return status === 'Rented'
-                  }).length
+                const { available, occupied: rented } = countUnitStatuses(floorUnits)
 
                 const floorNumber =
                   floor.floorNumber ??
@@ -1128,7 +1062,7 @@ const Properties = () => {
                             </CBadge>
 
                             <CBadge color="primary">
-                              {rented} rented
+                              {rented} occupied
                             </CBadge>
 
                           </div>
@@ -1194,13 +1128,7 @@ const Properties = () => {
 
               {buildingUnits.map((p) => {
 
-                const statusName =
-                  unitStatuses.find(
-                    (s) =>
-                      s.id === p.statusId,
-                  )?.name ||
-                  p.status ||
-                  ''
+                const statusName = unitStatusOf(p)
 
                 return (
 
@@ -1329,7 +1257,12 @@ const Properties = () => {
         visible={modalOpen}
         editData={editData}
         handleSubmit={handleSubmit}
-        closeModal={closeModal}
+        closeModal={() => {
+          closeModal()
+          // A floor may have been added inline: refresh the open building's floors and the totals
+          if (selectedBuildingId) loadFloors(selectedBuildingId)
+          loadBuildings()
+        }}
         buildings={buildings}
         floors={modalFloors}
         loadFloors={loadModalFloors}

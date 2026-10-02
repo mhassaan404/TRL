@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
   CButton,
   CCard,
@@ -106,7 +106,7 @@ const Login = () => {
                     </CInputGroup>
 
                     <CRow className="mb-4">
-                      <CCol xs={6}>
+                      <CCol xs={12}>
                         <CButton
                           color="primary"
                           className="px-4 w-100"
@@ -123,11 +123,6 @@ const Login = () => {
                           )}
                         </CButton>
                       </CCol>
-                      <CCol xs={6} className="text-end">
-                        <CButton color="link" className="px-0">
-                          Forgot password?
-                        </CButton>
-                      </CCol>
                     </CRow>
                   </CForm>
                 </CCardBody>
@@ -140,11 +135,6 @@ const Login = () => {
                 <CCardBody className="text-center">
                   <h2>Welcome Back!</h2>
                   <p>Securely manage your rent collection, tenants, and payments.</p>
-                  <Link to="/register">
-                    <CButton color="light" className="mt-3" active>
-                      Register Now!
-                    </CButton>
-                  </Link>
                 </CCardBody>
               </CCard>
             </CCardGroup>

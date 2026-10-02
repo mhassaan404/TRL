@@ -74,6 +74,7 @@ const MainChart = ({ tenants, totalRent, collected, pending }) => {
       options={{
         maintainAspectRatio: false,
         plugins: {
+          tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${Number(c.parsed.y).toLocaleString('en-US')}` } },
           legend: {
             display: true, // ✅ show legend since your datasets matter
           },
@@ -101,6 +102,7 @@ const MainChart = ({ tenants, totalRent, collected, pending }) => {
               color: getStyle('--cui-body-color'),
               maxTicksLimit: 6,
               // stepSize: 50000,
+              callback: (v) => Number(v).toLocaleString('en-US'),
             },
           },
         },

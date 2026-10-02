@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "trl-frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start"],
+      "port": 3000
+    },
+    {
+      "name": "trl-api",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "D:/TRL/TRL_API/TRL_API/TRL_API.csproj", "--launch-profile", "https"],
+      "port": 5142
+    }
+  ]
+}

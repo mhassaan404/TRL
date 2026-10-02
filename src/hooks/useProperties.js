@@ -68,7 +68,19 @@ export const useProperties = () => {
   const loadBuildings = useCallback(async () => {
     try {
       const res = await propertyService.getBuildings()
-      const list = Array.isArray(res) ? res : []
+      const buildingList = Array.isArray(res) ? res : []
+
+      // Floor count per building from the same floor list shown inside a building, so the main-page
+      // "Total Floors" card always matches it
+      const floorCounts = await Promise.all(
+        buildingList.map((b) =>
+          propertyService
+            .getFloors(b.id)
+            .then((f) => (Array.isArray(f) ? f.length : 0))
+            .catch(() => 0),
+        ),
+      )
+      const list = buildingList.map((b, i) => ({ ...b, floorCount: floorCounts[i] }))
 
       setBuildings(list)
 
@@ -205,7 +217,8 @@ export const useProperties = () => {
         }
       }
 
-      await loadProperties()
+      // Buildings too: the unit form can create a building or floor inline, which changes the card totals
+      await Promise.all([loadProperties(), loadBuildings()])
       return true
     } catch (err) {
       toast.error(getErrorMessage(err, 'Operation failed'))
@@ -338,7 +351,7 @@ export const useProperties = () => {
       closeFloorModal()
 
       if (buildingId) {
-        await loadFloors(buildingId)
+        await Promise.all([loadFloors(buildingId), loadBuildings()])
       }
     } catch (err) {
       toast.error(getErrorMessage(err, 'Floor operation failed'))
@@ -356,7 +369,7 @@ export const useProperties = () => {
       toast.success('Floor deleted')
 
       if (buildingId) {
-        await loadFloors(buildingId)
+        await Promise.all([loadFloors(buildingId), loadBuildings()])
       }
     } catch (err) {
       toast.error(getErrorMessage(err, 'Delete failed'))

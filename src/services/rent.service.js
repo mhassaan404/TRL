@@ -114,4 +114,7 @@ export const leaseService = {
   renew: (payload) => request(() => api.post('/Lease/Renew', payload), 'Failed to renew lease'),
 
   terminate: (payload) => request(() => api.post('/Lease/Terminate', payload), 'Failed to end lease'),
+
+  // Undo an early renewal that hasn't started; the current lease carries on
+  cancelRenewal: (leaseId) => request(() => api.post('/Lease/CancelRenewal', { LeaseId: leaseId }), 'Failed to cancel renewal'),
 }

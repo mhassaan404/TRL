@@ -1,17 +1,19 @@
 // src/pages/rent/RentCollection.page.jsx
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { CButton, CCard, CCardBody, CCardHeader, CRow, CCol } from '@coreui/react'
 import {
   useReactTable,
   getCoreRowModel,
   getSortedRowModel,
   getFilteredRowModel,
+  getPaginationRowModel,
 } from '@tanstack/react-table'
 
 import { rentService } from '../../services/rent.service'
 import { toast } from 'react-toastify'
 import Loader from '../../components/Loader'
 import RentListTable from '../../components/rent/RentListTable'
+import { PageSizeSelect, tablePageSizeProps, DEFAULT_PAGE_SIZE } from '../../components/common/TablePagination'
 import PaymentModal from '../../components/rent/PaymentModal'
 import BulkDueDateUpdateModal from '../../components/rent/BulkDueDateUpdateModal'
 import GenerateInvoicesModal from '../../components/rent/GenerateInvoicesModal'
@@ -47,6 +49,7 @@ const RentCollection = () => {
     handleApplyGlobalDiscountPercent,
     handleGlobalWaveChange,
     handleSubmitPayments,
+    isSubmittingPayment,
     handleApplyGlobalPaymentMethod,
     handleApplyGlobalPaymentDate,
     handleApplyGlobalNotes,
@@ -195,8 +198,17 @@ const RentCollection = () => {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: { pagination: { pageSize: DEFAULT_PAGE_SIZE } },
+    // Keep the page when the list reloads after a payment; the effect below handles a shorter list
     autoResetPageIndex: false,
   })
+
+  // Back to page 1 on a new search; stay on a real page if the list got shorter
+  useEffect(() => { table.setPageIndex(0) }, [globalFilter]) // eslint-disable-line react-hooks/exhaustive-deps
+  const pageCount = table.getPageCount()
+  const { pageIndex } = table.getState().pagination
+  useEffect(() => { if (pageCount > 0 && pageIndex > pageCount - 1) table.setPageIndex(pageCount - 1) }, [pageIndex, pageCount]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
@@ -286,6 +298,9 @@ const RentCollection = () => {
                 <div className="text-body-secondary small mt-2">
                   {table.getFilteredRowModel().rows.length} records found
                 </div>
+                <div className="mt-2">
+                  <PageSizeSelect {...tablePageSizeProps(table)} />
+                </div>
               </div>
             </CCardHeader>
 
@@ -356,6 +371,7 @@ const RentCollection = () => {
             handleApplyGlobalDiscountPercent={handleApplyGlobalDiscountPercent}
             handleGlobalWaveChange={handleGlobalWaveChange}
             handleSubmitPayments={handleSubmitPayments}
+            isSubmittingPayment={isSubmittingPayment}
             handleApplyGlobalPaymentMethod={handleApplyGlobalPaymentMethod}
             handleApplyGlobalPaymentDate={handleApplyGlobalPaymentDate}
             handleApplyGlobalNotes={handleApplyGlobalNotes}

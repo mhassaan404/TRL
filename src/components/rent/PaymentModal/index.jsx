@@ -35,6 +35,7 @@ const PaymentModal = ({
   handleApplyGlobalDiscountPercent,
   handleGlobalWaveChange,
   handleSubmitPayments,
+  isSubmittingPayment,
   handleApplyGlobalPaymentMethod,
   handleApplyGlobalPaymentDate,
   handleApplyGlobalNotes,
@@ -124,6 +125,7 @@ const PaymentModal = ({
                 totals={totals}
                 isEditMode={isEditMode}
                 onSubmit={handleSubmitPayments}
+                saving={isSubmittingPayment}
               />
             </CCol>
           </CRow>

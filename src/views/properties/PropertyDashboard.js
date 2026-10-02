@@ -3,6 +3,9 @@ import { toast } from "react-toastify";
 import Loader from "../../components/Loader";
 import { getErrorMessage } from "../../api/axios";
 import { propertyService } from "../../services/property.service";
+import { unitStatusOf } from "../../utils/unitStatus";
+import { fmt } from "../../utils/rentUtils";
+import { PageSizeSelect, TablePagination, tablePageProps, tablePageSizeProps, DEFAULT_PAGE_SIZE } from "../../components/common/TablePagination";
 import {
     CDropdown,
     CDropdownToggle,
@@ -24,9 +27,11 @@ import {
     flexRender,
 } from "@tanstack/react-table";
 
-// Unit status (Available / Rented / Reserved / Under Maintenance) -> badge colour
+// Current unit status (see utils/unitStatus) -> badge colour
 const statusColor = (status) =>
-    ({ Available: "green", Rented: "#0d6efd", Reserved: "#fd7e14" })[status] || "grey";
+    ({ Available: "#2eb85c", Occupied: "#0d6efd", "Under Maintenance": "#e0a800", Reserved: "#fd7e14" })[status] || "grey";
+
+const STATUS_FILTERS = ["Available", "Occupied", "Under Maintenance"];
 
 const PropertyDashboard = () => {
     const [properties, setProperties] = useState([]);
@@ -40,7 +45,9 @@ const PropertyDashboard = () => {
     const loadProperties = async () => {
         try {
             setLoading(true);
-            setProperties(await propertyService.getAllProperties());
+            // currentStatus is what the table shows, searches and filters on
+            const rows = await propertyService.getAllProperties();
+            setProperties(rows.map((p) => ({ ...p, currentStatus: unitStatusOf(p) })));
         } catch (err) {
             toast.error(getErrorMessage(err, "Failed to load properties"));
         } finally {
@@ -55,11 +62,6 @@ const PropertyDashboard = () => {
     const toggleExpand = (id) =>
         setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
 
-    const statuses = useMemo(
-        () => [...new Set(properties.map((p) => p.status).filter(Boolean))].sort(),
-        [properties]
-    );
-
     const columns = useMemo(
         () => [
             {
@@ -72,12 +74,12 @@ const PropertyDashboard = () => {
                 ),
             },
             { accessorKey: "buildingName", header: "Building Name" },
-            { accessorKey: "floorNumber", header: "Floor Number" },
-            { accessorKey: "unitNumber", header: "Unit Number" },
-            { accessorKey: "baseRent", header: "Base Rent" },
+            { accessorKey: "floorNumber", header: "Floor" },
+            { accessorKey: "unitNumber", header: "Unit" },
+            { accessorKey: "baseRent", header: "Base Rent", cell: ({ getValue }) => fmt(getValue()) },
             { accessorKey: "propertyType", header: "Property Type" },
             {
-                accessorKey: "status",
+                accessorKey: "currentStatus",
                 header: "Status",
                 cell: ({ getValue }) => (
                     <span
@@ -99,7 +101,7 @@ const PropertyDashboard = () => {
     );
 
     const filteredData = useMemo(
-        () => (statusFilter ? properties.filter((p) => p.status === statusFilter) : properties),
+        () => (statusFilter ? properties.filter((p) => p.currentStatus === statusFilter) : properties),
         [properties, statusFilter]
     );
 
@@ -113,10 +115,9 @@ const PropertyDashboard = () => {
         getPaginationRowModel: getPaginationRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
         globalFilterFn: "includesString",
-        initialState: { pagination: { pageSize: 10 } },
+        initialState: { pagination: { pageSize: DEFAULT_PAGE_SIZE } },
     });
 
-    const { pageIndex, pageSize } = table.getState().pagination;
 
     return (
         <>
@@ -132,18 +133,7 @@ const PropertyDashboard = () => {
                             <CRow className="align-items-center mb-2">
                                 {/* Left: Show entries */}
                                 <CCol xs={12} sm={6} md={4} className="d-flex align-items-center gap-2 flex-wrap mb-2">
-                                    <span>Show</span>
-                                    <select
-                                        className="form-select form-select-sm"
-                                        style={{ maxWidth: "70px", flexGrow: 1 }}
-                                        value={pageSize}
-                                        onChange={(e) => table.setPageSize(Number(e.target.value))}
-                                    >
-                                        {[5, 10, 20, 50].map((size) => (
-                                            <option key={size} value={size}>{size}</option>
-                                        ))}
-                                    </select>
-                                    <span>entries</span>
+                                    <PageSizeSelect {...tablePageSizeProps(table)} />
                                 </CCol>
 
                                 {/* Right: Search + Status Filter */}
@@ -168,7 +158,7 @@ const PropertyDashboard = () => {
                                         </CDropdownToggle>
                                         <CDropdownMenu className="w-100 text-center" style={{ cursor: "pointer" }}>
                                             <CDropdownItem onClick={() => setStatusFilter("")}>All</CDropdownItem>
-                                            {statuses.map((s) => (
+                                            {STATUS_FILTERS.map((s) => (
                                                 <CDropdownItem key={s} onClick={() => setStatusFilter(s)}>{s}</CDropdownItem>
                                             ))}
                                         </CDropdownMenu>
@@ -224,40 +214,7 @@ const PropertyDashboard = () => {
                                 </table>
                             </div>
 
-                            <div className="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-2">
-                                <div>
-                                    Showing {filteredData.length ? pageIndex * pageSize + 1 : 0} to{" "}
-                                    {Math.min((pageIndex + 1) * pageSize, filteredData.length)} of {filteredData.length} entries
-                                </div>
-                                <div className="d-flex gap-1 flex-wrap">
-                                    <CButton
-                                        color="secondary"
-                                        size="sm"
-                                        onClick={() => table.previousPage()}
-                                        disabled={!table.getCanPreviousPage()}
-                                    >
-                                        Previous
-                                    </CButton>
-                                    {Array.from({ length: table.getPageCount() }).map((_, i) => (
-                                        <CButton
-                                            key={i}
-                                            color={i === pageIndex ? "primary" : "secondary"}
-                                            size="sm"
-                                            onClick={() => table.setPageIndex(i)}
-                                        >
-                                            {i + 1}
-                                        </CButton>
-                                    ))}
-                                    <CButton
-                                        color="secondary"
-                                        size="sm"
-                                        onClick={() => table.nextPage()}
-                                        disabled={!table.getCanNextPage()}
-                                    >
-                                        Next
-                                    </CButton>
-                                </div>
-                            </div>
+                            <TablePagination {...tablePageProps(table)} />
                         </CCardBody>
                     </CCard>
                 </CCol>

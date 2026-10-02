@@ -3,15 +3,18 @@ import React, { useEffect, useRef } from 'react'
 import { flexRender } from '@tanstack/react-table'
 import { useIsDarkMode } from '../../hooks/useIsDarkMode'
 import { CFormCheck, CButton } from '@coreui/react'
+import { fmt } from '../../utils/rentUtils'
+import { TablePagination, tablePageProps } from '../common/TablePagination'
 
 const RentListTable = ({ table, selectedIds, setSelectedIds, expandedRows, toggleExpand }) => {
   const isDark = useIsDarkMode()
   const columnsLength = table.getHeaderGroups()[0]?.headers.length || 1
 
   const selectAllRef = useRef(null)
-  const rows = table.getRowModel().rows
+  // Select-all covers every invoice matching the search (all pages), not only the page shown
+  const rows = table.getPrePaginationRowModel().rows
   const allSelected = rows.length > 0 && rows.every((row) => selectedIds.includes(row.original.invoiceId))
-  const someSelected = selectedIds.length > 0 && selectedIds.length < rows.length
+  const someSelected = selectedIds.length > 0 && !allSelected
 
   useEffect(() => {
     if (selectAllRef.current) {
@@ -20,6 +23,7 @@ const RentListTable = ({ table, selectedIds, setSelectedIds, expandedRows, toggl
   }, [someSelected])
 
   return (
+    <>
     <div className="table-responsive" style={{ maxHeight: '500px', overflowY: 'auto' }}>
       <table className="table table-bordered table-hover mb-0">
         <thead
@@ -129,10 +133,10 @@ const RentListTable = ({ table, selectedIds, setSelectedIds, expandedRows, toggl
                           <div className="col-12">
                             <ul className="list-unstyled mt-2">
                               <li>
-                                <strong>Paid:</strong> {row.original.paidAmount || '0'}
+                                <strong>Paid:</strong> {fmt(row.original.paidAmount)}
                               </li>
                               <li>
-                                <strong>Remaining:</strong> {row.original.remainingAmount || '0'}
+                                <strong>Remaining:</strong> {fmt(row.original.remainingAmount)}
                               </li>
                             </ul>
                           </div>
@@ -147,35 +151,10 @@ const RentListTable = ({ table, selectedIds, setSelectedIds, expandedRows, toggl
         </tbody>
       </table>
 
-      <div className="d-flex justify-content-between align-items-center mt-3">
-        <div className="text-muted small">
-          Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-        </div>
-
-        <div className="d-flex gap-2">
-          <CButton
-            color="secondary"
-            variant="outline"
-            size="sm"
-            disabled={!table.getCanPreviousPage()}
-            onClick={() => table.previousPage()}
-          >
-            Previous
-          </CButton>
-
-          <CButton
-            color="secondary"
-            variant="outline"
-            size="sm"
-            disabled={!table.getCanNextPage()}
-            onClick={() => table.nextPage()}
-          >
-            Next
-          </CButton>
-        </div>
-      </div>
 
     </div>
+    <TablePagination {...tablePageProps(table)} />
+    </>
   )
 }
 

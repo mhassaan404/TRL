@@ -14,6 +14,7 @@ import {
   CInputGroupText,
 } from '@coreui/react'
 import TenantMultiSelect from './TenantMultiSelect'
+import CurrencyInput from '../common/CurrencyInput'
 
 const monthNames = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -107,12 +108,10 @@ const ExtraChargeModal = ({
             <CFormLabel>Amount</CFormLabel>
             <CInputGroup>
               <CInputGroupText>PKR</CInputGroupText>
-              <CFormInput
-                type="number"
-                min="0"
+              <CurrencyInput
                 placeholder="2,500"
                 value={form.amount}
-                onChange={(e) => setForm((prev) => ({ ...prev, amount: e.target.value }))}
+                onValueChange={(v) => setForm((prev) => ({ ...prev, amount: v }))}
               />
             </CInputGroup>
           </div>

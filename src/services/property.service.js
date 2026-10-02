@@ -14,6 +14,7 @@ const normalizeProperty = (p) => ({
   statusId: p.statusId ?? null,
   note: p.note,
   isActive: p.isActive ?? true,
+  isOccupied: !!p.isOccupied,
 })
 
 const normalizeBuilding = (b) => ({

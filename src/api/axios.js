@@ -2,11 +2,13 @@ import axios from 'axios'
 import { API_BASE_URL } from '../config'
 
 // Auth lives in HttpOnly cookies (access + refresh token), so every request sends credentials.
+// X-Requested-With is the API's CSRF check: other sites can't add it without passing CORS.
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
   },
 })
 

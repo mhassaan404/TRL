@@ -3,9 +3,10 @@ import React from 'react'
 import { CButton } from '@coreui/react'
 import { fmt } from '../../../utils/rentUtils'
 
-const TotalsFooter = ({ totals, isEditMode, onSubmit }) => {
+const TotalsFooter = ({ totals, isEditMode, onSubmit, saving }) => {
 
   const isDisabled =
+    saving ||
     totals.selectedCount === 0 ||
     (totals.sumSelectedPayAmount <= 0 && totals.sumSelectedDiscounts <= 0 && !totals.anyWaived)
 
@@ -50,7 +51,7 @@ const TotalsFooter = ({ totals, isEditMode, onSubmit }) => {
         onClick={onSubmit}
         className="px-4 py-2"
       >
-        Record Payment
+        {saving ? 'Saving...' : 'Record Payment'}
       </CButton>
     </div>
   )

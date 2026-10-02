@@ -4,6 +4,7 @@ import { CCard, CCardBody, CCardHeader, CFormInput, CTable, CTableHead, CTableRo
 import { rentService } from '../../services/rent.service'
 import { fmt, formatDate } from '../../utils/rentUtils'
 import { toLocalDateString } from '../../utils/dates'
+import { PageSizeSelect, TablePagination, DEFAULT_PAGE_SIZE } from '../common/TablePagination'
 
 const iso = toLocalDateString
 
@@ -19,6 +20,8 @@ const PaymentRecords = () => {
   const [search, setSearch] = useState('')
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(false)
+  const [pageIndex, setPageIndex] = useState(0)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
   useEffect(() => {
     let alive = true
@@ -37,6 +40,10 @@ const PaymentRecords = () => {
         .join(' ').toLowerCase().includes(q))
   }, [rows, search])
 
+  // Back to page 1 whenever the dates, search or page size change the list
+  useEffect(() => { setPageIndex(0) }, [from, to, search, pageSize])
+  const paged = filtered.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)
+
   const totalPaid = filtered.reduce((s, r) => s + Number(r.paymentAmount || 0), 0)
   const totalDisc = filtered.reduce((s, r) => s + Number(r.discountAmount || 0), 0)
 
@@ -54,7 +61,10 @@ const PaymentRecords = () => {
           {loading ? 'Loading...' : `${filtered.length} records | Paid ${fmt(totalPaid)} | Discounts ${fmt(totalDisc)}`}
         </div>
       </CCardHeader>
-      <CCardBody style={{ maxHeight: 520, overflowY: 'auto' }}>
+      <CCardBody>
+        <div className="mb-2">
+          <PageSizeSelect pageSize={pageSize} onChange={setPageSize} />
+        </div>
         <CTable hover responsive small className="mb-0">
           <CTableHead>
             <CTableRow>
@@ -70,7 +80,7 @@ const PaymentRecords = () => {
             </CTableRow>
           </CTableHead>
           <CTableBody>
-            {filtered.map((r) => (
+            {paged.map((r) => (
               <CTableRow key={r.paymentId}>
                 <CTableDataCell>{formatDate(r.paymentDate)}</CTableDataCell>
                 <CTableDataCell>{r.tenantName}</CTableDataCell>
@@ -90,6 +100,7 @@ const PaymentRecords = () => {
             )}
           </CTableBody>
         </CTable>
+        <TablePagination pageIndex={pageIndex} pageSize={pageSize} total={filtered.length} onPageChange={setPageIndex} />
       </CCardBody>
     </CCard>
   )

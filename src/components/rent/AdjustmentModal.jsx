@@ -8,11 +8,16 @@ import {
   CButton,
   CForm,
   CFormInput,
+  CFormLabel,
   CFormTextarea,
+  CInputGroup,
+  CInputGroupText,
 } from '@coreui/react'
 import { toast } from 'react-toastify'
 import { rentService } from '../../services/rent.service'
 import { useIsDarkMode } from '../../hooks/useIsDarkMode'
+import CurrencyInput from '../common/CurrencyInput'
+import { fmt } from '../../utils/rentUtils'
 
 const AdjustmentModal = ({
   visible,
@@ -45,7 +50,7 @@ const AdjustmentModal = ({
     }
 
     if (numAmount > maxAdjustment) {
-      toast.warn(`Cannot adjust more than paid amount (${maxAdjustment})`)
+      toast.warn(`Cannot adjust more than paid amount (${fmt(maxAdjustment)})`)
       return
     }
 
@@ -82,31 +87,26 @@ const AdjustmentModal = ({
           <CFormInput label="Invoice ID" value={invoiceId || ''} readOnly className="mb-3" />
 
 
-          <CFormInput
-            label="Adjustment Amount"
-            type="number"
-            placeholder={canAdjust ? `Max: ${safeMax.toFixed(2)}` : 'No payments to adjust'}
-            min={0}
-            max={safeMax}
-            step="0.01" // browser suggests 2 decimals
-            value={amount}
-            className="mb-3"
-            onChange={(e) => {
-              const val = e.target.value
-
-              if (val === '' || /^\d{0,10}(\.\d{0,2})?$/.test(val)) {
-                const num = parseFloat(val)
-
-                if (val === '' || (!isNaN(num) && num <= safeMax)) {
-                  setAmount(val)
-                } else if (!isNaN(num) && num > safeMax) {
-                  setAmount(safeMax.toFixed(2))
-                  toast.info(`Limited to max ${safeMax.toFixed(2)}`)
+          <CFormLabel htmlFor="adjustment-amount">Adjustment Amount</CFormLabel>
+          <CInputGroup className="mb-3">
+            <CInputGroupText>PKR</CInputGroupText>
+            <CurrencyInput
+              id="adjustment-amount"
+              placeholder={canAdjust ? `Max: ${fmt(safeMax)}` : 'No payments to adjust'}
+              value={amount}
+              onValueChange={(val) => {
+                // up to 10 whole digits and 2 decimals, never more than what was paid
+                if (val.split('.')[0].length > 10) return
+                if (val !== '' && Number(val) > safeMax) {
+                  setAmount(String(safeMax))
+                  toast.info(`Limited to max ${fmt(safeMax)}`)
+                  return
                 }
-              }
-            }}
-            disabled={!canAdjust}
-          />
+                setAmount(val)
+              }}
+              disabled={!canAdjust}
+            />
+          </CInputGroup>
 
           <CFormTextarea
             label="Reason / Notes"

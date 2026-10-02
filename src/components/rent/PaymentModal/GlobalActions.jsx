@@ -1,5 +1,6 @@
 import React from 'react'
 import { CFormLabel, CFormSelect, CFormInput, CFormCheck, CButton, CRow, CCol } from '@coreui/react'
+import CurrencyInput from '../../common/CurrencyInput'
 
 const GlobalActionsSection = ({
   rentForm,
@@ -74,14 +75,13 @@ const GlobalActionsSection = ({
         <CCol md={3}>
           <CFormLabel className="fw-medium mb-2">Discount Amount</CFormLabel>
           <div className="input-group">
-            <CFormInput
-              type="number"
-              min="0"
+            <CurrencyInput
+              allowDecimal={false}
               value={rentForm.globalDiscountAmount || ''}
-              onChange={(e) =>
+              onValueChange={(v) =>
                 setRentForm((prev) => ({
                   ...prev,
-                  globalDiscountAmount: Math.max(0, Number(e.target.value) || 0),
+                  globalDiscountAmount: Math.max(0, Number(v) || 0),
                 }))
               }
               placeholder="0"

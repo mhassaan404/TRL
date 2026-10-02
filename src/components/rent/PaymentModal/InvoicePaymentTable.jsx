@@ -16,6 +16,7 @@ import {
 import InvoiceHistoryModal from '../InvoiceHistoryModal'
 import AdjustmentModal from '../AdjustmentModal'
 import { fmt, formatDate, getRemainingRent } from '../../../utils/rentUtils'
+import CurrencyInput from '../../common/CurrencyInput'
 import { rentService } from '../../../services/rent.service'
 import { useIsDarkMode } from '../../../hooks/useIsDarkMode'
 import { todayLocal } from '../../../utils/dates'
@@ -209,13 +210,12 @@ const InvoicePaymentTable = ({
 
                   {/* Disc Amt - right */}
                   <CTableDataCell className="text-end">
-                    <CFormInput
-                      type="number"
-                      min="0"
+                    <CurrencyInput
+                      allowDecimal={false}
                       size="sm"
                       value={inv.discountAmount || ''}
-                      onChange={(e) =>
-                        updateInvoiceField(inv.invoiceId, 'discountAmount', Number(e.target.value))
+                      onValueChange={(v) =>
+                        updateInvoiceField(inv.invoiceId, 'discountAmount', Number(v))
                       }
                       placeholder="0"
                     />
@@ -225,14 +225,12 @@ const InvoicePaymentTable = ({
                       purpose — late fee is never part of this number since it's
                       not a persisted balance; charge it separately via "Charge" above. */}
                   <CTableDataCell className="text-end">
-                    <CFormInput
-                      type="number"
-                      min="0"
-                      max={remaining}
+                    <CurrencyInput
+                      allowDecimal={false}
                       size="sm"
                       value={inv.payAmount || ''}
-                      onChange={(e) =>
-                        updateInvoiceField(inv.invoiceId, 'payAmount', Number(e.target.value))
+                      onValueChange={(v) =>
+                        updateInvoiceField(inv.invoiceId, 'payAmount', Number(v))
                       }
                       placeholder="0"
                     />
