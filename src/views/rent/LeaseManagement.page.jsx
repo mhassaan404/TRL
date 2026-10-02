@@ -47,6 +47,8 @@ const LeaseManagement = () => {
   const [renewState, setRenewState] = useState(null)
   const [endState, setEndState] = useState(null)
   const [cancelState, setCancelState] = useState(null)
+  const [cancelLeaseState, setCancelLeaseState] = useState(null)
+  const [creating, setCreating] = useState(false)
   const [filter, setFilter] = useState('Active')
   const [pageIndex, setPageIndex] = useState(0)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
@@ -73,6 +75,8 @@ const LeaseManagement = () => {
   }, [leases])
 
   const handleCreate = async () => {
+    if (creating) return
+    setCreating(true)
     try {
       await leaseService.create({
         TenantId: Number(form.tenantId),
@@ -87,10 +91,14 @@ const LeaseManagement = () => {
       load()
     } catch (err) {
       toast.error(err.message)
+    } finally {
+      setCreating(false)
     }
   }
 
   const handleRenew = async () => {
+    if (renewState.saving) return
+    setRenewState((p) => ({ ...p, saving: true }))
     try {
       const res = await leaseService.renew({
         LeaseId: renewState.leaseId,
@@ -102,11 +110,10 @@ const LeaseManagement = () => {
       load()
     } catch (err) {
       toast.error(err.message)
+      setRenewState((p) => p && { ...p, saving: false })
     }
   }
 
-  // End Lease form: the window stays open until the lease is actually ended (missing reason, bad date or an
-  // API error keep it open with the message shown)
   // The current lease that an upcoming renewal replaces (shown in the Cancel Renewal / End windows)
   const previousOf = (renewal) =>
     leases.find((p) => p.tenantId === renewal.tenantId && p.unitId === renewal.unitId && p.renewedIntoNext
@@ -125,8 +132,27 @@ const LeaseManagement = () => {
     }
   }
 
+  const handleCancelLease = async () => {
+    if (cancelLeaseState.saving) return
+    setCancelLeaseState((p) => ({ ...p, saving: true }))
+    try {
+      const res = await leaseService.cancelLease(cancelLeaseState.lease.leaseId)
+      toast.success(res?.message || 'Lease cancelled')
+      setCancelLeaseState(null)
+      load()
+    } catch (err) {
+      toast.error(err.message)
+      setCancelLeaseState((p) => p && { ...p, saving: false })
+    }
+  }
+
+  // End Lease form: the window stays open until the lease is actually ended (missing reason, bad date or an
+  // API error keep it open with the message shown)
   const openTerminate = (lease) =>
     setEndState({ lease, reason: '', moveOut: todayLocal(), submitted: false, saving: false })
+
+  // A lease that has started can't be ended before its start date (same rule as the API)
+  const moveOutBeforeStart = (s) => hasStarted(s.lease) && s.moveOut < day(s.lease.startDate)
 
   const endErrors = endState?.submitted
     ? {
@@ -135,7 +161,9 @@ const LeaseManagement = () => {
           ? 'Please choose the move-out date.'
           : endState.moveOut > todayLocal()
             ? "The move-out date can't be in the future."
-            : '',
+            : moveOutBeforeStart(endState)
+              ? `The move-out date can't be before the lease start date (${formatDate(endState.lease.startDate)}).`
+              : '',
       }
     : {}
 
@@ -143,7 +171,7 @@ const LeaseManagement = () => {
     const reason = endState.reason.trim()
     const moveOut = endState.moveOut
     setEndState((p) => ({ ...p, submitted: true }))
-    if (!reason || !moveOut || moveOut > todayLocal()) return
+    if (!reason || !moveOut || moveOut > todayLocal() || moveOutBeforeStart(endState)) return
 
     setEndState((p) => ({ ...p, saving: true }))
     try {
@@ -212,13 +240,19 @@ const LeaseManagement = () => {
                   {l.isActive && (
                     <div className="d-flex gap-1">
                       {/* Same rule as the API: only a term that has started can be renewed, so an early renewal
-                          can't be renewed again before its new term begins */}
-                      <span title={hasStarted(l) ? '' : `Can be renewed once this term starts on ${formatDate(l.startDate)}`}>
-                        <CButton size="sm" color="info" variant="outline" disabled={!hasStarted(l)}
-                          onClick={() => setRenewState({ leaseId: l.leaseId, rentAmount: '', tenureMonths: l.tenureMonths })}>
+                          can't be renewed again before its new term begins (no Renew on upcoming leases) */}
+                      {hasStarted(l) && (
+                        <CButton size="sm" color="info" variant="outline"
+                          onClick={() => setRenewState({ leaseId: l.leaseId, rentAmount: '', tenureMonths: l.tenureMonths, saving: false })}>
                           Renew
                         </CButton>
-                      </span>
+                      )}
+                      {/* Only for a lease made by mistake; a renewal is refused by the API (use End) */}
+                      {statusOf(l) === 'Active' && !previousOf(l) && (
+                        <CButton size="sm" color="warning" variant="outline" onClick={() => setCancelLeaseState({ lease: l, saving: false })}>
+                          Cancel Lease
+                        </CButton>
+                      )}
                       {l.isPendingRenewal && (
                         <CButton size="sm" color="warning" variant="outline" onClick={() => setCancelState({ lease: l, saving: false })}>
                           Cancel Renewal
@@ -280,8 +314,8 @@ const LeaseManagement = () => {
         </CModalBody>
         <CModalFooter>
           <CButton color="secondary" onClick={() => setModal({ visible: false })}>Cancel</CButton>
-          <CButton color="primary" disabled={!form.tenantId || !form.unitId || !form.rentAmount} onClick={handleCreate}>
-            Create Lease
+          <CButton color="primary" disabled={!form.tenantId || !form.unitId || !form.rentAmount || creating} onClick={handleCreate}>
+            {creating ? 'Creating...' : 'Create Lease'}
           </CButton>
         </CModalFooter>
       </CModal>
@@ -311,7 +345,9 @@ const LeaseManagement = () => {
         </CModalBody>
         <CModalFooter>
           <CButton color="secondary" onClick={() => setRenewState(null)}>Cancel</CButton>
-          <CButton color="primary" onClick={handleRenew}>Renew</CButton>
+          <CButton color="primary" disabled={!!renewState?.saving} onClick={handleRenew}>
+            {renewState?.saving ? 'Renewing...' : 'Renew'}
+          </CButton>
         </CModalFooter>
       </CModal>
 
@@ -349,6 +385,34 @@ const LeaseManagement = () => {
         </CModalFooter>
       </CModal>
 
+      <CModal visible={!!cancelLeaseState} onClose={() => setCancelLeaseState(null)} backdrop="static">
+        <CModalHeader><strong>Cancel Lease</strong></CModalHeader>
+        <CModalBody>
+          {cancelLeaseState && (() => {
+            const l = cancelLeaseState.lease
+            return (
+              <>
+                <p className="text-body-secondary small mb-3">
+                  {l.tenantName} · {l.buildingName}, Floor {l.floorNumber}, Unit {l.unitNumber}
+                </p>
+                <p className="mb-2">
+                  Use this only for a lease created by mistake. The lease from <strong>{formatDate(l.startDate)}</strong>{' '}
+                  ({fmt(l.rentAmount)}/month) will be cancelled and never billed, its rent invoices are cancelled and the
+                  unit becomes available.
+                </p>
+                <p className="small text-body-secondary mb-0">If the tenant actually lived there, use End instead.</p>
+              </>
+            )
+          })()}
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setCancelLeaseState(null)}>Keep Lease</CButton>
+          <CButton color="warning" disabled={!!cancelLeaseState?.saving} onClick={handleCancelLease}>
+            {cancelLeaseState?.saving ? 'Cancelling...' : 'Cancel Lease'}
+          </CButton>
+        </CModalFooter>
+      </CModal>
+
       <CModal visible={!!endState} onClose={() => setEndState(null)} backdrop="static">
         <CModalHeader><strong>End Lease</strong></CModalHeader>
         <CModalBody>
@@ -375,13 +439,19 @@ const LeaseManagement = () => {
             <CFormInput
               id="end-moveout"
               type="date"
+              min={endState && hasStarted(endState.lease) ? day(endState.lease.startDate) : undefined}
               max={todayLocal()}
               value={endState?.moveOut || ''}
               invalid={!!endErrors.moveOut}
               onChange={(e) => setEndState((p) => ({ ...p, moveOut: e.target.value }))}
             />
             <CFormFeedback invalid>{endErrors.moveOut}</CFormFeedback>
-            <small className="text-body-secondary">Rent is billed through this day.</small>
+            {/* An upcoming lease (not a renewal) ends before it starts, so nothing is billed */}
+            <small className="text-body-secondary">
+              {endState && !hasStarted(endState.lease) && !endState.lease.isPendingRenewal
+                ? "This lease hasn't started yet, so no rent is billed."
+                : 'Rent is billed through this day.'}
+            </small>
             {endState?.lease.isPendingRenewal && (
               <div className="alert alert-warning small mt-3 mb-0">
                 This is an upcoming renewal. Ending it ends the tenancy: the current term also stops on the move-out

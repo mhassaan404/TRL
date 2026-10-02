@@ -117,4 +117,7 @@ export const leaseService = {
 
   // Undo an early renewal that hasn't started; the current lease carries on
   cancelRenewal: (leaseId) => request(() => api.post('/Lease/CancelRenewal', { LeaseId: leaseId }), 'Failed to cancel renewal'),
+
+  // Undo a lease created by mistake; it is never billed
+  cancelLease: (leaseId) => request(() => api.post('/Lease/Cancel', { LeaseId: leaseId }), 'Failed to cancel lease'),
 }
