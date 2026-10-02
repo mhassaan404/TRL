@@ -8,7 +8,9 @@ const Properties = React.lazy(() => import('./views/properties/Properties'))
 const PropertyDashboard = React.lazy(() => import('./views/properties/PropertyDashboard'))
 const RentCollection = React.lazy(() => import('./views/rent/RentCollection'))
 const RentHistory = React.lazy(() => import('./views/rent/RentHistory'))
+const Payments = React.lazy(() => import('./views/rent/Payments'))
 const LeaseManagement = React.lazy(() => import('./views/rent/LeaseManagement.page'))
+const LateFeeSettings = React.lazy(() => import('./views/settings/LateFeeSettings'))
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
@@ -18,7 +20,9 @@ const routes = [
   { path: '/properties/propertyDashboard', name: 'PropertyDashboard', element: PropertyDashboard },
   { path: '/rent/rentcollection', name: 'RentCollection', element: RentCollection },
   { path: '/rent/renthistory', name: 'RentHistory', element: RentHistory },
+  { path: '/rent/payments', name: 'Payments', element: Payments },
   { path: '/rent/leasemanagement', name: 'LeaseManagement', element: LeaseManagement },
+  { path: '/settings/late-fee', name: 'Late Fee Settings', element: LateFeeSettings },
 ]
 
 export default routes

@@ -18,17 +18,17 @@ const SummaryCards = ({ rentForm }) => {
       // color: 'text-dark',
     },
     {
-      label: 'Pending',
+      label: 'Pending Rent',
       value: fmt(rentForm.pendingAmount || 0),
       color: 'text-warning fw-bold',
     },
     {
-      label: 'Prev Balance',
+      label: 'Previous Balance',
       value: fmt(rentForm.previousBalance || 0),
       // color: 'text-dark',
     },
     {
-      label: 'Total Late Fee',
+      label: 'Total Late Fees',
       value: fmt(rentForm.lateFee || 0),
       color: 'text-danger fw-bold',
     },

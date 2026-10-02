@@ -5,6 +5,7 @@ import {
   cilUser,
   cilBuilding,
   cilCash,
+  cilSettings,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 
@@ -59,8 +60,13 @@ const _nav = [
       },
       {
         component: CNavItem,
-        name: 'RentHistory',
+        name: 'Rent History',
         to: '/rent/RentHistory',
+      },
+      {
+        component: CNavItem,
+        name: 'Payment Records',
+        to: '/rent/Payments',
       },
       {
         component: CNavItem,
@@ -68,6 +74,16 @@ const _nav = [
         to: '/rent/LeaseManagement',
       },
     ],
+  },
+  {
+    component: CNavTitle,
+    name: 'Administration',
+  },
+  {
+    component: CNavItem,
+    name: 'Late Fee Settings',
+    to: '/settings/late-fee',
+    icon: <CIcon icon={cilSettings} customClassName="nav-icon" />,
   },
 ]
 

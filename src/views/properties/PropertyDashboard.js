@@ -3,6 +3,8 @@ import { toast } from "react-toastify";
 import Loader from "../../components/Loader";
 import { getErrorMessage } from "../../api/axios";
 import { propertyService } from "../../services/property.service";
+import { leaseService } from "../../services/rent.service";
+import TenantFilter from "../../components/rent/TenantFilter";
 import { unitStatusOf } from "../../utils/unitStatus";
 import { fmt } from "../../utils/rentUtils";
 import { PageSizeSelect, TablePagination, tablePageProps, tablePageSizeProps, DEFAULT_PAGE_SIZE } from "../../components/common/TablePagination";
@@ -37,6 +39,7 @@ const PropertyDashboard = () => {
     const [properties, setProperties] = useState([]);
     const [globalFilter, setGlobalFilter] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
+    const [tenantFilter, setTenantFilter] = useState(""); // "" = all tenants
     const [loading, setLoading] = useState(false);
     const [expandedRows, setExpandedRows] = useState({});
 
@@ -45,9 +48,11 @@ const PropertyDashboard = () => {
     const loadProperties = async () => {
         try {
             setLoading(true);
-            // currentStatus is what the table shows, searches and filters on
-            const rows = await propertyService.getAllProperties();
-            setProperties(rows.map((p) => ({ ...p, currentStatus: unitStatusOf(p) })));
+            // currentStatus is what the table shows, searches and filters on.
+            // tenantName = the tenant of the unit's open lease (one per unit), from the lease list
+            const [rows, leases] = await Promise.all([propertyService.getAllProperties(), leaseService.getAll()]);
+            const tenantByUnit = new Map(leases.filter((l) => l.isActive).map((l) => [l.unitId, l.tenantName]));
+            setProperties(rows.map((p) => ({ ...p, currentStatus: unitStatusOf(p), tenantName: tenantByUnit.get(p.id) || "" })));
         } catch (err) {
             toast.error(getErrorMessage(err, "Failed to load properties"));
         } finally {
@@ -76,6 +81,7 @@ const PropertyDashboard = () => {
             { accessorKey: "buildingName", header: "Building Name" },
             { accessorKey: "floorNumber", header: "Floor" },
             { accessorKey: "unitNumber", header: "Unit" },
+            { accessorKey: "tenantName", header: "Tenant", cell: ({ getValue }) => getValue() || "—" },
             { accessorKey: "baseRent", header: "Base Rent", cell: ({ getValue }) => fmt(getValue()) },
             { accessorKey: "propertyType", header: "Property Type" },
             {
@@ -101,8 +107,11 @@ const PropertyDashboard = () => {
     );
 
     const filteredData = useMemo(
-        () => (statusFilter ? properties.filter((p) => p.currentStatus === statusFilter) : properties),
-        [properties, statusFilter]
+        () =>
+            properties.filter(
+                (p) => (!statusFilter || p.currentStatus === statusFilter) && (!tenantFilter || p.tenantName === tenantFilter)
+            ),
+        [properties, statusFilter, tenantFilter]
     );
 
     const table = useReactTable({
@@ -146,6 +155,13 @@ const PropertyDashboard = () => {
                                         className="form-control"
                                         style={{ maxWidth: "220px", flexGrow: 1 }}
                                     />
+                                    <div style={{ minWidth: "240px", maxWidth: "260px" }} title="Tenant / Company">
+                                        <TenantFilter
+                                            names={properties.map((p) => p.tenantName)}
+                                            value={tenantFilter}
+                                            onChange={setTenantFilter}
+                                        />
+                                    </div>
                                     <CDropdown className="flex-shrink-0" style={{ minWidth: "150px" }}>
                                         <CDropdownToggle
                                             as="div"

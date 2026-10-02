@@ -6,6 +6,7 @@ import {
 import { toast } from 'react-toastify'
 import { leaseService, rentService } from '../../services/rent.service'
 import UnitPicker from '../../components/rent/UnitPicker'
+import TenantFilter from '../../components/rent/TenantFilter'
 import CurrencyInput from '../../components/common/CurrencyInput'
 import { PageSizeSelect, TablePagination, DEFAULT_PAGE_SIZE } from '../../components/common/TablePagination'
 import { fmt, formatDate } from '../../utils/rentUtils'
@@ -50,18 +51,25 @@ const LeaseManagement = () => {
   const [cancelLeaseState, setCancelLeaseState] = useState(null)
   const [creating, setCreating] = useState(false)
   const [filter, setFilter] = useState('Active')
+  const [tenantFilter, setTenantFilter] = useState('') // '' = all tenants
   const [pageIndex, setPageIndex] = useState(0)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
   const load = () => leaseService.getAll().then(setLeases)
   useEffect(() => { load(); rentService.getActiveTenants().then(setTenants) }, [])
 
-  const filtered = useMemo(
-    () => (filter === 'All' ? leases : leases.filter((l) => statusOf(l) === filter)),
-    [leases, filter],
+  // The chosen tenant's leases; the status buttons (and their counts) then work within them
+  const tenantLeases = useMemo(
+    () => (tenantFilter ? leases.filter((l) => l.tenantName === tenantFilter) : leases),
+    [leases, tenantFilter],
   )
 
-  useEffect(() => { setPageIndex(0) }, [filter])
+  const filtered = useMemo(
+    () => (filter === 'All' ? tenantLeases : tenantLeases.filter((l) => statusOf(l) === filter)),
+    [tenantLeases, filter],
+  )
+
+  useEffect(() => { setPageIndex(0) }, [filter, tenantFilter])
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
   // Stay on a real page when the list shrinks (e.g. the last lease on the last page was ended)
@@ -69,10 +77,10 @@ const LeaseManagement = () => {
   const paged = filtered.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)
 
   const counts = useMemo(() => {
-    const c = { All: leases.length, Active: 0, Upcoming: 0, Expired: 0, Ended: 0 }
-    leases.forEach((l) => { c[statusOf(l)]++ })
+    const c = { All: tenantLeases.length, Active: 0, Upcoming: 0, Expired: 0, Ended: 0 }
+    tenantLeases.forEach((l) => { c[statusOf(l)]++ })
     return c
-  }, [leases])
+  }, [tenantLeases])
 
   const handleCreate = async () => {
     if (creating) return
@@ -195,6 +203,9 @@ const LeaseManagement = () => {
       <CCardBody>
         <div className="d-flex justify-content-between align-items-center gap-2 mb-3 flex-wrap">
           <PageSizeSelect pageSize={pageSize} onChange={(size) => { setPageSize(size); setPageIndex(0) }} />
+          <div style={{ minWidth: 240, maxWidth: 260 }} title="Tenant / Company">
+            <TenantFilter names={leases.map((l) => l.tenantName)} value={tenantFilter} onChange={setTenantFilter} />
+          </div>
           <div className="d-flex gap-2 flex-wrap">
           {FILTERS.map((f) => (
             <CButton

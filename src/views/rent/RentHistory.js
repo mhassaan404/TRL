@@ -1,7 +1,8 @@
 // RentHistory.jsx
 import React, { useState, useEffect, useMemo } from 'react'
 import { fmt, formatDate } from '../../utils/rentUtils'
-import PaymentRecords from '../../components/rent/PaymentRecords'
+import TenantFilter from '../../components/rent/TenantFilter'
+import InvoiceDetailsModal from '../../components/rent/InvoiceDetailsModal'
 import {
   CButton,
   CCard,
@@ -56,6 +57,7 @@ const RentHistory = () => {
   const [tenantFilter, setTenantFilter] = useState('')
   const [unitFilter, setUnitFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [historyId, setHistoryId] = useState(null) // invoice shown in the History window
   const [datePreset, setDatePreset] = useState('all')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
@@ -111,11 +113,8 @@ const RentHistory = () => {
         if (!matches) return false
       }
 
-      // Tenant filter
-      if (
-        tenantFilter &&
-        !record.tenant?.toLowerCase().includes(tenantFilter.toLowerCase().trim())
-      ) {
+      // Tenant / Company filter (exact name chosen from the list)
+      if (tenantFilter && record.tenant !== tenantFilter) {
         return false
       }
 
@@ -233,7 +232,10 @@ const RentHistory = () => {
           const status = row.original.status
 
           return (
-            <>
+            <div className="d-flex gap-1 flex-wrap">
+              <CButton color="info" variant="outline" size="sm" onClick={() => setHistoryId(id)}>
+                History
+              </CButton>
               {status === 'Cancelled' ? (
                 <CButton
                   color="success"
@@ -253,7 +255,7 @@ const RentHistory = () => {
                   Cancel Invoice
                 </CButton>
               )}
-            </>
+            </div>
           )
         },
       },
@@ -309,6 +311,18 @@ const RentHistory = () => {
                   onChange={(e) =>
                     setGlobalSearch(e.target.value)
                   }
+                />
+              </div>
+
+              <div className="col-md-3">
+                <label className="form-label small text-muted mb-1">
+                  Tenant / Company
+                </label>
+
+                <TenantFilter
+                  names={historyRecords.map((r) => r.tenant)}
+                  value={tenantFilter}
+                  onChange={setTenantFilter}
                 />
               </div>
 
@@ -467,7 +481,7 @@ const RentHistory = () => {
             )}
           </CCardBody>
         </CCard>
-        <PaymentRecords />
+        <InvoiceDetailsModal invoiceId={historyId} onClose={() => setHistoryId(null)} />
       </CCol>
     </CRow>
   )

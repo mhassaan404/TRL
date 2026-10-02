@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { CCard, CCardBody, CCardHeader, CFormInput, CTable, CTableHead, CTableRow,
+import { CBadge, CButton, CCard, CCardBody, CCardHeader, CFormInput, CTable, CTableHead, CTableRow,
   CTableHeaderCell, CTableBody, CTableDataCell } from '@coreui/react'
 import { rentService } from '../../services/rent.service'
 import { fmt, formatDate } from '../../utils/rentUtils'
+import { exportCSV } from '../../utils/exportUtils'
 import { toLocalDateString } from '../../utils/dates'
 import { PageSizeSelect, TablePagination, DEFAULT_PAGE_SIZE } from '../common/TablePagination'
+import TenantFilter from './TenantFilter'
 
 const iso = toLocalDateString
 
@@ -14,10 +16,28 @@ const typeOf = (r) =>
   : Number(r.discountAmount) > 0 ? 'Discount'
   : 'Adjustment'
 
+// Badge colour per type, so an adjustment (often money taken back) stands out from normal payments
+const TYPE_COLOR = { Payment: 'success', Adjustment: 'warning', Discount: 'info', 'Late fee waived': 'secondary' }
+
+// CSV columns: the same as the table
+const CSV_COLUMNS = [
+  { accessorKey: 'paymentDate', header: 'Date' },
+  { accessorKey: 'tenantName', header: 'Tenant' },
+  { accessorKey: 'unitNumber', header: 'Unit' },
+  { accessorKey: 'invoiceId', header: 'Invoice' },
+  { accessorKey: 'chargeType', header: 'Charge Type' },
+  { accessorKey: 'type', header: 'Type' },
+  { accessorKey: 'paymentAmount', header: 'Paid' },
+  { accessorKey: 'discountAmount', header: 'Discount' },
+  { accessorKey: 'paymentMethod', header: 'Method' },
+  { accessorKey: 'notes', header: 'Notes' },
+]
+
 const PaymentRecords = () => {
   const [from, setFrom] = useState(iso(new Date(Date.now() - 90 * 864e5)))
   const [to, setTo] = useState(iso(new Date()))
   const [search, setSearch] = useState('')
+  const [tenantFilter, setTenantFilter] = useState('') // '' = all tenants
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(false)
   const [pageIndex, setPageIndex] = useState(0)
@@ -34,14 +54,15 @@ const PaymentRecords = () => {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (!q) return rows
-    return rows.filter((r) =>
+    const byTenant = tenantFilter ? rows.filter((r) => r.tenantName === tenantFilter) : rows
+    if (!q) return byTenant
+    return byTenant.filter((r) =>
       [r.tenantName, r.unitNumber, r.invoiceId, r.paymentMethod, r.notes, r.chargeType, typeOf(r)]
         .join(' ').toLowerCase().includes(q))
-  }, [rows, search])
+  }, [rows, search, tenantFilter])
 
-  // Back to page 1 whenever the dates, search or page size change the list
-  useEffect(() => { setPageIndex(0) }, [from, to, search, pageSize])
+  // Back to page 1 whenever the dates, tenant, search or page size change the list
+  useEffect(() => { setPageIndex(0) }, [from, to, tenantFilter, search, pageSize])
   const paged = filtered.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)
 
   const totalPaid = filtered.reduce((s, r) => s + Number(r.paymentAmount || 0), 0)
@@ -50,10 +71,20 @@ const PaymentRecords = () => {
   return (
     <CCard className="border-0 shadow-sm mb-4">
       <CCardHeader className="py-3 px-4">
-        <div className="fw-semibold fs-5 mb-2">Payment Records</div>
+        <div className="d-flex justify-content-between align-items-center gap-2 mb-2">
+          <div className="fw-semibold fs-5">Payment Records</div>
+          {/* Exports what the filters show (all pages) */}
+          <CButton color="success" variant="outline" disabled={loading || !filtered.length}
+            onClick={() => exportCSV(CSV_COLUMNS, filtered.map((r) => ({ ...r, type: typeOf(r) })), `payments_${from}_to_${to}.csv`)}>
+            Export CSV
+          </CButton>
+        </div>
         <div className="d-flex flex-wrap gap-2">
           <CFormInput type="date" style={{ maxWidth: 170 }} value={from} onChange={(e) => setFrom(e.target.value)} />
           <CFormInput type="date" style={{ maxWidth: 170 }} value={to} onChange={(e) => setTo(e.target.value)} />
+          <div style={{ minWidth: 240, maxWidth: 260 }} title="Tenant / Company">
+            <TenantFilter names={rows.map((r) => r.tenantName)} value={tenantFilter} onChange={setTenantFilter} />
+          </div>
           <CFormInput placeholder="Search tenant, invoice, method..." style={{ maxWidth: 260 }}
             value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
@@ -86,8 +117,8 @@ const PaymentRecords = () => {
                 <CTableDataCell>{r.tenantName}</CTableDataCell>
                 <CTableDataCell>{r.unitNumber}</CTableDataCell>
                 <CTableDataCell>#{r.invoiceId}{r.chargeType ? ` (${r.chargeType})` : ''}</CTableDataCell>
-                <CTableDataCell>{typeOf(r)}</CTableDataCell>
-                <CTableDataCell className="text-end">{fmt(r.paymentAmount)}</CTableDataCell>
+                <CTableDataCell><CBadge color={TYPE_COLOR[typeOf(r)]}>{typeOf(r)}</CBadge></CTableDataCell>
+                <CTableDataCell className={`text-end ${Number(r.paymentAmount) < 0 ? 'text-danger' : ''}`}>{fmt(r.paymentAmount)}</CTableDataCell>
                 <CTableDataCell className="text-end">{fmt(r.discountAmount)}</CTableDataCell>
                 <CTableDataCell>{r.paymentMethod}</CTableDataCell>
                 <CTableDataCell>{r.notes}</CTableDataCell>

@@ -18,6 +18,7 @@ import PaymentModal from '../../components/rent/PaymentModal'
 import BulkDueDateUpdateModal from '../../components/rent/BulkDueDateUpdateModal'
 import GenerateInvoicesModal from '../../components/rent/GenerateInvoicesModal'
 import ExtraChargeModal from '../../components/rent/ExtraChargeModal'
+import TenantFilter from '../../components/rent/TenantFilter'
 
 import { useRentCollection } from '../../hooks/useRentCollection'
 import { fmt, formatDate } from '../../utils/rentUtils'
@@ -101,7 +102,14 @@ const RentCollection = () => {
   }
 
   const [globalFilter, setGlobalFilter] = useState('')
+  const [tenantFilter, setTenantFilter] = useState('') // '' = all tenants
   const [expandedRows, setExpandedRows] = useState({})
+
+  // Invoices of the chosen tenant / company only; the search box then works within them
+  const tableData = useMemo(
+    () => (tenantFilter ? (rentList || []).filter((r) => r.tenantName === tenantFilter) : rentList || []),
+    [rentList, tenantFilter],
+  )
 
   const toggleExpand = (id) => {
     setExpandedRows((prev) => ({
@@ -188,7 +196,7 @@ const RentCollection = () => {
 
 
   const table = useReactTable({
-    data: rentList || [],
+    data: tableData,
     columns,
     state: {
       globalFilter,
@@ -205,7 +213,9 @@ const RentCollection = () => {
   })
 
   // Back to page 1 on a new search; stay on a real page if the list got shorter
-  useEffect(() => { table.setPageIndex(0) }, [globalFilter]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { table.setPageIndex(0) }, [globalFilter, tenantFilter]) // eslint-disable-line react-hooks/exhaustive-deps
+  // A new tenant / company choice clears the ticked invoices, so Update Due Date never acts on hidden rows
+  useEffect(() => { setSelectedIds([]) }, [tenantFilter])
   const pageCount = table.getPageCount()
   const { pageIndex } = table.getState().pagination
   useEffect(() => { if (pageCount > 0 && pageIndex > pageCount - 1) table.setPageIndex(pageCount - 1) }, [pageIndex, pageCount]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -249,6 +259,14 @@ const RentCollection = () => {
                     value={globalFilter ?? ''}
                     onChange={(e) => setGlobalFilter(e.target.value)}
                   />
+                  {/* Tenant / Company */}
+                  <div style={{ minWidth: '240px', maxWidth: '260px' }} title="Tenant / Company">
+                    <TenantFilter
+                      names={(rentList || []).map((r) => r.tenantName)}
+                      value={tenantFilter}
+                      onChange={setTenantFilter}
+                    />
+                  </div>
                   {/* Generate Invoices */}
                   <CButton
                     color="dark"

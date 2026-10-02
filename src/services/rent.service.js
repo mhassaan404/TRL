@@ -18,6 +18,11 @@ export const rentService = {
   // ── Reads ──────────────────────────────────────────────────────────────
   getRentHistory: () => load(async () => list(await api.get('/RentHistory/History')), [], 'Failed to load rent history'),
 
+  // One invoice with its payments and recorded events ({ invoice, payments, events }). Throws, so the
+  // History window can show the error in place of the details.
+  getInvoiceDetails: (invoiceId) =>
+    request(() => api.get('/RentHistory/InvoiceDetails', { params: { invoiceId } }), 'Failed to load invoice history'),
+
   getRentCollection: () =>
     load(async () => list(await api.get('/Rent/GetRentCollection')), [], 'Failed to load rent collection'),
 
@@ -69,7 +74,8 @@ export const rentService = {
     request(() => api.post('/Rent/CreatePaymentAdjustment', payload), 'Adjustment failed'),
 
   // tenantIds: null = all tenants; otherwise only those tenants (an empty list is rejected by the caller)
-  generateInvoices: ({ tenantIds, month, year, dueInDays = 5 }) =>
+  // dueInDays: leave out to use the Payment Due Days setting (Late Fee Settings)
+  generateInvoices: ({ tenantIds, month, year, dueInDays = null }) =>
     request(
       () =>
         api.post('/Rent/GenerateInvoices', {
@@ -81,7 +87,7 @@ export const rentService = {
       'Failed to generate invoices',
     ),
 
-  createExtraCharge: ({ tenantIds, month, year, chargeType, description, amount, dueInDays = 5 }) =>
+  createExtraCharge: ({ tenantIds, month, year, chargeType, description, amount, dueInDays = null }) =>
     request(
       () =>
         api.post('/Rent/CreateExtraCharge', {
