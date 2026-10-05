@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   CCard, CCardBody, CCardHeader, CButton, CModal, CModalHeader, CModalBody, CModalFooter,
   CFormInput, CFormLabel, CFormTextarea, CFormFeedback, CInputGroup, CInputGroupText, CTable, CTableHead, CTableRow, CTableHeaderCell, CTableBody, CTableDataCell
@@ -46,6 +46,8 @@ const LeaseManagement = () => {
   const [modal, setModal] = useState({ visible: false })
   const [form, setForm] = useState(emptyForm)
   const [renewState, setRenewState] = useState(null)
+  const [editState, setEditState] = useState(null)
+  const editSavingRef = useRef(false)
   const [endState, setEndState] = useState(null)
   const [cancelState, setCancelState] = useState(null)
   const [cancelLeaseState, setCancelLeaseState] = useState(null)
@@ -126,6 +128,52 @@ const LeaseManagement = () => {
   const previousOf = (renewal) =>
     leases.find((p) => p.tenantId === renewal.tenantId && p.unitId === renewal.unitId && p.renewedIntoNext
       && day(p.nextStartDate) === day(renewal.startDate))
+
+  // Edit: same rules as the API (LeaseRepository.UpdateAsync). Tenure can always change; start date and rent
+  // only before the lease is billed; a renewal's start date never (it follows on from the previous term).
+  const openEdit = (lease) =>
+    setEditState({
+      lease,
+      startDate: day(lease.startDate),
+      rentAmount: String(Number(lease.rentAmount)),
+      tenureMonths: String(lease.tenureMonths),
+      isRenewal: !!lease.isPendingRenewal || !!previousOf(lease),
+      saving: false,
+    })
+
+  const editErrors = editState
+    ? {
+        startDate: editState.startDate ? '' : 'Please choose the start date.',
+        rentAmount: Number(editState.rentAmount) > 0 ? '' : 'Rent must be greater than zero.',
+      }
+    : {}
+  const editChanged = !!editState && (
+    editState.startDate !== day(editState.lease.startDate)
+    || Number(editState.rentAmount) !== Number(editState.lease.rentAmount)
+    || Number(editState.tenureMonths) !== Number(editState.lease.tenureMonths))
+
+  const handleEdit = async () => {
+    // The ref blocks a second click in the same instant (state updates only apply on the next render)
+    if (editSavingRef.current || editState.saving || editErrors.startDate || editErrors.rentAmount || !editChanged) return
+    editSavingRef.current = true
+    setEditState((p) => ({ ...p, saving: true }))
+    try {
+      const res = await leaseService.update({
+        LeaseId: editState.lease.leaseId,
+        StartDate: editState.startDate,
+        RentAmount: Number(editState.rentAmount),
+        TenureMonths: Number(editState.tenureMonths),
+      })
+      toast.success(res?.message || 'Lease updated')
+      setEditState(null)
+      load()
+    } catch (err) {
+      toast.error(err.message)
+      setEditState((p) => p && { ...p, saving: false })
+    } finally {
+      editSavingRef.current = false
+    }
+  }
 
   const handleCancelRenewal = async () => {
     setCancelState((p) => ({ ...p, saving: true }))
@@ -250,6 +298,9 @@ const LeaseManagement = () => {
                 <CTableDataCell>
                   {l.isActive && (
                     <div className="d-flex gap-1">
+                      <CButton size="sm" color="secondary" variant="outline" onClick={() => openEdit(l)}>
+                        Edit
+                      </CButton>
                       {/* Same rule as the API: only a term that has started can be renewed, so an early renewal
                           can't be renewed again before its new term begins (no Renew on upcoming leases) */}
                       {hasStarted(l) && (
@@ -327,6 +378,89 @@ const LeaseManagement = () => {
           <CButton color="secondary" onClick={() => setModal({ visible: false })}>Cancel</CButton>
           <CButton color="primary" disabled={!form.tenantId || !form.unitId || !form.rentAmount || creating} onClick={handleCreate}>
             {creating ? 'Creating...' : 'Create Lease'}
+          </CButton>
+        </CModalFooter>
+      </CModal>
+
+      <CModal visible={!!editState} onClose={() => setEditState(null)} backdrop="static">
+        <CModalHeader><strong>Edit Lease</strong></CModalHeader>
+        <CModalBody>
+          {editState && (() => {
+            const l = editState.lease
+            const billed = !!l.hasRentInvoices
+            const startLocked = billed || editState.isRenewal
+            const tenureOptions = [...new Set([1, 3, 6, 12, 24, Number(l.tenureMonths)])].sort((a, b) => a - b)
+            const end = new Date(`${editState.startDate || day(l.startDate)}T00:00:00`)
+            end.setMonth(end.getMonth() + Number(editState.tenureMonths))
+            return (
+              <>
+                <p className="text-body-secondary small mb-3">
+                  {l.tenantName} · {l.buildingName}, Floor {l.floorNumber}, Unit {l.unitNumber}
+                </p>
+                {billed && (
+                  <div className="alert alert-info small">
+                    This lease already has rent invoices, so its start date and rent can&apos;t be changed here. To
+                    correct them, cancel its open rent invoices in Rent History first, then edit the lease and
+                    generate the rent again. The tenure can still be changed.
+                  </div>
+                )}
+                <div className="mb-3">
+                  <CFormLabel htmlFor="edit-start">Start Date <span className="text-danger">*</span></CFormLabel>
+                  <CFormInput
+                    id="edit-start"
+                    type="date"
+                    value={editState.startDate}
+                    disabled={startLocked}
+                    invalid={!!editErrors.startDate}
+                    onChange={(e) => setEditState((p) => ({ ...p, startDate: e.target.value }))}
+                  />
+                  <CFormFeedback invalid>{editErrors.startDate}</CFormFeedback>
+                  {editState.isRenewal && !billed && (
+                    <small className="text-body-secondary">
+                      This is a renewal: its start date follows on from the previous term and can&apos;t be changed.
+                    </small>
+                  )}
+                </div>
+                <div className="mb-3">
+                  <CFormLabel htmlFor="edit-rent">Rent Amount <span className="text-danger">*</span></CFormLabel>
+                  <CInputGroup className="has-validation">
+                    <CInputGroupText>PKR</CInputGroupText>
+                    <CurrencyInput
+                      id="edit-rent"
+                      value={editState.rentAmount}
+                      disabled={billed}
+                      invalid={!!editErrors.rentAmount}
+                      onValueChange={(v) => setEditState((p) => ({ ...p, rentAmount: v }))}
+                    />
+                    <CFormFeedback invalid>{editErrors.rentAmount}</CFormFeedback>
+                  </CInputGroup>
+                </div>
+                <div>
+                  <CFormLabel htmlFor="edit-tenure">Tenure</CFormLabel>
+                  <select
+                    id="edit-tenure"
+                    className="form-select"
+                    value={editState.tenureMonths}
+                    onChange={(e) => setEditState((p) => ({ ...p, tenureMonths: e.target.value }))}
+                  >
+                    {tenureOptions.map((m) => (
+                      <option key={m} value={m}>{m === 12 ? '1 year' : m === 24 ? '2 years' : `${m} month${m === 1 ? '' : 's'}`}</option>
+                    ))}
+                  </select>
+                  <small className="text-body-secondary">Ends {formatDate(end)}</small>
+                </div>
+              </>
+            )
+          })()}
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setEditState(null)}>Cancel</CButton>
+          <CButton
+            color="primary"
+            disabled={!!editState?.saving || !editChanged || !!editErrors.startDate || !!editErrors.rentAmount}
+            onClick={handleEdit}
+          >
+            {editState?.saving ? 'Saving...' : 'Save Changes'}
           </CButton>
         </CModalFooter>
       </CModal>

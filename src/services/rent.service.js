@@ -119,6 +119,9 @@ export const leaseService = {
 
   renew: (payload) => request(() => api.post('/Lease/Renew', payload), 'Failed to renew lease'),
 
+  // Correct an open lease's start date, rent or tenure
+  update: (payload) => request(() => api.post('/Lease/Update', payload), 'Failed to update lease'),
+
   terminate: (payload) => request(() => api.post('/Lease/Terminate', payload), 'Failed to end lease'),
 
   // Undo an early renewal that hasn't started; the current lease carries on

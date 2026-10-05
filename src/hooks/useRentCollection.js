@@ -187,7 +187,7 @@ export const useRentCollection = () => {
       discountPercent: 0,
       payAmount: 0,
       computedDiscount: 0,
-      paymentDate: '',
+      paymentDate: todayLocal(), // Pay Date defaults to today; Admin can still change it
       paymentMethod: '',
       invoiceNotes: '',
     }
@@ -237,7 +237,7 @@ export const useRentCollection = () => {
         discountPercent: 0,
         payAmount: 0,
         computedDiscount: 0,
-        paymentDate: '',
+        paymentDate: todayLocal(), // Pay Date defaults to today; Admin can still change it
         paymentMethod: '',
         invoiceNotes: '',
       }))
