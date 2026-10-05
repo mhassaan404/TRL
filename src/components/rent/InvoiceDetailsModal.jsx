@@ -73,7 +73,7 @@ const Field = ({ label, children }) => (
 )
 Field.propTypes = { label: PropTypes.string.isRequired, children: PropTypes.node }
 
-const InvoiceDetailsModal = ({ invoiceId, onClose }) => {
+const InvoiceDetailsModal = ({ invoiceId, onClose, onOpenInvoice }) => {
   const [state, setState] = useState({ loading: true, error: '', data: null })
 
   useEffect(() => {
@@ -91,6 +91,7 @@ const InvoiceDetailsModal = ({ invoiceId, onClose }) => {
 
   const inv = state.data?.invoice
   const payments = state.data?.payments || []
+  const linkedCharges = state.data?.linkedCharges || []
 
   // Activity: invoice created, late fee charged (stored on the invoice) and the recorded events, oldest first
   const activity = inv
@@ -189,10 +190,38 @@ const InvoiceDetailsModal = ({ invoiceId, onClose }) => {
               </CCol>
               <CCol md={6}>
                 <Field label="Late fee rule">
-                  {fmt(inv.lateFeePerDay)} per day after the due date, up to{' '}
-                  {Number(inv.lateFeeMaxMultiplier)} × the invoice amount
+                  {Number(inv.lateFeePerDay) === 0
+                    ? 'No late fee'
+                    : <>{fmt(inv.lateFeePerDay)} per day after the due date, up to{' '}{Number(inv.lateFeeMaxMultiplier)} × the invoice amount</>}
                 </Field>
               </CCol>
+              {inv.relatedInvoiceId ? (
+                <CCol md={12}>
+                  <Field label="Related invoice">
+                    <CButton color="link" size="sm" className="p-0 align-baseline" onClick={() => onOpenInvoice?.(inv.relatedInvoiceId)}>
+                      #{inv.relatedInvoiceId}
+                    </CButton>{' '}
+                    · {inv.relatedChargeType ? `${inv.relatedChargeType} (extra charge)` : 'Monthly rent'} ·{' '}
+                    {formatDate(inv.relatedInvoiceDate)} · {fmt(inv.relatedAmount)} · {inv.relatedStatus}
+                    <span className="small text-body-secondary"> (not changed by this charge)</span>
+                  </Field>
+                </CCol>
+              ) : null}
+              {linkedCharges.length > 0 && (
+                <CCol md={12}>
+                  <Field label="Extra charges for this invoice">
+                    {linkedCharges.map((c) => (
+                      <div key={c.invoiceId}>
+                        <CButton color="link" size="sm" className="p-0 align-baseline" onClick={() => onOpenInvoice?.(c.invoiceId)}>
+                          #{c.invoiceId}
+                        </CButton>{' '}
+                        · {c.chargeType} · {formatDate(c.invoiceDate)} · {fmt(c.totalRent)} · {c.status}
+                        {c.description ? <span className="small text-body-secondary"> · {c.description}</span> : null}
+                      </div>
+                    ))}
+                  </Field>
+                </CCol>
+              )}
             </CRow>
 
             <div className="border rounded p-3 mb-4 bg-body-tertiary">
@@ -344,6 +373,7 @@ const InvoiceDetailsModal = ({ invoiceId, onClose }) => {
 InvoiceDetailsModal.propTypes = {
   invoiceId: PropTypes.number, // null = closed
   onClose: PropTypes.func.isRequired,
+  onOpenInvoice: PropTypes.func, // opens another invoice's history (related invoice / linked charge)
 }
 
 export default InvoiceDetailsModal

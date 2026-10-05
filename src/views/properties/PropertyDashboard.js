@@ -136,7 +136,7 @@ const PropertyDashboard = () => {
                 <CCol xs={12}>
                     <CCard className="mb-4">
                         <CCardHeader className="d-flex flex-wrap align-items-center justify-content-between gap-2">
-                            <strong>Properties</strong>
+                            <strong>Unit Occupancy</strong>
                         </CCardHeader>
                         <CCardBody>
                             <CRow className="align-items-center mb-2">

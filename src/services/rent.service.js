@@ -87,20 +87,26 @@ export const rentService = {
       'Failed to generate invoices',
     ),
 
-  createExtraCharge: ({ tenantIds, month, year, chargeType, description, amount, dueInDays = null }) =>
+  // A separate invoice per tenant. chargeDate/dueInDays null = today / the Payment Due Days setting.
+  createExtraCharge: ({ tenantIds, chargeDate = null, dueInDays = null, chargeType, description, amount, relatedInvoiceId = null, applyLateFee = true }) =>
     request(
       () =>
         api.post('/Rent/CreateExtraCharge', {
           TenantIds: tenantIds,
-          Month: month,
-          Year: year,
+          ChargeDate: chargeDate,
+          DueInDays: dueInDays,
           ChargeType: chargeType,
           Description: description,
           Amount: amount,
-          DueInDays: dueInDays,
+          RelatedInvoiceId: relatedInvoiceId,
+          ApplyLateFee: applyLateFee,
         }),
       'Failed to add charge',
     ),
+
+  // A tenant's invoices (for choosing the invoice an extra charge relates to)
+  getInvoicesByTenant: (tenantId) =>
+    load(async () => list(await api.get('/Rent/GetInvoicesByTenant', { params: { tenantId } })), [], 'Failed to load invoices'),
 
   chargeLateFee: (invoiceId) =>
     request(() => api.post('/Rent/ChargeLateFee', null, { params: { invoiceId } }), 'Failed to charge late fee'),

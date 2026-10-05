@@ -30,14 +30,17 @@ const emptyRentForm = {
   globalDiscountPercent: '',
 }
 
-// A function so month/year are "now" each time the form opens, not when the app was loaded
+// A function so the charge date is "today" each time the form opens, not when the app was loaded.
+// dueInDays '' = the Payment Due Days setting; relatedInvoiceId '' = none
 const emptyExtraChargeForm = () => ({
   tenantIds: [],
-  month: new Date().getMonth() + 1,
-  year: new Date().getFullYear(),
+  chargeDate: todayLocal(),
+  dueInDays: '',
   chargeType: '',
   description: '',
   amount: '',
+  relatedInvoiceId: '',
+  applyLateFee: true,
 })
 
 export const useRentCollection = () => {
@@ -102,6 +105,7 @@ export const useRentCollection = () => {
   // ── Extra Charges ────────────────────────────────────────────────────────
   const [extraChargeModal, setExtraChargeModal] = useState({ visible: false, form: emptyExtraChargeForm() })
   const [isAddingCharge, setIsAddingCharge] = useState(false)
+  const addingChargeRef = useRef(false) // blocks a second submit in the same instant (state applies on the next render)
 
   const openExtraCharge = () => {
     setExtraChargeModal({ visible: true, form: emptyExtraChargeForm() })
@@ -116,16 +120,21 @@ export const useRentCollection = () => {
   }
 
   const handleAddExtraCharge = async () => {
+    if (addingChargeRef.current) return
+    addingChargeRef.current = true
     const form = extraChargeModal.form
+    const tenantIds = form.tenantIds === 'ALL' ? activeTenants.map((t) => t.id) : form.tenantIds
     setIsAddingCharge(true)
     try {
       const result = await rentService.createExtraCharge({
-        tenantIds: form.tenantIds === 'ALL' ? activeTenants.map((t) => t.id) : form.tenantIds,
-        month: form.month,
-        year: form.year,
+        tenantIds,
+        chargeDate: form.chargeDate || null,
+        dueInDays: form.dueInDays === '' ? null : Number(form.dueInDays),
         chargeType: form.chargeType,
-        description: form.description,
+        description: form.description.trim(),
         amount: Number(form.amount),
+        relatedInvoiceId: tenantIds.length === 1 && form.relatedInvoiceId ? Number(form.relatedInvoiceId) : null,
+        applyLateFee: form.applyLateFee,
       })
       toast.success(result?.message || 'Charge added')
       closeExtraCharge()
@@ -133,6 +142,7 @@ export const useRentCollection = () => {
     } catch (err) {
       toast.error(err.message)
     } finally {
+      addingChargeRef.current = false
       setIsAddingCharge(false)
     }
   }

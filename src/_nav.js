@@ -31,19 +31,18 @@ const _nav = [
     icon: <CIcon icon={cilUser} customClassName="nav-icon" />
   },
   {
-    component: CNavItem,
-    name: 'Properties',
-    to: '/properties',
-    icon: <CIcon icon={cilBuilding} customClassName="nav-icon" />,
-  },
-  {
     component: CNavGroup,
     name: 'Properties',
     icon: <CIcon icon={cilBuilding} customClassName="nav-icon" />,
     items: [
       {
         component: CNavItem,
-        name: 'Property Dashboard',
+        name: 'Buildings & Units',
+        to: '/properties',
+      },
+      {
+        component: CNavItem,
+        name: 'Unit Occupancy',
         to: '/properties/PropertyDashboard',
       },
     ],

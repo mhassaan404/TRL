@@ -274,6 +274,10 @@ const RentCollection = () => {
                   >
                     + Generate Invoices
                   </CButton>
+                  {/* Extra Charge: a separate one-time invoice (maintenance, utility, damage, rent correction...) */}
+                  <CButton color="dark" variant="outline" onClick={openExtraCharge}>
+                    + Extra Charge
+                  </CButton>
                   {/* New Payment */}
                   <CButton
                     color="primary"

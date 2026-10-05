@@ -392,7 +392,7 @@ const Properties = () => {
             <strong className="fs-5">
 
               {!selectedBuilding
-                ? 'Properties Management'
+                ? 'Buildings & Units'
                 : selectedFloor
                   ? `${selectedBuilding.buildingName} — Floor ${
                       selectedFloor.floorNumber ??
