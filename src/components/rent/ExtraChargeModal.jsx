@@ -1,5 +1,5 @@
 // src/components/rent/ExtraChargeModal.jsx
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   CModal,
   CModalHeader,
@@ -18,6 +18,7 @@ import {
   CCol,
 } from '@coreui/react'
 import TenantMultiSelect from './TenantMultiSelect'
+import SearchableSelect from './SearchableSelect'
 import CurrencyInput from '../common/CurrencyInput'
 import { rentService } from '../../services/rent.service'
 import { fmt, formatDate } from '../../utils/rentUtils'
@@ -83,11 +84,26 @@ const ExtraChargeModal = ({
   }
   const isValid = Object.values(errors).every((e) => !e)
 
-  const invoiceLabel = (i) =>
-    `#${i.invoiceId} · ${formatDate(i.invoiceDate)} · ${i.chargeType ? i.chargeType : 'Rent'} ${fmt(i.totalRent)} · ${i.status}`
+  // Searchable list (by invoice no., unit, date, type, amount or status): open invoices first, newest first;
+  // cancelled ones last. Every line shows the unit, since a tenant with several units has several invoices a month.
+  const relatedOptions = useMemo(() => {
+    const sorted = [...tenantInvoices].sort(
+      (a, b) =>
+        (a.status === 'Cancelled') - (b.status === 'Cancelled') ||
+        String(b.invoiceDate).localeCompare(String(a.invoiceDate)) ||
+        b.invoiceId - a.invoiceId,
+    )
+    return [
+      { value: '', label: 'None' },
+      ...sorted.map((i) => ({
+        value: String(i.invoiceId),
+        label: `#${i.invoiceId} · Unit ${i.unitNumber || '—'} · ${formatDate(i.invoiceDate)} · ${i.chargeType || 'Rent'} ${fmt(i.totalRent)} · ${i.status}`,
+      })),
+    ]
+  }, [tenantInvoices])
 
   return (
-    <CModal visible={visible} onClose={onClose} backdrop="static">
+    <CModal size="lg" visible={visible} onClose={onClose} backdrop="static">
       <CModalHeader className={isDark ? 'bg-body-secondary' : 'bg-body-tertiary'}>
         <strong>Add Extra Charge</strong>
       </CModalHeader>
@@ -103,8 +119,8 @@ const ExtraChargeModal = ({
             />
           </div>
 
-          <CRow className="mb-3 g-2">
-            <CCol sm={7}>
+          <CRow className="mb-3 g-3">
+            <CCol md={4}>
               <CFormLabel htmlFor="xc-type">Charge Type</CFormLabel>
               <CFormSelect
                 id="xc-type"
@@ -119,7 +135,7 @@ const ExtraChargeModal = ({
                 ))}
               </CFormSelect>
             </CCol>
-            <CCol sm={5}>
+            <CCol md={4}>
               <CFormLabel htmlFor="xc-amount">Amount</CFormLabel>
               <CInputGroup>
                 <CInputGroupText>PKR</CInputGroupText>
@@ -130,6 +146,15 @@ const ExtraChargeModal = ({
                   onValueChange={set('amount')}
                 />
               </CInputGroup>
+            </CCol>
+            <CCol md={4}>
+              <CFormLabel htmlFor="xc-date">Charge Date</CFormLabel>
+              <CFormInput
+                id="xc-date"
+                type="date"
+                value={form.chargeDate}
+                onChange={(e) => set('chargeDate')(e.target.value)}
+              />
             </CCol>
           </CRow>
 
@@ -156,17 +181,8 @@ const ExtraChargeModal = ({
             />
           </div>
 
-          <CRow className="mb-3 g-2">
-            <CCol sm={6}>
-              <CFormLabel htmlFor="xc-date">Charge Date</CFormLabel>
-              <CFormInput
-                id="xc-date"
-                type="date"
-                value={form.chargeDate}
-                onChange={(e) => set('chargeDate')(e.target.value)}
-              />
-            </CCol>
-            <CCol sm={6}>
+          <CRow className="mb-3 g-3">
+            <CCol md={4}>
               <CFormLabel htmlFor="xc-due">Due In (days)</CFormLabel>
               <CFormInput
                 id="xc-due"
@@ -178,31 +194,25 @@ const ExtraChargeModal = ({
                 invalid={!!errors.dueInDays}
                 onChange={(e) => set('dueInDays')(e.target.value)}
               />
+              <CFormText>Empty = Payment Due Days setting</CFormText>
+            </CCol>
+            <CCol md={8}>
+              <CFormLabel>Related Invoice (optional)</CFormLabel>
+              <div id="xc-related">
+                <SearchableSelect
+                  options={singleTenantId ? relatedOptions : []}
+                  value={form.relatedInvoiceId}
+                  disabled={!singleTenantId}
+                  placeholder={singleTenantId ? 'None' : 'Select one tenant to link an invoice'}
+                  onChange={(v) => set('relatedInvoiceId')(String(v))}
+                />
+              </div>
+              <CFormText>
+                For a Rent Correction, link the original invoice. It and its payments are not
+                changed.
+              </CFormText>
             </CCol>
           </CRow>
-
-          <div className="mb-3">
-            <CFormLabel htmlFor="xc-related">Related Invoice (optional)</CFormLabel>
-            <CFormSelect
-              id="xc-related"
-              value={form.relatedInvoiceId}
-              disabled={!singleTenantId}
-              onChange={(e) => set('relatedInvoiceId')(e.target.value)}
-            >
-              <option value="">
-                {singleTenantId ? 'None' : 'Select one tenant to link an invoice'}
-              </option>
-              {tenantInvoices.map((i) => (
-                <option key={i.invoiceId} value={i.invoiceId}>
-                  {invoiceLabel(i)}
-                </option>
-              ))}
-            </CFormSelect>
-            <CFormText>
-              For a Rent Correction, link the original invoice. The original invoice and its
-              payments are not changed.
-            </CFormText>
-          </div>
 
           <CFormCheck
             id="xc-latefee"

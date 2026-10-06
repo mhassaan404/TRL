@@ -267,15 +267,16 @@ const RentCollection = () => {
                       onChange={setTenantFilter}
                     />
                   </div>
-                  {/* Generate Invoices */}
+                  {/* Generate Invoices (theme-aware colours: readable in light and dark mode) */}
                   <CButton
-                    color="dark"
+                    color="primary"
+                    variant="outline"
                     onClick={openGenerateInvoices}
                   >
                     + Generate Invoices
                   </CButton>
                   {/* Extra Charge: a separate one-time invoice (maintenance, utility, damage, rent correction...) */}
-                  <CButton color="dark" variant="outline" onClick={openExtraCharge}>
+                  <CButton color="info" variant="outline" onClick={openExtraCharge}>
                     + Extra Charge
                   </CButton>
                   {/* New Payment */}
@@ -287,7 +288,7 @@ const RentCollection = () => {
                   </CButton>
                   {/* Update Due Date */}
                   <CButton
-                    color="warning"
+                    color="secondary"
                     variant="outline"
                     disabled={selectedIds.length === 0}
                     onClick={() => {
