@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  CCard, CCardBody, CCardHeader, CButton, CModal, CModalHeader, CModalBody, CModalFooter,
+  CCard, CCardBody, CCardHeader, CButton, CButtonGroup, CModal, CModalHeader, CModalBody, CModalFooter,
   CFormInput, CFormLabel, CFormTextarea, CFormFeedback, CInputGroup, CInputGroupText, CTable, CTableHead, CTableRow, CTableHeaderCell, CTableBody, CTableDataCell
 } from '@coreui/react'
 import { toast } from 'react-toastify'
@@ -8,11 +8,11 @@ import { leaseService, rentService } from '../../services/rent.service'
 import UnitPicker from '../../components/rent/UnitPicker'
 import TenantFilter from '../../components/rent/TenantFilter'
 import CurrencyInput from '../../components/common/CurrencyInput'
-import { PageSizeSelect, TablePagination, DEFAULT_PAGE_SIZE } from '../../components/common/TablePagination'
+import { PAGE_SIZES, TablePagination, DEFAULT_PAGE_SIZE } from '../../components/common/TablePagination'
 import { fmt, formatDate } from '../../utils/rentUtils'
 import { todayLocal } from '../../utils/dates'
 
-const emptyForm = { tenantId: '', unitId: '', rentAmount: '', startDate: todayLocal(), tenureMonths: 12 }
+const emptyForm = { tenantId: '', unitId: '', rentAmount: '', unitRent: 0, startDate: todayLocal(), tenureMonths: 12 }
 const FILTERS = ['All', 'Active', 'Upcoming', 'Expired', 'Ended']
 
 const day = (d) => String(d || '').slice(0, 10)
@@ -54,24 +54,29 @@ const LeaseManagement = () => {
   const [creating, setCreating] = useState(false)
   const [filter, setFilter] = useState('Active')
   const [tenantFilter, setTenantFilter] = useState('') // '' = all tenants
+  const [search, setSearch] = useState('') // tenant, unit, building or floor
   const [pageIndex, setPageIndex] = useState(0)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
   const load = () => leaseService.getAll().then(setLeases)
   useEffect(() => { load(); rentService.getActiveTenants().then(setTenants) }, [])
 
-  // The chosen tenant's leases; the status buttons (and their counts) then work within them
-  const tenantLeases = useMemo(
-    () => (tenantFilter ? leases.filter((l) => l.tenantName === tenantFilter) : leases),
-    [leases, tenantFilter],
-  )
+  // The chosen tenant's leases matching the search; the status buttons (and their counts) then work within them
+  const tenantLeases = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return leases.filter(
+      (l) =>
+        (!tenantFilter || l.tenantName === tenantFilter) &&
+        (!q || [l.tenantName, l.unitNumber, l.buildingName, l.floorNumber].join(' ').toLowerCase().includes(q)),
+    )
+  }, [leases, tenantFilter, search])
 
   const filtered = useMemo(
     () => (filter === 'All' ? tenantLeases : tenantLeases.filter((l) => statusOf(l) === filter)),
     [tenantLeases, filter],
   )
 
-  useEffect(() => { setPageIndex(0) }, [filter, tenantFilter])
+  useEffect(() => { setPageIndex(0) }, [filter, tenantFilter, search])
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
   // Stay on a real page when the list shrinks (e.g. the last lease on the last page was ended)
@@ -202,6 +207,12 @@ const LeaseManagement = () => {
     }
   }
 
+  // A lease made by mistake and then ended on its start day (one day billed) can still be cancelled (no rent).
+  // Same rule as the API (LeaseRepository.CancelLeaseAsync); a renewal is refused there.
+  const endedOnStartDay = (l) =>
+    !l.isActive && !!l.billedThrough && day(l.billedThrough) === day(l.startDate)
+    && !['Renewed', 'Lease cancelled', 'Renewal cancelled'].includes(l.terminationReason) && !previousOf(l)
+
   // End Lease form: the window stays open until the lease is actually ended (missing reason, bad date or an
   // API error keep it open with the message shown)
   const openTerminate = (lease) =>
@@ -245,46 +256,78 @@ const LeaseManagement = () => {
   return (
     <CCard className="border-0 shadow-sm mb-4">
       <CCardHeader className="d-flex flex-wrap justify-content-between align-items-center gap-2 py-3 px-4">
-        <div className="fw-semibold fs-5">Lease Management</div>
+        <div>
+          <div className="fw-semibold fs-5">Lease Management</div>
+          <div className="small text-body-secondary">{leases.length} leases in total</div>
+        </div>
         <CButton color="primary" onClick={() => setModal({ visible: true })}>+ New Lease</CButton>
       </CCardHeader>
       <CCardBody>
-        <div className="d-flex justify-content-between align-items-center gap-2 mb-3 flex-wrap">
-          <PageSizeSelect pageSize={pageSize} onChange={(size) => { setPageSize(size); setPageIndex(0) }} />
-          <div style={{ minWidth: 240, maxWidth: 260 }} title="Tenant / Company">
+        {/* Filters: search + tenant on the left, status on the right */}
+        <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
+          <CFormInput
+            type="search"
+            placeholder="Search tenant, unit, building or floor..."
+            style={{ maxWidth: 300 }}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <div style={{ minWidth: 220, maxWidth: 260 }} title="Tenant / Company">
             <TenantFilter names={leases.map((l) => l.tenantName)} value={tenantFilter} onChange={setTenantFilter} />
           </div>
-          <div className="d-flex gap-2 flex-wrap">
-          {FILTERS.map((f) => (
-            <CButton
-              key={f}
-              size="sm"
-              color={filter === f ? 'primary' : 'secondary'}
-              variant={filter === f ? undefined : 'outline'}
-              onClick={() => setFilter(f)}
+          <CButtonGroup size="sm" role="group" aria-label="Lease status" className="ms-lg-auto flex-wrap">
+            {FILTERS.map((f) => (
+              <CButton
+                key={f}
+                color={filter === f ? 'primary' : 'secondary'}
+                variant={filter === f ? undefined : 'outline'}
+                onClick={() => setFilter(f)}
+              >
+                {f} <span className="opacity-75">({counts[f]})</span>
+              </CButton>
+            ))}
+          </CButtonGroup>
+        </div>
+
+        {/* Page size and the record count on one line */}
+        <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+          {/* Same choices as PageSizeSelect, kept on one line */}
+          <label className="d-flex align-items-center gap-2 text-nowrap mb-0">
+            Show
+            <select
+              className="form-select form-select-sm"
+              style={{ width: 'auto' }}
+              value={pageSize}
+              onChange={(e) => { setPageSize(Number(e.target.value)); setPageIndex(0) }}
             >
-              {f} ({counts[f]})
-            </CButton>
-          ))}
+              {PAGE_SIZES.map((size) => (
+                <option key={size} value={size}>{size}</option>
+              ))}
+            </select>
+            entries
+          </label>
+          <div className="small text-body-secondary">
+            {filtered.length === leases.length ? `${filtered.length} leases` : `${filtered.length} of ${leases.length} leases`}
           </div>
         </div>
 
         <CTable hover responsive small>
           <CTableHead><CTableRow>
-            {['Tenant', 'Building', 'Floor', 'Unit', 'Rent', 'Start', 'End', 'Tenure', 'Status', 'Actions'].map((h) => (
+            {['Lease #', 'Tenant', 'Building', 'Floor', 'Unit', 'Rent', 'Start', 'End', 'Tenure', 'Status', 'Actions'].map((h) => (
               <CTableHeaderCell key={h}>{h}</CTableHeaderCell>
             ))}
           </CTableRow></CTableHead>
           <CTableBody>
             {paged.map((l) => (
               <CTableRow key={l.leaseId}>
+                <CTableDataCell className="text-nowrap">#{l.leaseId}</CTableDataCell>
                 <CTableDataCell>{l.tenantName}</CTableDataCell>
                 <CTableDataCell>{l.buildingName}</CTableDataCell>
                 <CTableDataCell>{l.floorNumber}</CTableDataCell>
                 <CTableDataCell>{l.unitNumber}</CTableDataCell>
-                <CTableDataCell>{fmt(l.rentAmount)}</CTableDataCell>
-                <CTableDataCell>{formatDate(l.startDate)}</CTableDataCell>
-                <CTableDataCell>{formatDate(l.endDate)}</CTableDataCell>
+                <CTableDataCell className="text-nowrap">{fmt(l.rentAmount)}</CTableDataCell>
+                <CTableDataCell className="text-nowrap">{formatDate(l.startDate)}</CTableDataCell>
+                <CTableDataCell className="text-nowrap">{formatDate(l.endDate)}</CTableDataCell>
                 <CTableDataCell>{l.tenureMonths} mo</CTableDataCell>
                 <CTableDataCell>
                   <span className={'badge ' + STATUS_BADGE[statusOf(l)]}>{statusOf(l)}</span>
@@ -297,7 +340,7 @@ const LeaseManagement = () => {
                 </CTableDataCell>
                 <CTableDataCell>
                   {l.isActive && (
-                    <div className="d-flex gap-1">
+                    <div className="d-flex gap-1 text-nowrap">
                       <CButton size="sm" color="secondary" variant="outline" onClick={() => openEdit(l)}>
                         Edit
                       </CButton>
@@ -325,11 +368,18 @@ const LeaseManagement = () => {
                       </CButton>
                     </div>
                   )}
+                  {endedOnStartDay(l) && (
+                    <CButton size="sm" color="warning" variant="outline" className="text-nowrap"
+                      title="Ended on its start day, so one day is billed. Cancel it if it was created by mistake (no rent)."
+                      onClick={() => setCancelLeaseState({ lease: l, saving: false })}>
+                      Cancel Lease
+                    </CButton>
+                  )}
                 </CTableDataCell>
               </CTableRow>
             ))}
             {!paged.length && (
-              <CTableRow><CTableDataCell colSpan={10} className="text-center text-muted py-4">No leases</CTableDataCell></CTableRow>
+              <CTableRow><CTableDataCell colSpan={11} className="text-center text-muted py-4">No leases</CTableDataCell></CTableRow>
             )}
           </CTableBody>
         </CTable>
@@ -348,14 +398,19 @@ const LeaseManagement = () => {
             </select>
           </div>
           <div className="mb-3">
-            <UnitPicker value={form.unitId} onChange={({ unitId, rent }) => setForm((p) => ({ ...p, unitId, rentAmount: rent || p.rentAmount }))} />
+            <UnitPicker value={form.unitId} onChange={({ unitId, rent }) => setForm((p) => ({ ...p, unitId, unitRent: rent, rentAmount: rent || p.rentAmount }))} />
           </div>
           <div className="mb-3">
-            <CFormLabel>Rent Amount</CFormLabel>
+            <CFormLabel>Monthly Rent</CFormLabel>
             <CInputGroup>
               <CInputGroupText>PKR</CInputGroupText>
               <CurrencyInput value={form.rentAmount} placeholder="0" onValueChange={(v) => setForm((p) => ({ ...p, rentAmount: v }))} />
             </CInputGroup>
+            {form.unitRent > 0 && Number(form.rentAmount) > 0 && Number(form.rentAmount) !== Number(form.unitRent) && (
+              <div className="small text-warning mt-1">
+                Unit rent is PKR {fmt(form.unitRent)}; this lease is PKR {fmt(form.rentAmount)}.
+              </div>
+            )}
           </div>
           <div className="d-flex gap-2">
             <div className="flex-grow-1">
@@ -422,7 +477,7 @@ const LeaseManagement = () => {
                   )}
                 </div>
                 <div className="mb-3">
-                  <CFormLabel htmlFor="edit-rent">Rent Amount <span className="text-danger">*</span></CFormLabel>
+                  <CFormLabel htmlFor="edit-rent">Monthly Rent <span className="text-danger">*</span></CFormLabel>
                   <CInputGroup className="has-validation">
                     <CInputGroupText>PKR</CInputGroupText>
                     <CurrencyInput
@@ -469,7 +524,7 @@ const LeaseManagement = () => {
         <CModalHeader><strong>Renew Lease</strong></CModalHeader>
         <CModalBody>
           <div className="mb-3">
-            <CFormLabel>New Rent (leave blank to keep current)</CFormLabel>
+            <CFormLabel>New Monthly Rent (leave blank to keep current)</CFormLabel>
             <CInputGroup>
               <CInputGroupText>PKR</CInputGroupText>
               <CurrencyInput value={renewState?.rentAmount || ''} placeholder="Current rent"
@@ -597,6 +652,20 @@ const LeaseManagement = () => {
                 ? "This lease hasn't started yet, so no rent is billed."
                 : 'Rent is billed through this day.'}
             </small>
+            {/* Moving out on the start day of a started, non-renewal lease bills one day: usually a lease made by mistake */}
+            {endState && hasStarted(endState.lease) && !endState.lease.isPendingRenewal && !previousOf(endState.lease)
+              && endState.moveOut === day(endState.lease.startDate) && (
+              <div className="alert alert-warning small mt-3 mb-0">
+                Ending on the start day bills <strong>1 day of rent</strong>. If this lease was created by mistake, cancel
+                it instead, so no rent is billed.
+                <div className="mt-2">
+                  <CButton size="sm" color="warning"
+                    onClick={() => { const lease = endState.lease; setEndState(null); setCancelLeaseState({ lease, saving: false }) }}>
+                    Cancel Lease instead
+                  </CButton>
+                </div>
+              </div>
+            )}
             {endState?.lease.isPendingRenewal && (
               <div className="alert alert-warning small mt-3 mb-0">
                 This is an upcoming renewal. Ending it ends the tenancy: the current term also stops on the move-out

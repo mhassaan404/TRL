@@ -107,6 +107,7 @@ const RentHistory = () => {
         const matches =
           record.tenant?.toLowerCase().includes(term) ||
           record.unit?.toLowerCase().includes(term) ||
+          record.buildingName?.toLowerCase().includes(term) ||
           String(record.invoiceId || '').includes(term) ||
           String(record.monthlyRent || '').includes(term)
 
@@ -161,15 +162,30 @@ const RentHistory = () => {
     () => [
       {
         accessorKey: 'invoiceId',
-        header: 'ID',
+        header: 'Invoice #',
+        cell: ({ row }) => `#${row.original.invoiceId}`,
+      },
+      {
+        // Extra charges have no lease
+        accessorKey: 'leaseId',
+        header: 'Lease #',
+        cell: ({ row }) => (row.original.leaseId ? `#${row.original.leaseId}` : '—'),
       },
       {
         accessorKey: 'tenant',
         header: 'Tenant Name',
       },
       {
+        accessorKey: 'buildingName',
+        header: 'Building',
+      },
+      {
+        accessorKey: 'floorNumber',
+        header: 'Floor',
+      },
+      {
         accessorKey: 'unit',
-        header: 'Property / Unit',
+        header: 'Unit',
       },
       {
         accessorKey: 'monthlyRent',
@@ -190,6 +206,11 @@ const RentHistory = () => {
         accessorKey: 'invoiceDate',
         header: 'Invoice Date',
         cell: ({ row }) => formatDate(row.original.invoiceDate),
+      },
+      {
+        accessorKey: 'dueDate',
+        header: 'Due Date',
+        cell: ({ row }) => formatDate(row.original.dueDate),
       },
       {
         accessorKey: 'lastPaymentDate',
@@ -237,14 +258,21 @@ const RentHistory = () => {
                 History
               </CButton>
               {status === 'Cancelled' ? (
-                <CButton
-                  color="success"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleReinstate(id)}
+                // Same rule as the API (CanReinstate): disabled when its lease no longer covers that month or a newer
+                // invoice already bills it
+                <span
+                  title={row.original.canReinstate ? '' : "Can't be reinstated: its lease no longer covers that month, or another invoice already bills it."}
                 >
-                  Reinstate
-                </CButton>
+                  <CButton
+                    color="success"
+                    variant="outline"
+                    size="sm"
+                    disabled={!row.original.canReinstate}
+                    onClick={() => handleReinstate(id)}
+                  >
+                    Reinstate
+                  </CButton>
+                </span>
               ) : row.original.hasPaymentRecords ? (
                 // Same rule as the API: an invoice with payment records can't be cancelled, so payment history is
                 // never rewritten. Corrections go through payment adjustments instead.

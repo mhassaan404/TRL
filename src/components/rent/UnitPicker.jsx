@@ -7,10 +7,12 @@ const UnitPicker = ({ value, onChange, disabled }) => {
   const [units, setUnits] = useState([])
   const [buildingId, setBuildingId] = useState('')
   const [floorId, setFloorId] = useState('')
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     rentService.getVacantUnits(value || undefined).then((d) => {
       setUnits(d)
+      setLoaded(true)
       const cur = d.find((u) => u.unitId === value)
       if (cur) { setBuildingId(String(cur.buildingId)); setFloorId(String(cur.floorId)) }
     })
@@ -73,6 +75,14 @@ const UnitPicker = ({ value, onChange, disabled }) => {
           }}
         />
       </CCol>
+
+      {loaded && units.length === 0 && (
+        <CCol xs={12}>
+          <div className="small text-danger">
+            No vacant units: every unit already has an active lease. End a lease or add a unit first.
+          </div>
+        </CCol>
+      )}
     </CRow>
   )
 }

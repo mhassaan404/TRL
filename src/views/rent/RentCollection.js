@@ -120,6 +120,9 @@ const RentCollection = () => {
 
   const columns = useMemo(
     () => [
+      { accessorKey: 'invoiceId', header: 'Invoice #', cell: ({ row }) => `#${row.original.invoiceId}` },
+      // Extra charges have no lease
+      { accessorKey: 'leaseId', header: 'Lease #', cell: ({ row }) => (row.original.leaseId ? `#${row.original.leaseId}` : '—') },
       { accessorKey: 'tenantName', header: 'Tenant' },
       { accessorKey: 'buildingName', header: 'Building' },
       { accessorKey: 'floorNumber', header: 'Floor' },
@@ -141,6 +144,9 @@ const RentCollection = () => {
           </div>
         ),
       },
+      { accessorKey: 'paidAmount', header: 'Paid', cell: ({ row }) => fmt(row.original.paidAmount || 0) },
+      { accessorKey: 'lateFee', header: 'Late Fee', cell: ({ row }) => fmt(row.original.lateFee || 0) },
+      { accessorKey: 'remainingAmount', header: 'Balance', cell: ({ row }) => fmt(row.original.remainingAmount || 0) },
       {
         accessorKey: 'dueDate',
         header: 'Due Date',
@@ -288,7 +294,7 @@ const RentCollection = () => {
                   </CButton>
                   {/* Update Due Date */}
                   <CButton
-                    color="secondary"
+                    color="warning"
                     variant="outline"
                     disabled={selectedIds.length === 0}
                     onClick={() => {

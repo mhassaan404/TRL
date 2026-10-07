@@ -23,8 +23,10 @@ const TYPE_COLOR = { Payment: 'success', Adjustment: 'warning', Discount: 'info'
 const CSV_COLUMNS = [
   { accessorKey: 'paymentDate', header: 'Date' },
   { accessorKey: 'tenantName', header: 'Tenant' },
+  { accessorKey: 'buildingName', header: 'Building' },
+  { accessorKey: 'floorNumber', header: 'Floor' },
   { accessorKey: 'unitNumber', header: 'Unit' },
-  { accessorKey: 'invoiceId', header: 'Invoice' },
+  { accessorKey: 'invoiceId', header: 'Invoice #' },
   { accessorKey: 'chargeType', header: 'Charge Type' },
   { accessorKey: 'type', header: 'Type' },
   { accessorKey: 'paymentAmount', header: 'Paid' },
@@ -57,7 +59,7 @@ const PaymentRecords = () => {
     const byTenant = tenantFilter ? rows.filter((r) => r.tenantName === tenantFilter) : rows
     if (!q) return byTenant
     return byTenant.filter((r) =>
-      [r.tenantName, r.unitNumber, r.invoiceId, r.paymentMethod, r.notes, r.chargeType, typeOf(r)]
+      [r.tenantName, r.buildingName, r.floorNumber, r.unitNumber, r.invoiceId, r.paymentMethod, r.notes, r.chargeType, typeOf(r)]
         .join(' ').toLowerCase().includes(q))
   }, [rows, search, tenantFilter])
 
@@ -101,8 +103,10 @@ const PaymentRecords = () => {
             <CTableRow>
               <CTableHeaderCell>Date</CTableHeaderCell>
               <CTableHeaderCell>Tenant</CTableHeaderCell>
+              <CTableHeaderCell>Building</CTableHeaderCell>
+              <CTableHeaderCell>Floor</CTableHeaderCell>
               <CTableHeaderCell>Unit</CTableHeaderCell>
-              <CTableHeaderCell>Invoice</CTableHeaderCell>
+              <CTableHeaderCell>Invoice #</CTableHeaderCell>
               <CTableHeaderCell>Type</CTableHeaderCell>
               <CTableHeaderCell className="text-end">Paid</CTableHeaderCell>
               <CTableHeaderCell className="text-end">Discount</CTableHeaderCell>
@@ -115,6 +119,8 @@ const PaymentRecords = () => {
               <CTableRow key={r.paymentId}>
                 <CTableDataCell>{formatDate(r.paymentDate)}</CTableDataCell>
                 <CTableDataCell>{r.tenantName}</CTableDataCell>
+                <CTableDataCell>{r.buildingName}</CTableDataCell>
+                <CTableDataCell>{r.floorNumber}</CTableDataCell>
                 <CTableDataCell>{r.unitNumber}</CTableDataCell>
                 <CTableDataCell>#{r.invoiceId}{r.chargeType ? ` (${r.chargeType})` : ''}</CTableDataCell>
                 <CTableDataCell><CBadge color={TYPE_COLOR[typeOf(r)]}>{typeOf(r)}</CBadge></CTableDataCell>
@@ -126,7 +132,7 @@ const PaymentRecords = () => {
             ))}
             {!loading && !filtered.length && (
               <CTableRow>
-                <CTableDataCell colSpan={9} className="text-center text-muted py-4">No records</CTableDataCell>
+                <CTableDataCell colSpan={11} className="text-center text-muted py-4">No records</CTableDataCell>
               </CTableRow>
             )}
           </CTableBody>
