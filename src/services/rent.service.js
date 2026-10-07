@@ -56,6 +56,10 @@ export const rentService = {
   getVacantUnits: (includeUnitId) =>
     load(async () => list(await api.get('/Rent/GetVacantUnits', { params: { includeUnitId } })), [], 'Failed to load units'),
 
+  // Open invoices with the tenant's phone, for the Reminders page
+  getUnpaidForReminders: () =>
+    load(async () => list(await api.get('/Reminders/GetUnpaid')), [], 'Failed to load unpaid invoices'),
+
   getDashboard: () => load(async () => list(await api.get('/Dashboard/dashboard')), [], 'Failed to load dashboard'),
 
   // ── Changes (throw Error(message) on failure) ──────────────────────────
