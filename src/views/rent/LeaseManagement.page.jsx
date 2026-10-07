@@ -7,6 +7,7 @@ import { toast } from 'react-toastify'
 import { leaseService, rentService } from '../../services/rent.service'
 import UnitPicker from '../../components/rent/UnitPicker'
 import TenantFilter from '../../components/rent/TenantFilter'
+import SearchableSelect from '../../components/rent/SearchableSelect'
 import CurrencyInput from '../../components/common/CurrencyInput'
 import { PAGE_SIZES, TablePagination, DEFAULT_PAGE_SIZE } from '../../components/common/TablePagination'
 import { fmt, formatDate } from '../../utils/rentUtils'
@@ -392,10 +393,12 @@ const LeaseManagement = () => {
         <CModalBody>
           <div className="mb-3">
             <CFormLabel>Tenant</CFormLabel>
-            <select className="form-select" value={form.tenantId} onChange={(e) => setForm((p) => ({ ...p, tenantId: e.target.value }))}>
-              <option value="">Select tenant...</option>
-              {tenants.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
+            <SearchableSelect
+              options={tenants.map((t) => ({ value: t.id, label: t.name }))}
+              value={form.tenantId}
+              onChange={(v) => setForm((p) => ({ ...p, tenantId: String(v) }))}
+              placeholder="Select tenant..."
+            />
           </div>
           <div className="mb-3">
             <UnitPicker value={form.unitId} onChange={({ unitId, rent }) => setForm((p) => ({ ...p, unitId, unitRent: rent, rentAmount: rent || p.rentAmount }))} />

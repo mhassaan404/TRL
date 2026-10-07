@@ -10,6 +10,7 @@ const RentCollection = React.lazy(() => import('./views/rent/RentCollection'))
 const RentHistory = React.lazy(() => import('./views/rent/RentHistory'))
 const Payments = React.lazy(() => import('./views/rent/Payments'))
 const Reminders = React.lazy(() => import('./views/rent/Reminders'))
+const MaintenanceJobs = React.lazy(() => import('./views/maintenance/MaintenanceJobs'))
 const LeaseManagement = React.lazy(() => import('./views/rent/LeaseManagement.page'))
 const LateFeeSettings = React.lazy(() => import('./views/settings/LateFeeSettings'))
 
@@ -23,6 +24,7 @@ const routes = [
   { path: '/rent/renthistory', name: 'RentHistory', element: RentHistory },
   { path: '/rent/payments', name: 'Payments', element: Payments },
   { path: '/rent/reminders', name: 'Reminders', element: Reminders },
+  { path: '/maintenance', name: 'Maintenance', element: MaintenanceJobs },
   { path: '/rent/leasemanagement', name: 'LeaseManagement', element: LeaseManagement },
   { path: '/settings/late-fee', name: 'Late Fee Settings', element: LateFeeSettings },
 ]

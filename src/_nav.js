@@ -7,6 +7,7 @@ import {
   cilCash,
   cilSettings,
   cilBell,
+  cilClipboard,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 
@@ -80,6 +81,12 @@ const _nav = [
     name: 'Reminders',
     to: '/rent/Reminders',
     icon: <CIcon icon={cilBell} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Maintenance',
+    to: '/maintenance',
+    icon: <CIcon icon={cilClipboard} customClassName="nav-icon" />,
   },
   {
     component: CNavTitle,

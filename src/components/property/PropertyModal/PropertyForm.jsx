@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react'
+import SearchableSelect from '../../rent/SearchableSelect'
 import {
   CForm,
   CFormInput,
@@ -195,14 +196,16 @@ const PropertyForm = ({
           </CFormLabel>
 
           <CInputGroup>
-            <CFormSelect value={formData.buildingId} onChange={handleBuildingChange} required>
-              <option value="">Select Building...</option>
-              {buildings.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </CFormSelect>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <SearchableSelect
+                options={buildings.map((b) => ({ value: b.id, label: b.name }))}
+                value={formData.buildingId}
+                onChange={(v) => handleBuildingChange({ target: { value: String(v) } })}
+                placeholder="Select Building..."
+                required
+                invalid={validated && !formData.buildingId}
+              />
+            </div>
 
             <CButton type="button" color="outline-primary" onClick={() => setShowNewBuilding((v) => !v)}>
               +
@@ -227,17 +230,14 @@ const PropertyForm = ({
                 size="sm"
               />
 
-              <CFormSelect
-                size="sm"
-                className="mb-2"
-                value={newBuilding.cityId}
-                onChange={(e) => setNewBuilding({ ...newBuilding, cityId: e.target.value })}
-              >
-                <option value="">Select City *</option>
-                {cities.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </CFormSelect>
+              <div className="mb-2">
+                <SearchableSelect
+                  options={cities.map((c) => ({ value: c.id, label: c.name }))}
+                  value={newBuilding.cityId}
+                  onChange={(v) => setNewBuilding({ ...newBuilding, cityId: String(v) })}
+                  placeholder="Select City *"
+                />
+              </div>
 
               <CFormSelect
                 size="sm"
@@ -287,22 +287,17 @@ const PropertyForm = ({
           </CFormLabel>
 
           <CInputGroup>
-            <CFormSelect
-              value={formData.floorId}
-              onChange={(e) => setFormData({ ...formData, floorId: e.target.value })}
-              disabled={!formData.buildingId}
-              required
-            >
-              <option value="">
-                {formData.buildingId ? 'Select Floor...' : 'Select building first'}
-              </option>
-
-              {floors.map((f) => (
-                <option key={f.id} value={f.id}>
-                  Floor {f.floorNumber}
-                </option>
-              ))}
-            </CFormSelect>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <SearchableSelect
+                options={floors.map((f) => ({ value: f.id, label: `Floor ${f.floorNumber}` }))}
+                value={formData.floorId}
+                onChange={(v) => setFormData({ ...formData, floorId: String(v) })}
+                disabled={!formData.buildingId}
+                placeholder={formData.buildingId ? 'Select Floor...' : 'Select building first'}
+                required
+                invalid={validated && !formData.floorId}
+              />
+            </div>
 
             <CButton
               type="button"

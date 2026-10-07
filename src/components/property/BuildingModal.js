@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import SearchableSelect from '../rent/SearchableSelect'
 import {
   CModal,
   CModalHeader,
@@ -94,16 +95,14 @@ const BuildingModal = ({ visible, editData, handleSubmit, closeModal, cities, bu
               <CFormLabel className="fw-semibold">
                 City <span className="text-danger">*</span>
               </CFormLabel>
-              <CFormSelect
+              <SearchableSelect
+                options={cities.map((c) => ({ value: c.id, label: c.name }))}
                 value={formData.cityId}
-                onChange={(e) => setFormData({ ...formData, cityId: e.target.value })}
+                onChange={(v) => setFormData({ ...formData, cityId: String(v) })}
+                placeholder="Select City..."
                 required
-              >
-                <option value="">Select City...</option>
-                {cities.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </CFormSelect>
+                invalid={validated && !formData.cityId}
+              />
             </CCol>
 
             {/* Address */}

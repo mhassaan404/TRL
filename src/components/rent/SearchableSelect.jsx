@@ -2,7 +2,9 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useIsDarkMode } from '../../hooks/useIsDarkMode'
 
 // options: [{ value, label }]
-const SearchableSelect = ({ options, value, onChange, placeholder = 'Select...', disabled }) => {
+// required: adds a hidden required input so a form's checkValidity() catches an empty choice;
+// invalid: shows the red invalid border
+const SearchableSelect = ({ options, value, onChange, placeholder = 'Select...', disabled, required, invalid }) => {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const ref = useRef(null)
@@ -26,8 +28,12 @@ const SearchableSelect = ({ options, value, onChange, placeholder = 'Select...',
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
+      {required && (
+        <input tabIndex={-1} aria-hidden="true" required value={value ?? ''} onChange={() => {}}
+          style={{ position: 'absolute', opacity: 0, width: 1, height: 1, bottom: 0, left: 8, pointerEvents: 'none' }} />
+      )}
       <div
-        className="form-select"
+        className={`form-select${invalid ? ' is-invalid' : ''}`}
         style={{ cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.6 : 1 }}
         onClick={() => !disabled && setOpen((o) => !o)}
       >
