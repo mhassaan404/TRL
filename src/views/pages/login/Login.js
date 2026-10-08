@@ -20,6 +20,7 @@ import CIcon from '@coreui/icons-react'
 import { cilBuilding, cilLockLocked, cilUser } from '@coreui/icons'
 
 import authService, { LAST_CLIENT_CODE } from '../../../services/auth.service'
+import { TrlLogo } from '../../../components/brand/TrlLogo'
 
 // Pre-fills the company code used last time on this browser (not secret)
 const lastClientCode = () => {
@@ -70,6 +71,9 @@ const Login = () => {
             <CCardGroup>
               <CCard className="p-4 shadow-lg">
                 <CCardBody>
+                  <div className="text-center mb-4">
+                    <TrlLogo size={40} />
+                  </div>
                   <h1 className="text-center mb-4">Login</h1>
                   <p className="text-body-secondary text-center mb-4">Sign in to your account</p>
 

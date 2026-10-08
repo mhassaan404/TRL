@@ -6,9 +6,6 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import { CSpinner, useColorModes } from '@coreui/react'
 import './scss/style.scss'
-
-// We use those styles to show code examples, you should remove them in your application.
-import './scss/examples.scss'
 import './App.css';
 import authService from './services/auth.service'
 

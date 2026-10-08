@@ -9,12 +9,8 @@ import {
   CSidebarHeader,
   CSidebarToggler,
 } from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-
 import { AppSidebarNav } from './AppSidebarNav'
-
-import { logo } from 'src/assets/brand/logo'
-import { sygnet } from 'src/assets/brand/sygnet'
+import { TrlLogo, TrlMark } from './brand/TrlLogo'
 
 // sidebar nav config
 import navigation from '../_nav'
@@ -36,9 +32,15 @@ const AppSidebar = () => {
       }}
     >
       <CSidebarHeader className="border-bottom">
-        <CSidebarBrand to="/">
-          <CIcon customClassName="sidebar-brand-full" icon={logo} height={32} />
-          <CIcon customClassName="sidebar-brand-narrow" icon={sygnet} height={32} />
+        {/* Product name: full when the sidebar is open, short when it is folded */}
+        <CSidebarBrand to="/" className="text-decoration-none">
+          {/* CoreUI shows/hides these two classes; the wrappers keep the logo's own display styles out of the way */}
+          <span className="sidebar-brand-full text-white">
+            <TrlLogo size={30} />
+          </span>
+          <span className="sidebar-brand-narrow">
+            <TrlMark size={30} />
+          </span>
         </CSidebarBrand>
         <CCloseButton
           className="d-lg-none"

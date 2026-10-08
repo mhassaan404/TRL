@@ -1,7 +1,5 @@
 import React from 'react'
 
-// Mock pages (views/rent/Invoices, maintenance, reminders, reports, charts) are kept on disk but not routed:
-// they only show sample data and have no API behind them yet.
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Tenants = React.lazy(() => import('./views/tenants/Tenants'))
 const Properties = React.lazy(() => import('./views/properties/Properties'))

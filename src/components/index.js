@@ -3,8 +3,6 @@ import AppFooter from './AppFooter'
 import AppHeader from './AppHeader'
 import AppHeaderDropdown from './header/AppHeaderDropdown'
 import AppSidebar from './AppSidebar'
-import DocsIcons from './DocsIcons'
-import DocsLink from './DocsLink'
 
 export {
   AppContent,
@@ -12,6 +10,4 @@ export {
   AppHeader,
   AppHeaderDropdown,
   AppSidebar,
-  DocsIcons,
-  DocsLink
 }
