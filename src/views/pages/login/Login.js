@@ -17,36 +17,46 @@ import {
   CSpinner,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilLockLocked, cilUser } from '@coreui/icons'
+import { cilBuilding, cilLockLocked, cilUser } from '@coreui/icons'
 
-import authService from '../../../services/auth.service'
+import authService, { LAST_CLIENT_CODE } from '../../../services/auth.service'
+
+// Pre-fills the company code used last time on this browser (not secret)
+const lastClientCode = () => {
+  try {
+    return localStorage.getItem(LAST_CLIENT_CODE) || ''
+  } catch {
+    return ''
+  }
+}
 
 const Login = () => {
   const navigate = useNavigate()
 
+  const [clientCode, setClientCode] = useState(lastClientCode)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [serverError, setServerError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [touched, setTouched] = useState({ username: false, password: false })
+  const [touched, setTouched] = useState({ clientCode: false, username: false, password: false })
 
   const handleLogin = async (e) => {
     e.preventDefault()
     setServerError('')
 
-    const hasError = !username.trim() || !password
+    const hasError = !clientCode.trim() || !username.trim() || !password
     if (hasError) {
-      setTouched({ username: true, password: true })
+      setTouched({ clientCode: true, username: true, password: true })
       return
     }
 
     setLoading(true)
 
     try {
-      await authService.login(username.trim(), password)
+      await authService.login(clientCode.trim(), username.trim(), password)
       navigate('/dashboard', { replace: true })
     } catch (err) {
-      setServerError(err.message || 'Invalid username or password')
+      setServerError(err.message || 'Invalid client code, username or password')
     } finally {
       setLoading(false)
     }
@@ -70,6 +80,25 @@ const Login = () => {
                   )}
 
                   <CForm onSubmit={handleLogin} noValidate>
+                    <CInputGroup className="mb-4">
+                      <CInputGroupText>
+                        <CIcon icon={cilBuilding} />
+                      </CInputGroupText>
+                      <CFormInput
+                        placeholder="Client Code"
+                        autoComplete="organization"
+                        autoCapitalize="characters"
+                        maxLength={20}
+                        value={clientCode}
+                        invalid={touched.clientCode && !clientCode.trim()}
+                        onBlur={() => setTouched({ ...touched, clientCode: true })}
+                        onChange={(e) => setClientCode(e.target.value)}
+                        disabled={loading}
+                        required
+                      />
+                      <CFormFeedback invalid>Client code is required</CFormFeedback>
+                    </CInputGroup>
+
                     <CInputGroup className="mb-4">
                       <CInputGroupText>
                         <CIcon icon={cilUser} />

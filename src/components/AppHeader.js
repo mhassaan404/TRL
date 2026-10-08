@@ -23,6 +23,7 @@ import {
 } from '@coreui/icons'
 
 import { AppHeaderDropdown } from './header/index'
+import authService from '../services/auth.service'
 
 const AppHeader = () => {
   const headerRef = useRef()
@@ -30,6 +31,8 @@ const AppHeader = () => {
 
   const dispatch = useDispatch()
   const sidebarShow = useSelector((state) => state.sidebarShow)
+  // The signed-in client (company), saved at login; all data shown belongs to this client
+  const client = authService.getCurrentUser()
 
   useEffect(() => {
     const onScroll = () =>
@@ -56,6 +59,14 @@ const AppHeader = () => {
           </CNavItem>
         </CHeaderNav>
         <CHeaderNav className="ms-auto">
+          {client?.clientName && (
+            <li className="nav-item d-flex align-items-center px-2">
+              <span className="fw-semibold text-body-secondary text-truncate" style={{ maxWidth: 220 }}
+                title={`Client code: ${client.clientCode}`}>
+                {client.clientName}
+              </span>
+            </li>
+          )}
           <li className="nav-item py-1">
             <div className="vr h-100 mx-2 text-body text-opacity-75"></div>
           </li>

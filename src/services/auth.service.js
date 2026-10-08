@@ -1,21 +1,26 @@
 // src/services/auth.service.js
 import api from '../api/axios' // your axios instance with interceptors
 
+export const LAST_CLIENT_CODE = 'lastClientCode'
+
 class AuthService {
   /**
-   * Login user using username/password
-   * - Uses HttpOnly cookie for refresh token (withCredentials: true)
-   * - Returns user data on success
+   * Login with client (company) code + username/password
+   * - Tokens are HttpOnly cookies (withCredentials: true); the server picks the client's database from them
+   * - Stores only non-sensitive details: { username, role, clientCode, clientName }
    */
-  async login(username, password) {
+  async login(clientCode, username, password) {
     try {
       const response = await api.post('/Auth/login', {
+        clientCode: clientCode.trim(),
         username: username.trim(),
         password: password.trim(),
       })
 
       const user = response.data.user || response.data
       localStorage.setItem('user', JSON.stringify(user))
+      // Remembered to pre-fill the login form next time (not secret)
+      if (user?.clientCode) localStorage.setItem(LAST_CLIENT_CODE, user.clientCode)
 
       return user
     } catch (error) {
