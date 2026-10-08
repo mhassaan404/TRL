@@ -10,6 +10,12 @@ const Payments = React.lazy(() => import('./views/rent/Payments'))
 const Reminders = React.lazy(() => import('./views/rent/Reminders'))
 const MaintenanceJobs = React.lazy(() => import('./views/maintenance/MaintenanceJobs'))
 const LeaseManagement = React.lazy(() => import('./views/rent/LeaseManagement.page'))
+const ArrearsAgeing = React.lazy(() => import('./views/reports/ArrearsAgeing'))
+const Collections = React.lazy(() => import('./views/reports/Collections'))
+const TenantStatement = React.lazy(() => import('./views/reports/TenantStatement'))
+const BillingVsCollection = React.lazy(() => import('./views/reports/BillingVsCollection'))
+const RentRoll = React.lazy(() => import('./views/reports/RentRoll'))
+const MaintenanceCost = React.lazy(() => import('./views/reports/MaintenanceCost'))
 const LateFeeSettings = React.lazy(() => import('./views/settings/LateFeeSettings'))
 
 const routes = [
@@ -24,6 +30,12 @@ const routes = [
   { path: '/rent/reminders', name: 'Reminders', element: Reminders },
   { path: '/maintenance', name: 'Maintenance', element: MaintenanceJobs },
   { path: '/rent/leasemanagement', name: 'LeaseManagement', element: LeaseManagement },
+  { path: '/reports/arrears-ageing', name: 'Arrears Ageing', element: ArrearsAgeing },
+  { path: '/reports/collections', name: 'Collections', element: Collections },
+  { path: '/reports/tenant-statement', name: 'Tenant Statement', element: TenantStatement },
+  { path: '/reports/billing-vs-collection', name: 'Billing vs Collection', element: BillingVsCollection },
+  { path: '/reports/rent-roll', name: 'Occupancy / Rent Roll', element: RentRoll },
+  { path: '/reports/maintenance-cost', name: 'Maintenance Cost', element: MaintenanceCost },
   { path: '/settings/late-fee', name: 'Late Fee Settings', element: LateFeeSettings },
 ]
 

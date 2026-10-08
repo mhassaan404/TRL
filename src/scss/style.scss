@@ -65,3 +65,21 @@ body {
     --cui-footer-bg: var(--cui-body-bg);
   }
 }
+
+// Reports: print only the report card (no sidebar, header, footer or buttons)
+@media print {
+  .sidebar,
+  .header,
+  .footer,
+  .no-print {
+    display: none !important;
+  }
+
+  .wrapper {
+    padding-inline-start: 0 !important;
+  }
+
+  .report-print {
+    box-shadow: none !important;
+  }
+}

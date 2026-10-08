@@ -8,6 +8,7 @@ import {
   cilSettings,
   cilBell,
   cilClipboard,
+  cilChartLine,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 
@@ -83,6 +84,44 @@ const _nav = [
     name: 'Maintenance',
     to: '/maintenance',
     icon: <CIcon icon={cilClipboard} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavGroup,
+    name: 'Reports',
+    to: '/reports',
+    icon: <CIcon icon={cilChartLine} customClassName="nav-icon" />,
+    items: [
+      {
+        component: CNavItem,
+        name: 'Arrears Ageing',
+        to: '/reports/arrears-ageing',
+      },
+      {
+        component: CNavItem,
+        name: 'Collections',
+        to: '/reports/collections',
+      },
+      {
+        component: CNavItem,
+        name: 'Tenant Statement',
+        to: '/reports/tenant-statement',
+      },
+      {
+        component: CNavItem,
+        name: 'Billing vs Collection',
+        to: '/reports/billing-vs-collection',
+      },
+      {
+        component: CNavItem,
+        name: 'Occupancy / Rent Roll',
+        to: '/reports/rent-roll',
+      },
+      {
+        component: CNavItem,
+        name: 'Maintenance Cost',
+        to: '/reports/maintenance-cost',
+      },
+    ],
   },
   {
     component: CNavTitle,
