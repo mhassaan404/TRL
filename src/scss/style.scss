@@ -83,3 +83,177 @@ body {
     box-shadow: none !important;
   }
 }
+
+// Printable documents (receipts, invoices): A4 sheets on a grey desk on screen, plain paper when printed.
+// The named page keeps these margins off the report pages.
+// The whole page behind a document is paper-coloured, even in dark mode
+body:has(.print-root) { background: #e9ecef !important; }
+
+.print-root {
+  min-height: 100vh;
+  padding-bottom: 2rem;
+  color: #212529;
+  background: #e9ecef;
+}
+
+.print-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: #fff;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.print-sheet {
+  position: relative;
+  max-width: 794px;
+  min-height: 1000px;
+  padding: 40px 48px;
+  margin: 1.5rem auto 0;
+  overflow: hidden;
+  color: #212529;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0 0 0 / 15%);
+  page: doc;
+}
+
+@media (max-width: 576px) {
+  .print-sheet { padding: 20px 16px; margin-top: 0; }
+}
+
+.print-watermark {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  z-index: 0;
+  font-size: 7rem;
+  font-weight: 800;
+  color: rgba(220 53 69 / 15%);
+  pointer-events: none;
+  transform: translate(-50%, -50%) rotate(-30deg);
+}
+
+.doc-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.doc-meta {
+  font-size: 0.875rem;
+
+  th {
+    padding: 1px 12px 1px 0;
+    font-weight: 400;
+    color: #6c757d;
+    text-align: right;
+  }
+
+  td { text-align: right; }
+}
+
+.doc-label {
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.doc-box {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+}
+
+.doc-table {
+  font-size: 0.875rem;
+
+  thead th { background: #f1f3f5; }
+}
+
+.doc-kv {
+  th {
+    padding: 2px 12px 2px 0;
+    font-weight: 400;
+    color: #6c757d;
+    white-space: nowrap;
+    vertical-align: top;
+  }
+
+  td { padding: 2px 0; }
+}
+
+.doc-summary {
+  font-size: 0.95rem;
+
+  td { text-align: right; }
+
+  .doc-summary-total th,
+  .doc-summary-total td {
+    padding-top: 6px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #212529;
+    border-top: 2px solid #212529;
+  }
+}
+
+.doc-total {
+  padding: 0.75rem 1rem;
+  text-align: right;
+  background: #f1f3f5;
+  border-radius: 0.375rem;
+}
+
+.doc-total-amount {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.doc-signature {
+  width: 220px;
+  padding-top: 0.25rem;
+  font-size: 0.875rem;
+  text-align: center;
+  border-top: 1px solid #212529;
+}
+
+.text-pre-line { white-space: pre-line; }
+
+@page doc {
+  size: a4;
+  margin: 12mm;
+}
+
+@media print {
+  .print-root { padding: 0; background: #fff; }
+
+  body:has(.print-root) { background: #fff !important; }
+
+  // Notifications never print
+  .Toastify { display: none !important; }
+
+  .print-sheet {
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+    break-after: page;
+  }
+
+  .print-sheet:last-child { break-after: auto; }
+
+  .doc-table thead th,
+  .doc-total {
+    print-color-adjust: exact;
+  }
+}

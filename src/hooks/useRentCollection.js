@@ -3,6 +3,7 @@ import { todayLocal } from '../utils/dates'
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { rentService } from '../services/rent.service'
+import { showPaymentRecorded } from '../components/rent/paymentToast'
 import {
   fmt,
   getRemainingRent,
@@ -376,28 +377,14 @@ export const useRentCollection = () => {
 
       // Both the "New Rent Payment" and the row "Record Payment" flows add a new payment;
       // /Rent/UpdatePayments is only for editing an existing payment by its Id.
-      await rentService.submitPayments(payload)
-      toast.success('Payment recorded successfully')
+      const res = await rentService.submitPayments(payload)
+      showPaymentRecorded(res?.receiptIds)
       closeModal()
     } catch (err) {
       toast.error(err.message)
     } finally {
       submittingPaymentRef.current = false
       setIsSubmittingPayment(false)
-      setLoading(false)
-    }
-  }
-
-  const handleDeletePayment = async (row) => {
-    if (!window.confirm('Are you sure you want to delete this rent payment?')) return
-    setLoading(true)
-    try {
-      await rentService.deletePayment(row.invoiceId)
-      toast.success('Payment deleted successfully')
-      loadRentCollection()
-    } catch (err) {
-      toast.error(err.message)
-    } finally {
       setLoading(false)
     }
   }
@@ -514,7 +501,6 @@ export const useRentCollection = () => {
     handleGlobalWaveChange,
     handleSubmitPayments,
     isSubmittingPayment,
-    handleDeletePayment,
     handleChargeLateFee,
     handleReverseLateFee,
     handleApplyGlobalPaymentDate,

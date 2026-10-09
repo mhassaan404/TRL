@@ -4,7 +4,7 @@ import {
   CTableDataCell, CTableFoot, CTableHead, CTableHeaderCell, CTableRow,
 } from '@coreui/react'
 import { reportService } from '../../services/report.service'
-import authService from '../../services/auth.service'
+import CompanyHeader from '../../components/common/CompanyHeader'
 import SearchableSelect from '../../components/rent/SearchableSelect'
 import { fmt } from '../../utils/rentUtils'
 import { exportCSV } from '../../utils/exportUtils'
@@ -27,7 +27,6 @@ const TenantStatement = () => {
   const [statement, setStatement] = useState(null)
   const [loading, setLoading] = useState(false)
   const requestId = useRef(0)
-  const client = authService.getCurrentUser()
 
   useEffect(() => {
     reportService.getStatementTenants().then(setTenants)
@@ -168,11 +167,9 @@ const TenantStatement = () => {
       {s && (
         <CCard className="border-0 shadow-sm mb-4 report-print" style={{ opacity: loading ? 0.6 : 1 }}>
           <CCardBody className="p-4">
+            <CompanyHeader />
             <div className="d-flex flex-wrap justify-content-between gap-3 mb-3">
-              <div>
-                {client?.clientName && <div className="fw-bold fs-5">{client.clientName}</div>}
-                <div className="fs-6 text-body-secondary">Statement of Account</div>
-              </div>
+              <div className="fw-semibold fs-6">Statement of Account</div>
               <div className="text-end small">
                 <div><span className="text-body-secondary">Period:</span> <span className="fw-semibold">{periodText}</span></div>
                 <div><span className="text-body-secondary">Printed:</span> {formatDay(todayLocal())}</div>

@@ -70,10 +70,6 @@ export const rentService = {
 
   submitPayments: (payload) => request(() => api.post('/Rent/SubmitPayments', payload), 'Payment submission failed'),
 
-  // The API deletes the most recent payment on the given invoice (its query param is named paymentId, but takes an invoice id)
-  deletePayment: (invoiceId) =>
-    request(() => api.delete('/Rent/DeletePayment', { params: { paymentId: invoiceId } }), 'Failed to delete payment'),
-
   createPaymentAdjustment: (payload) =>
     request(() => api.post('/Rent/CreatePaymentAdjustment', payload), 'Adjustment failed'),
 

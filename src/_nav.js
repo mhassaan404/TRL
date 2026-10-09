@@ -9,6 +9,7 @@ import {
   cilBell,
   cilClipboard,
   cilChartLine,
+  cilBriefcase,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 
@@ -71,6 +72,16 @@ const _nav = [
         name: 'Lease Management',
         to: '/rent/LeaseManagement',
       },
+      {
+        component: CNavItem,
+        name: 'Security Deposits',
+        to: '/rent/deposits',
+      },
+      {
+        component: CNavItem,
+        name: 'Move-out Settlements',
+        to: '/rent/settlements',
+      },
     ],
   },
   {
@@ -126,6 +137,12 @@ const _nav = [
   {
     component: CNavTitle,
     name: 'Administration',
+  },
+  {
+    component: CNavItem,
+    name: 'Company Profile',
+    to: '/settings/company-profile',
+    icon: <CIcon icon={cilBriefcase} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,

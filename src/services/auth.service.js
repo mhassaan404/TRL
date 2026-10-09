@@ -1,5 +1,5 @@
 // src/services/auth.service.js
-import api from '../api/axios' // your axios instance with interceptors
+import api, { request } from '../api/axios' // your axios instance with interceptors
 
 export const LAST_CLIENT_CODE = 'lastClientCode'
 
@@ -36,6 +36,17 @@ class AuthService {
 
       throw new Error(message)
     }
+  }
+
+  /**
+   * Change My Password. The server checks the current password, saves the new one and signs out every other
+   * session; this browser gets fresh session cookies. Throws Error(message) on failure. Passwords are not stored.
+   */
+  changePassword({ currentPassword, newPassword, confirmPassword }) {
+    return request(
+      () => api.post('/Auth/change-password', { currentPassword, newPassword, confirmPassword }),
+      'The password could not be changed',
+    )
   }
 
   /**

@@ -20,13 +20,18 @@ import {
 } from '@coreui/react'
 import { rentService } from '../../services/rent.service'
 import { fmt, formatDate } from '../../utils/rentUtils'
+import { hasReceipt, invoiceNo, openInvoice, openReceipts, receiptNo } from '../../utils/documents'
 
 // History window for one invoice (Rent History): the invoice, its totals, every payment record and every
 // recorded event. Read only.
 
 // Same wording as Payments (PaymentRecords)
 const paymentType = (p) =>
-  Number(p.paymentAmount) > 0
+  p.paymentMethod === 'Security Deposit'
+    ? 'From deposit'
+    : p.paymentMethod === 'Credit to Deposit'
+    ? 'Credit moved'
+    : Number(p.paymentAmount) > 0
     ? 'Payment'
     : p.isLateFeeWaived
       ? 'Late fee waived'
@@ -35,7 +40,7 @@ const paymentType = (p) =>
         : 'Adjustment'
 
 // Same badge colours as Payments (PaymentRecords)
-const TYPE_COLOR = { Payment: 'success', Adjustment: 'warning', Discount: 'info', 'Late fee waived': 'secondary' }
+const TYPE_COLOR = { Payment: 'success', Adjustment: 'warning', Discount: 'info', 'Late fee waived': 'secondary', 'From deposit': 'primary', 'Credit moved': 'dark' }
 
 // InvoiceAudit actions
 const EVENT_LABEL = {
@@ -137,7 +142,7 @@ const InvoiceDetailsModal = ({ invoiceId, onClose, onOpenInvoice }) => {
     <CModal size="xl" visible={!!invoiceId} onClose={onClose} scrollable>
       <CModalHeader>
         <strong>
-          Invoice #{invoiceId} History{inv ? ` — ${inv.tenantName}` : ''}
+          Invoice #{invoiceId} ({invoiceNo(invoiceId)}) History{inv ? ` — ${inv.tenantName}` : ''}
         </strong>
       </CModalHeader>
       <CModalBody>
@@ -279,6 +284,7 @@ const InvoiceDetailsModal = ({ invoiceId, onClose, onOpenInvoice }) => {
                   <CTableHeaderCell>Notes</CTableHeaderCell>
                   <CTableHeaderCell className="text-end">Balance after</CTableHeaderCell>
                   <CTableHeaderCell>Recorded by</CTableHeaderCell>
+                  <CTableHeaderCell>Receipt</CTableHeaderCell>
                 </CTableRow>
               </CTableHead>
               <CTableBody>
@@ -314,11 +320,18 @@ const InvoiceDetailsModal = ({ invoiceId, onClose, onOpenInvoice }) => {
                         </div>
                       ) : null}
                     </CTableDataCell>
+                    <CTableDataCell>
+                      {hasReceipt(p) ? (
+                        <CButton color="link" size="sm" className="p-0" title="Print receipt" onClick={() => openReceipts(p.paymentId)}>
+                          {receiptNo(p.paymentId)}
+                        </CButton>
+                      ) : '—'}
+                    </CTableDataCell>
                   </CTableRow>
                 ))}
                 {!payments.length && (
                   <CTableRow>
-                    <CTableDataCell colSpan={8} className="text-center text-body-secondary py-3">
+                    <CTableDataCell colSpan={9} className="text-center text-body-secondary py-3">
                       No payments recorded
                     </CTableDataCell>
                   </CTableRow>
@@ -362,6 +375,11 @@ const InvoiceDetailsModal = ({ invoiceId, onClose, onOpenInvoice }) => {
         )}
       </CModalBody>
       <CModalFooter>
+        {inv && (
+          <CButton color="primary" variant="outline" onClick={() => openInvoice(invoiceId)}>
+            Print Invoice
+          </CButton>
+        )}
         <CButton color="secondary" onClick={onClose}>
           Close
         </CButton>

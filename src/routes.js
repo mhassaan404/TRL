@@ -16,6 +16,11 @@ const TenantStatement = React.lazy(() => import('./views/reports/TenantStatement
 const BillingVsCollection = React.lazy(() => import('./views/reports/BillingVsCollection'))
 const RentRoll = React.lazy(() => import('./views/reports/RentRoll'))
 const MaintenanceCost = React.lazy(() => import('./views/reports/MaintenanceCost'))
+const CompanyProfile = React.lazy(() => import('./views/settings/CompanyProfile'))
+const SecurityDeposits = React.lazy(() => import('./views/rent/SecurityDeposits'))
+const MoveOutSettlements = React.lazy(() => import('./views/rent/MoveOutSettlements'))
+const SettlementForm = React.lazy(() => import('./views/rent/SettlementForm'))
+const ChangePassword = React.lazy(() => import('./views/account/ChangePassword'))
 const LateFeeSettings = React.lazy(() => import('./views/settings/LateFeeSettings'))
 
 const routes = [
@@ -36,6 +41,11 @@ const routes = [
   { path: '/reports/billing-vs-collection', name: 'Billing vs Collection', element: BillingVsCollection },
   { path: '/reports/rent-roll', name: 'Occupancy / Rent Roll', element: RentRoll },
   { path: '/reports/maintenance-cost', name: 'Maintenance Cost', element: MaintenanceCost },
+  { path: '/rent/deposits', name: 'Security Deposits', element: SecurityDeposits },
+  { path: '/rent/settlements', name: 'Move-out Settlements', element: MoveOutSettlements },
+  { path: '/rent/settlements/new/:tenantId/:unitId', name: 'Settle Tenancy', element: SettlementForm },
+  { path: '/account/change-password', name: 'Change Password', element: ChangePassword },
+  { path: '/settings/company-profile', name: 'Company Profile', element: CompanyProfile },
   { path: '/settings/late-fee', name: 'Late Fee Settings', element: LateFeeSettings },
 ]
 

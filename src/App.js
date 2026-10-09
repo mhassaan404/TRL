@@ -22,6 +22,12 @@ const Login = React.lazy(() => import('./views/pages/login/Login'))
 const Page404 = React.lazy(() => import('./views/pages/page404/Page404'))
 const Page500 = React.lazy(() => import('./views/pages/page500/Page500'))
 
+// Printable documents: own tab, outside the app layout (no sidebar/header)
+const ReceiptPrint = React.lazy(() => import('./views/print/ReceiptPrint'))
+const InvoicePrint = React.lazy(() => import('./views/print/InvoicePrint'))
+const DepositReceiptPrint = React.lazy(() => import('./views/print/DepositReceiptPrint'))
+const SettlementPrint = React.lazy(() => import('./views/print/SettlementPrint'))
+
 const App = () => {
   const { isColorModeSet, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
   const storedTheme = useSelector((state) => state.theme)
@@ -57,6 +63,10 @@ const App = () => {
             <Route exact path="/login" name="Login Page" element={<Login />} />
             <Route exact path="/404" name="Page 404" element={<Page404 />} />
             <Route exact path="/500" name="Page 500" element={<Page500 />} />
+            <Route path="/print/receipts/:ids" name="Receipt" element={<RequireAuth><ReceiptPrint /></RequireAuth>} />
+            <Route path="/print/invoice/:id" name="Invoice" element={<RequireAuth><InvoicePrint /></RequireAuth>} />
+            <Route path="/print/deposit/:id" name="Deposit Receipt" element={<RequireAuth><DepositReceiptPrint /></RequireAuth>} />
+            <Route path="/print/settlement/:id" name="Settlement" element={<RequireAuth><SettlementPrint /></RequireAuth>} />
             <Route path="*" name="Home" element={<RequireAuth><DefaultLayout /></RequireAuth>} />
           </Routes>
         </Suspense>

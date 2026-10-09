@@ -25,6 +25,7 @@ import {
 import { useRentHistory } from '../../hooks/useRentHistory'
 import { toLocalDateString } from '../../utils/dates'
 import { exportCSV } from '../../utils/exportUtils'
+import { invoiceNo, openInvoice } from '../../utils/documents'
 import { PageSizeSelect, TablePagination, tablePageProps, tablePageSizeProps, DEFAULT_PAGE_SIZE } from '../../components/common/TablePagination'
 
 // CSV Export Helper
@@ -256,6 +257,9 @@ const RentHistory = () => {
             <div className="d-flex gap-1 flex-wrap">
               <CButton color="info" variant="outline" size="sm" onClick={() => setHistoryId(id)}>
                 History
+              </CButton>
+              <CButton color="primary" variant="outline" size="sm" title={`Print invoice ${invoiceNo(id)}`} onClick={() => openInvoice(id)}>
+                Print
               </CButton>
               {status === 'Cancelled' ? (
                 // Same rule as the API (CanReinstate): disabled when its lease no longer covers that month or a newer

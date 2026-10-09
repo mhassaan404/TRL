@@ -4,6 +4,7 @@ import {
   CTable, CTableBody, CTableDataCell, CTableFoot, CTableHead, CTableHeaderCell, CTableRow,
 } from '@coreui/react'
 import { reportService } from '../../services/report.service'
+import CompanyHeader from '../../components/common/CompanyHeader'
 import { fmt } from '../../utils/rentUtils'
 import { exportCSV } from '../../utils/exportUtils'
 import { todayLocal } from '../../utils/dates'
@@ -112,6 +113,9 @@ const BillingVsCollection = () => {
 
   return (
     <CCard className="border-0 shadow-sm mb-4 report-print">
+      <div className="px-4 pt-3 d-none d-print-block">
+        <CompanyHeader />
+      </div>
       <CCardHeader className="py-3 px-4 d-flex flex-wrap align-items-center gap-2">
         <div className="me-auto">
           <div className="fw-semibold fs-5">Billing vs Collection</div>

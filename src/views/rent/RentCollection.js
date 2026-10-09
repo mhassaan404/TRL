@@ -40,7 +40,6 @@ const RentCollection = () => {
     totals,
     openNewPayment,
     openEditPayment,
-    handleDeletePayment,
     closeModal,
     handleTenantChange,
     handleToggleSelectAll,
@@ -196,7 +195,6 @@ const RentCollection = () => {
       },
     ],
     [openEditPayment,
-      // handleDeletePayment, 
       toggleExpand, expandedRows],
   )
 

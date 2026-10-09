@@ -7,17 +7,20 @@ import { exportCSV } from '../../utils/exportUtils'
 import { toLocalDateString } from '../../utils/dates'
 import { PageSizeSelect, TablePagination, DEFAULT_PAGE_SIZE } from '../common/TablePagination'
 import TenantFilter from './TenantFilter'
+import { hasReceipt, openReceipts, receiptNo } from '../../utils/documents'
 
 const iso = toLocalDateString
 
 const typeOf = (r) =>
-  Number(r.paymentAmount) > 0 ? 'Payment'
+  r.paymentMethod === 'Security Deposit' ? 'From deposit'
+  : r.paymentMethod === 'Credit to Deposit' ? 'Credit moved'
+  : Number(r.paymentAmount) > 0 ? 'Payment'
   : r.isLateFeeWaived ? 'Late fee waived'
   : Number(r.discountAmount) > 0 ? 'Discount'
   : 'Adjustment'
 
 // Badge colour per type, so an adjustment (often money taken back) stands out from normal payments
-const TYPE_COLOR = { Payment: 'success', Adjustment: 'warning', Discount: 'info', 'Late fee waived': 'secondary' }
+const TYPE_COLOR = { Payment: 'success', Adjustment: 'warning', Discount: 'info', 'Late fee waived': 'secondary', 'From deposit': 'primary', 'Credit moved': 'dark' }
 
 // CSV columns: the same as the table
 const CSV_COLUMNS = [
@@ -33,6 +36,7 @@ const CSV_COLUMNS = [
   { accessorKey: 'discountAmount', header: 'Discount' },
   { accessorKey: 'paymentMethod', header: 'Method' },
   { accessorKey: 'notes', header: 'Notes' },
+  { accessorKey: 'receiptNo', header: 'Receipt No.' },
 ]
 
 const PaymentRecords = () => {
@@ -59,7 +63,8 @@ const PaymentRecords = () => {
     const byTenant = tenantFilter ? rows.filter((r) => r.tenantName === tenantFilter) : rows
     if (!q) return byTenant
     return byTenant.filter((r) =>
-      [r.tenantName, r.buildingName, r.floorNumber, r.unitNumber, r.invoiceId, r.paymentMethod, r.notes, r.chargeType, typeOf(r)]
+      [r.tenantName, r.buildingName, r.floorNumber, r.unitNumber, r.invoiceId, r.paymentMethod, r.notes, r.chargeType, typeOf(r),
+        hasReceipt(r) ? receiptNo(r.paymentId) : '']
         .join(' ').toLowerCase().includes(q))
   }, [rows, search, tenantFilter])
 
@@ -77,7 +82,7 @@ const PaymentRecords = () => {
           <div className="fw-semibold fs-5">Payment Records</div>
           {/* Exports what the filters show (all pages) */}
           <CButton color="success" variant="outline" disabled={loading || !filtered.length}
-            onClick={() => exportCSV(CSV_COLUMNS, filtered.map((r) => ({ ...r, type: typeOf(r) })), `payments_${from}_to_${to}.csv`)}>
+            onClick={() => exportCSV(CSV_COLUMNS, filtered.map((r) => ({ ...r, type: typeOf(r), receiptNo: hasReceipt(r) ? receiptNo(r.paymentId) : '' })), `payments_${from}_to_${to}.csv`)}>
             Export CSV
           </CButton>
         </div>
@@ -112,6 +117,7 @@ const PaymentRecords = () => {
               <CTableHeaderCell className="text-end">Discount</CTableHeaderCell>
               <CTableHeaderCell>Method</CTableHeaderCell>
               <CTableHeaderCell>Notes</CTableHeaderCell>
+              <CTableHeaderCell>Receipt</CTableHeaderCell>
             </CTableRow>
           </CTableHead>
           <CTableBody>
@@ -128,11 +134,19 @@ const PaymentRecords = () => {
                 <CTableDataCell className="text-end">{fmt(r.discountAmount)}</CTableDataCell>
                 <CTableDataCell>{r.paymentMethod}</CTableDataCell>
                 <CTableDataCell>{r.notes}</CTableDataCell>
+                <CTableDataCell className="text-nowrap">
+                  {hasReceipt(r) ? (
+                    <CButton size="sm" color="primary" variant="outline" title={`Print receipt ${receiptNo(r.paymentId)}`}
+                      onClick={() => openReceipts(r.paymentId)}>
+                      {receiptNo(r.paymentId)}
+                    </CButton>
+                  ) : <span className="text-body-secondary small">—</span>}
+                </CTableDataCell>
               </CTableRow>
             ))}
             {!loading && !filtered.length && (
               <CTableRow>
-                <CTableDataCell colSpan={11} className="text-center text-muted py-4">No records</CTableDataCell>
+                <CTableDataCell colSpan={12} className="text-center text-muted py-4">No records</CTableDataCell>
               </CTableRow>
             )}
           </CTableBody>
