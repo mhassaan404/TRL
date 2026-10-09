@@ -278,10 +278,10 @@ const RentHistory = () => {
                   </CButton>
                 </span>
               ) : row.original.hasPaymentRecords ? (
-                // Same rule as the API: an invoice with payment records can't be cancelled, so payment history is
-                // never rewritten. Corrections go through payment adjustments instead.
+                // Same rule as the API: an invoice with payment records that still count can't be cancelled, so
+                // payment history is never rewritten. Once every record is reversed (History), it can be cancelled.
                 <span
-                  title="This invoice has payment records (payments, discounts, waivers or adjustments), so it can't be cancelled. Correct it with a payment adjustment instead."
+                  title="This invoice has payment records (payments, discounts, waivers or adjustments), so it can't be cancelled. To cancel it, first reverse its records in History."
                   style={{ cursor: 'not-allowed' }}
                 >
                   <CButton color="warning" variant="outline" size="sm" disabled style={{ pointerEvents: 'none' }}>
@@ -524,7 +524,12 @@ const RentHistory = () => {
             )}
           </CCardBody>
         </CCard>
-        <InvoiceDetailsModal invoiceId={historyId} onClose={() => setHistoryId(null)} onOpenInvoice={setHistoryId} />
+        <InvoiceDetailsModal
+          invoiceId={historyId}
+          onClose={() => setHistoryId(null)}
+          onOpenInvoice={setHistoryId}
+          onChanged={loadRentHistory}
+        />
       </CCol>
     </CRow>
   )

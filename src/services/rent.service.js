@@ -70,6 +70,10 @@ export const rentService = {
 
   submitPayments: (payload) => request(() => api.post('/Rent/SubmitPayments', payload), 'Payment submission failed'),
 
+  // Reverses one payment record as a whole (cash, discount and waiver); reason required. Not a refund.
+  reversePayment: (paymentId, reason) =>
+    request(() => api.post('/Rent/ReversePayment', { paymentId, reason }), 'Payment could not be reversed'),
+
   createPaymentAdjustment: (payload) =>
     request(() => api.post('/Rent/CreatePaymentAdjustment', payload), 'Adjustment failed'),
 

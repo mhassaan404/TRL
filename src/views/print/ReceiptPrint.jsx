@@ -15,9 +15,21 @@ import { amountInWords, invoiceNo, invoiceTitle, receiptNo } from '../../utils/d
 const Receipt = ({ r }) => {
   const invoiceTotal = Number(r.totalRent) + Number(r.lateFeeCharged)
   const after = Number(r.balanceAfter)
+  const reversed = r.reversedByPaymentId != null // entered by mistake and reversed later: the receipt is void
   return (
     <div className="print-sheet">
+      {reversed && <div className="print-watermark">REVERSED</div>}
       <CompanyHeader />
+      {reversed && (
+        <div className="doc-box mb-3 border-danger">
+          <div className="fw-bold text-danger">This receipt is void: the payment was reversed.</div>
+          <div className="small">
+            Reversed on {formatDay(r.reversedAt)}
+            {r.reversedBy ? ` by ${r.reversedBy}` : ''} (record #{r.reversedByPaymentId}). Reason: {r.reversalReason || '—'}
+          </div>
+          <div className="small">A reversal means the payment was entered by mistake; it is not a refund.</div>
+        </div>
+      )}
       <div className="d-flex justify-content-between align-items-start gap-3 mb-3">
         <div className="doc-title">Payment Receipt</div>
         <table className="doc-meta">

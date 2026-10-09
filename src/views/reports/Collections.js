@@ -11,11 +11,14 @@ import { fmt } from '../../utils/rentUtils'
 import { exportCSV } from '../../utils/exportUtils'
 import { todayLocal } from '../../utils/dates'
 import { formatDay, invoiceLabel } from '../../utils/reminders'
-import { GROUP_BY, PRESETS, groupPayments, presetRange, totalsOf } from '../../utils/collections'
+import { GROUP_BY, PRESETS, groupPayments, isReversalRow, presetRange, totalsOf } from '../../utils/collections'
 
 // Collections: money actually received (by payment date), totalled by day, month, method, building or tenant.
 // Read only. The date range is loaded from the API; the other filters work on the loaded payments.
 const isWaived = (p) => p.lateFeeWaived === true || p.lateFeeWaived === 1
+// Reversal = a payment entered by mistake, taken back on this date (negative amounts); Reversed = taken back later
+const rowType = (p) =>
+  isReversalRow(p) ? `Reversal of #${p.reversalOfPaymentId}` : p.reversedByPaymentId != null ? 'Reversed' : ''
 const money = (v) => (Number(v) ? fmt(v) : '—')
 
 const Collections = () => {
@@ -119,16 +122,26 @@ const Collections = () => {
       { accessorKey: 'amount', header: 'Received' },
       { accessorKey: 'discount', header: 'Discount' },
       { accessorKey: 'waived', header: 'Late Fee Waived' },
+      { accessorKey: 'reversal', header: 'Reversal' },
       { accessorKey: 'recordedBy', header: 'Recorded By' },
       { accessorKey: 'notes', header: 'Notes' },
     ],
-    filtered.map((p) => ({ ...p, for: p.invoiceId ? invoiceLabel(p) : '', waived: isWaived(p) ? 'Yes' : '' })),
+    filtered.map((p) => ({
+      ...p,
+      for: p.invoiceId ? invoiceLabel(p) : '',
+      waived: isWaived(p) ? 'Yes' : isReversalRow(p) && p.reversesWaiver ? 'Waiver reversed' : '',
+      reversal: rowType(p),
+    })),
     `collections-payments-${fileSuffix}.csv`,
   )
 
   const cards = [
     { label: 'Total Received', value: `PKR ${fmt(totals.amount)}`, strong: true },
-    { label: 'Payments', value: `${totals.count} from ${totals.tenants} tenant${totals.tenants === 1 ? '' : 's'}` },
+    {
+      label: 'Payments',
+      value: `${totals.count} from ${totals.tenants} tenant${totals.tenants === 1 ? '' : 's'}${
+        totals.reversals ? ` · ${totals.reversals} reversal${totals.reversals === 1 ? '' : 's'}` : ''}`,
+    },
     { label: 'Discounts Given', value: `PKR ${fmt(totals.discount)}` },
     { label: 'Late Fees Waived', value: `${totals.waived} payment${totals.waived === 1 ? '' : 's'}` },
   ]
@@ -298,6 +311,7 @@ const Collections = () => {
                 <CTableDataCell>
                   {p.invoiceId ? invoiceLabel(p) : '—'}
                   {isWaived(p) && <CBadge color="warning" className="ms-1">Late fee waived</CBadge>}
+                  {rowType(p) && <CBadge color="danger" className="ms-1">{rowType(p)}</CBadge>}
                 </CTableDataCell>
                 <CTableDataCell>{p.method}</CTableDataCell>
                 <CTableDataCell className="text-end fw-semibold">{fmt(p.amount)}</CTableDataCell>

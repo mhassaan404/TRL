@@ -1,14 +1,18 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import PropTypes from 'prop-types'
+import { toast } from 'react-toastify'
 import {
   CAlert,
   CBadge,
   CButton,
   CCol,
+  CFormLabel,
+  CFormTextarea,
   CModal,
   CModalBody,
   CModalFooter,
   CModalHeader,
+  CModalTitle,
   CRow,
   CSpinner,
   CTable,
@@ -21,26 +25,20 @@ import {
 import { rentService } from '../../services/rent.service'
 import { fmt, formatDate } from '../../utils/rentUtils'
 import { hasReceipt, invoiceNo, openInvoice, openReceipts, receiptNo } from '../../utils/documents'
+import { todayLocal } from '../../utils/dates'
+import {
+  canReverse,
+  isReversal,
+  isReversed,
+  paymentType,
+  PAYMENT_TYPE_COLOR as TYPE_COLOR,
+  REVERSE_BLOCK_TEXT,
+  reversalEffects,
+} from '../../utils/payments'
 
 // History window for one invoice (Rent History): the invoice, its totals, every payment record and every
-// recorded event. Read only.
-
-// Same wording as Payments (PaymentRecords)
-const paymentType = (p) =>
-  p.paymentMethod === 'Security Deposit'
-    ? 'From deposit'
-    : p.paymentMethod === 'Credit to Deposit'
-    ? 'Credit moved'
-    : Number(p.paymentAmount) > 0
-    ? 'Payment'
-    : p.isLateFeeWaived
-      ? 'Late fee waived'
-      : Number(p.discountAmount) > 0
-        ? 'Discount'
-        : 'Adjustment'
-
-// Same badge colours as Payments (PaymentRecords)
-const TYPE_COLOR = { Payment: 'success', Adjustment: 'warning', Discount: 'info', 'Late fee waived': 'secondary', 'From deposit': 'primary', 'Credit moved': 'dark' }
+// recorded event. The only change made here is reversing a payment record entered by mistake (with a reason);
+// records are never edited or deleted.
 
 // InvoiceAudit actions
 const EVENT_LABEL = {
@@ -78,13 +76,19 @@ const Field = ({ label, children }) => (
 )
 Field.propTypes = { label: PropTypes.string.isRequired, children: PropTypes.node }
 
-const InvoiceDetailsModal = ({ invoiceId, onClose, onOpenInvoice }) => {
+const InvoiceDetailsModal = ({ invoiceId, onClose, onOpenInvoice, onChanged }) => {
   const [state, setState] = useState({ loading: true, error: '', data: null })
+  const [reloadKey, setReloadKey] = useState(0)
+  const [reversing, setReversing] = useState(null) // payment record in the Reverse window
+  const [reason, setReason] = useState('')
+  const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false) // blocks a double click before the button re-renders as disabled
 
   useEffect(() => {
     if (!invoiceId) return undefined
     let alive = true
-    setState({ loading: true, error: '', data: null })
+    // Reloading the same invoice (after a reversal) keeps showing it until the new data arrives
+    setState((s) => ({ loading: true, error: '', data: s.data?.invoice?.invoiceId === invoiceId ? s.data : null }))
     rentService
       .getInvoiceDetails(invoiceId)
       .then((data) => alive && setState({ loading: false, error: '', data }))
@@ -92,7 +96,39 @@ const InvoiceDetailsModal = ({ invoiceId, onClose, onOpenInvoice }) => {
     return () => {
       alive = false
     }
+  }, [invoiceId, reloadKey])
+
+  // A different invoice opened (or closed): no Reverse window left open
+  useEffect(() => {
+    setReversing(null)
   }, [invoiceId])
+
+  const openReverse = (p) => {
+    setReason('')
+    setReversing(p)
+  }
+
+  const confirmReverse = useCallback(async () => {
+    if (!reversing || savingRef.current) return
+    if (!reason.trim()) {
+      toast.warn('Please enter a reason for the reversal.')
+      return
+    }
+    savingRef.current = true
+    setSaving(true)
+    try {
+      const res = await rentService.reversePayment(reversing.paymentId, reason.trim())
+      toast.success(res?.message || 'Payment reversed.')
+      setReversing(null)
+      setReloadKey((k) => k + 1)
+      onChanged?.()
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      savingRef.current = false
+      setSaving(false)
+    }
+  }, [reversing, reason, onChanged])
 
   const inv = state.data?.invoice
   const payments = state.data?.payments || []
@@ -137,8 +173,10 @@ const InvoiceDetailsModal = ({ invoiceId, onClose, onOpenInvoice }) => {
 
   const balance = Number(inv?.balance || 0)
   const cancelled = inv?.status === 'Cancelled'
+  const effects = reversing && inv ? reversalEffects(reversing, inv, todayLocal()) : null
 
   return (
+    <>
     <CModal size="xl" visible={!!invoiceId} onClose={onClose} scrollable>
       <CModalHeader>
         <strong>
@@ -146,7 +184,7 @@ const InvoiceDetailsModal = ({ invoiceId, onClose, onOpenInvoice }) => {
         </strong>
       </CModalHeader>
       <CModalBody>
-        {state.loading && (
+        {state.loading && !inv && (
           <div className="text-center py-5">
             <CSpinner color="primary" />
           </div>
@@ -285,14 +323,23 @@ const InvoiceDetailsModal = ({ invoiceId, onClose, onOpenInvoice }) => {
                   <CTableHeaderCell className="text-end">Balance after</CTableHeaderCell>
                   <CTableHeaderCell>Recorded by</CTableHeaderCell>
                   <CTableHeaderCell>Receipt</CTableHeaderCell>
+                  <CTableHeaderCell />
                 </CTableRow>
               </CTableHead>
               <CTableBody>
                 {payments.map((p) => (
-                  <CTableRow key={p.paymentId}>
+                  <CTableRow key={p.paymentId} className={isReversed(p) ? 'text-body-secondary' : ''}>
                     <CTableDataCell>{formatDate(p.paymentDate)}</CTableDataCell>
                     <CTableDataCell>
                       <CBadge color={TYPE_COLOR[paymentType(p)]}>{paymentType(p)}</CBadge>
+                      {isReversed(p) && (
+                        <div className="small mt-1">
+                          <CBadge color="danger">Reversed</CBadge>{' '}
+                          {formatDate(p.reversedAt)}
+                          {p.reversedBy ? ` by ${p.reversedBy}` : ''}
+                        </div>
+                      )}
+                      {isReversal(p) && <div className="small mt-1">of record #{p.reversalOfPaymentId}</div>}
                     </CTableDataCell>
                     <CTableDataCell
                       className={`text-end ${Number(p.paymentAmount) < 0 ? 'text-danger' : ''}`}
@@ -309,7 +356,13 @@ const InvoiceDetailsModal = ({ invoiceId, onClose, onOpenInvoice }) => {
                       ) : null}
                     </CTableDataCell>
                     <CTableDataCell>{p.paymentMethod || '—'}</CTableDataCell>
-                    <CTableDataCell style={{ maxWidth: 220 }}>{p.notes || '—'}</CTableDataCell>
+                    <CTableDataCell style={{ maxWidth: 220 }}>
+                      {isReversal(p) ? <span className="text-body-secondary">Reason: </span> : null}
+                      {p.notes || '—'}
+                      {isReversed(p) && p.reversalReason ? (
+                        <div className="small">Reversal reason: {p.reversalReason}</div>
+                      ) : null}
+                    </CTableDataCell>
                     <CTableDataCell className="text-end">{fmt(p.balanceAfter)}</CTableDataCell>
                     <CTableDataCell className="small">
                       {p.createdBy || '—'}
@@ -327,11 +380,24 @@ const InvoiceDetailsModal = ({ invoiceId, onClose, onOpenInvoice }) => {
                         </CButton>
                       ) : '—'}
                     </CTableDataCell>
+                    <CTableDataCell className="text-nowrap">
+                      {canReverse(p) ? (
+                        <CButton color="danger" variant="outline" size="sm" onClick={() => openReverse(p)}>
+                          Reverse
+                        </CButton>
+                      ) : !isReversal(p) && !isReversed(p) ? (
+                        <span title={REVERSE_BLOCK_TEXT[p.reverseBlock] || ''} style={{ cursor: 'not-allowed' }}>
+                          <CButton color="secondary" variant="outline" size="sm" disabled style={{ pointerEvents: 'none' }}>
+                            Reverse
+                          </CButton>
+                        </span>
+                      ) : null}
+                    </CTableDataCell>
                   </CTableRow>
                 ))}
                 {!payments.length && (
                   <CTableRow>
-                    <CTableDataCell colSpan={9} className="text-center text-body-secondary py-3">
+                    <CTableDataCell colSpan={10} className="text-center text-body-secondary py-3">
                       No payments recorded
                     </CTableDataCell>
                   </CTableRow>
@@ -385,6 +451,63 @@ const InvoiceDetailsModal = ({ invoiceId, onClose, onOpenInvoice }) => {
         </CButton>
       </CModalFooter>
     </CModal>
+
+    {/* Reverse a payment record: the whole record (cash, discount and waiver together), reason required */}
+    <CModal visible={!!reversing} onClose={() => !saving && setReversing(null)} backdrop="static" alignment="center">
+      <CModalHeader closeButton={!saving}>
+        <CModalTitle>Reverse record #{reversing?.paymentId}</CModalTitle>
+      </CModalHeader>
+      <CModalBody>
+        {reversing && effects && (
+          <>
+            <p className="mb-2">
+              {paymentType(reversing)} of {formatDate(reversing.paymentDate)} on invoice #{invoiceId}. The whole record
+              is taken back; it is <strong>not deleted</strong> and stays in the history, marked Reversed.
+            </p>
+            <ul className="mb-3">
+              {effects.cash > 0 && <li>Paid {fmt(effects.cash)} ({reversing.paymentMethod || '—'}) is taken back</li>}
+              {effects.disc > 0 && <li>Discount {fmt(effects.disc)} is taken back</li>}
+              {effects.waived && <li>The late fee waiver is taken back</li>}
+              <li>
+                Invoice balance after: <strong>{fmt(effects.balanceAfter)}</strong>
+                {effects.lateFeeWarning ? ' plus any late fee' : ''}
+              </li>
+            </ul>
+            {effects.lateFeeWarning && (
+              <CAlert color="warning" className="py-2">
+                This invoice is overdue (due {formatDate(inv.dueDate)}). After the reversal the late fee may be
+                recalculated from the original due date, so the amount owed can increase.
+              </CAlert>
+            )}
+            {effects.cash > 0 && (
+              <div className="small text-body-secondary mb-3">
+                A reversal means this payment was entered by mistake. It does not record money paid back to the tenant.
+                If the payment was real but on the wrong invoice or amount, record the correct payment afterwards.
+              </div>
+            )}
+            <CFormLabel htmlFor="reverse-reason">Reason (required)</CFormLabel>
+            <CFormTextarea
+              id="reverse-reason"
+              rows={2}
+              maxLength={500}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g. Entered on the wrong invoice"
+              disabled={saving}
+            />
+          </>
+        )}
+      </CModalBody>
+      <CModalFooter>
+        <CButton color="secondary" variant="outline" disabled={saving} onClick={() => setReversing(null)}>
+          Keep Record
+        </CButton>
+        <CButton color="danger" disabled={saving || !reason.trim()} onClick={confirmReverse}>
+          {saving ? <CSpinner size="sm" /> : 'Reverse Record'}
+        </CButton>
+      </CModalFooter>
+    </CModal>
+    </>
   )
 }
 
@@ -392,6 +515,7 @@ InvoiceDetailsModal.propTypes = {
   invoiceId: PropTypes.number, // null = closed
   onClose: PropTypes.func.isRequired,
   onOpenInvoice: PropTypes.func, // opens another invoice's history (related invoice / linked charge)
+  onChanged: PropTypes.func, // a record was reversed (refresh the list behind)
 }
 
 export default InvoiceDetailsModal

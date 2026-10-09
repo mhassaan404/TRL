@@ -44,14 +44,23 @@ export const GROUP_BY = {
   Tenant: { key: (p) => p.tenantName || 'Unknown', label: (k) => k },
 }
 
-// Totals over a list of payments
+export const isReversalRow = (p) => p?.reversalOfPaymentId != null
+
+// Totals over a list of payments. A reversal (payment entered by mistake, taken back on its own date) has negative
+// amounts, so it lowers Received / Discount by exactly its cash / discount; it is counted under "reversals", not
+// as a payment, and takes one off "waived" when the reversed record had waived the late fee.
 export const totalsOf = (payments) => {
-  const t = { count: 0, amount: 0, discount: 0, waived: 0, tenants: new Set() }
+  const t = { count: 0, reversals: 0, amount: 0, discount: 0, waived: 0, tenants: new Set() }
   payments.forEach((p) => {
-    t.count += 1
+    if (isReversalRow(p)) {
+      t.reversals += 1
+      if (p.reversesWaiver === true || p.reversesWaiver === 1) t.waived -= 1
+    } else {
+      t.count += 1
+      if (p.lateFeeWaived === true || p.lateFeeWaived === 1) t.waived += 1
+    }
     t.amount = round2(t.amount + num(p.amount))
     t.discount = round2(t.discount + num(p.discount))
-    if (p.lateFeeWaived === true || p.lateFeeWaived === 1) t.waived += 1
     t.tenants.add(p.tenantId)
   })
   return { ...t, tenants: t.tenants.size }

@@ -376,7 +376,7 @@ export const useRentCollection = () => {
         }))
 
       // Both the "New Rent Payment" and the row "Record Payment" flows add a new payment;
-      // /Rent/UpdatePayments is only for editing an existing payment by its Id.
+      // Payments are never edited: a wrong one is reversed (Rent History → History) and entered again.
       const res = await rentService.submitPayments(payload)
       showPaymentRecorded(res?.receiptIds)
       closeModal()

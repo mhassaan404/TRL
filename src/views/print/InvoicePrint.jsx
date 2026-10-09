@@ -16,6 +16,7 @@ const CANCELLED = 6
 const isTrue = (v) => v === true || v === 1
 
 const paymentLabel = (p) => {
+  if (p.reversalOfPaymentId != null) return `Reversal of record #${p.reversalOfPaymentId} (entered by mistake)`
   if (p.paymentMethod === 'Security Deposit') return 'Paid from security deposit (move-out settlement)'
   if (p.paymentMethod === 'Credit to Deposit') return 'Credit moved to security deposit (move-out settlement)'
   if (Number(p.paymentAmount) < 0) return 'Adjustment (reversal)'
@@ -144,6 +145,7 @@ const InvoicePrint = () => {
                       <CTableDataCell>
                         {paymentLabel(p)}
                         {isTrue(p.isLateFeeWaived) && Number(p.paymentAmount) !== 0 && <span> · late fee waived</span>}
+                        {p.reversedByPaymentId != null && <strong> · REVERSED</strong>}
                       </CTableDataCell>
                       <CTableDataCell className="text-end">{Number(p.paymentAmount) ? fmt(p.paymentAmount) : '—'}</CTableDataCell>
                       <CTableDataCell className="text-end">{Number(p.discountAmount) ? fmt(p.discountAmount) : '—'}</CTableDataCell>

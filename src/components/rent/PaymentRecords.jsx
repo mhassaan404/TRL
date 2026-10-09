@@ -8,19 +8,12 @@ import { toLocalDateString } from '../../utils/dates'
 import { PageSizeSelect, TablePagination, DEFAULT_PAGE_SIZE } from '../common/TablePagination'
 import TenantFilter from './TenantFilter'
 import { hasReceipt, openReceipts, receiptNo } from '../../utils/documents'
+import { isReversed, paymentType as typeOf, PAYMENT_TYPE_COLOR as TYPE_COLOR } from '../../utils/payments'
 
 const iso = toLocalDateString
 
-const typeOf = (r) =>
-  r.paymentMethod === 'Security Deposit' ? 'From deposit'
-  : r.paymentMethod === 'Credit to Deposit' ? 'Credit moved'
-  : Number(r.paymentAmount) > 0 ? 'Payment'
-  : r.isLateFeeWaived ? 'Late fee waived'
-  : Number(r.discountAmount) > 0 ? 'Discount'
-  : 'Adjustment'
-
-// Badge colour per type, so an adjustment (often money taken back) stands out from normal payments
-const TYPE_COLOR = { Payment: 'success', Adjustment: 'warning', Discount: 'info', 'Late fee waived': 'secondary', 'From deposit': 'primary', 'Credit moved': 'dark' }
+// Type text incl. "(reversed)" for an original that was reversed later
+const typeText = (r) => `${typeOf(r)}${isReversed(r) ? ' (reversed)' : ''}`
 
 // CSV columns: the same as the table
 const CSV_COLUMNS = [
@@ -63,7 +56,7 @@ const PaymentRecords = () => {
     const byTenant = tenantFilter ? rows.filter((r) => r.tenantName === tenantFilter) : rows
     if (!q) return byTenant
     return byTenant.filter((r) =>
-      [r.tenantName, r.buildingName, r.floorNumber, r.unitNumber, r.invoiceId, r.paymentMethod, r.notes, r.chargeType, typeOf(r),
+      [r.tenantName, r.buildingName, r.floorNumber, r.unitNumber, r.invoiceId, r.paymentMethod, r.notes, r.chargeType, typeText(r),
         hasReceipt(r) ? receiptNo(r.paymentId) : '']
         .join(' ').toLowerCase().includes(q))
   }, [rows, search, tenantFilter])
@@ -82,7 +75,7 @@ const PaymentRecords = () => {
           <div className="fw-semibold fs-5">Payment Records</div>
           {/* Exports what the filters show (all pages) */}
           <CButton color="success" variant="outline" disabled={loading || !filtered.length}
-            onClick={() => exportCSV(CSV_COLUMNS, filtered.map((r) => ({ ...r, type: typeOf(r), receiptNo: hasReceipt(r) ? receiptNo(r.paymentId) : '' })), `payments_${from}_to_${to}.csv`)}>
+            onClick={() => exportCSV(CSV_COLUMNS, filtered.map((r) => ({ ...r, type: typeText(r), receiptNo: hasReceipt(r) ? receiptNo(r.paymentId) : '' })), `payments_${from}_to_${to}.csv`)}>
             Export CSV
           </CButton>
         </div>
@@ -129,7 +122,14 @@ const PaymentRecords = () => {
                 <CTableDataCell>{r.floorNumber}</CTableDataCell>
                 <CTableDataCell>{r.unitNumber}</CTableDataCell>
                 <CTableDataCell>#{r.invoiceId}{r.chargeType ? ` (${r.chargeType})` : ''}</CTableDataCell>
-                <CTableDataCell><CBadge color={TYPE_COLOR[typeOf(r)]}>{typeOf(r)}</CBadge></CTableDataCell>
+                <CTableDataCell>
+                  <CBadge color={TYPE_COLOR[typeOf(r)]}>{typeOf(r)}</CBadge>
+                  {isReversed(r) && (
+                    <CBadge color="danger" className="ms-1" title={`Reversed on ${formatDate(r.reversedAt)}: ${r.reversalReason || ''}`}>
+                      Reversed
+                    </CBadge>
+                  )}
+                </CTableDataCell>
                 <CTableDataCell className={`text-end ${Number(r.paymentAmount) < 0 ? 'text-danger' : ''}`}>{fmt(r.paymentAmount)}</CTableDataCell>
                 <CTableDataCell className="text-end">{fmt(r.discountAmount)}</CTableDataCell>
                 <CTableDataCell>{r.paymentMethod}</CTableDataCell>
