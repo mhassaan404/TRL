@@ -1,6 +1,7 @@
 import React from 'react'
 import { CFormLabel, CFormSelect, CFormInput, CFormCheck, CButton, CRow, CCol } from '@coreui/react'
 import CurrencyInput from '../../common/CurrencyInput'
+import { todayLocal } from '../../../utils/dates'
 
 const GlobalActionsSection = ({
   rentForm,
@@ -48,6 +49,7 @@ const GlobalActionsSection = ({
           <div className="input-group">
             <CFormInput
               type="date"
+              max={todayLocal()}
               value={rentForm.globalPaymentDate || ''}
               onChange={(e) =>
                 setRentForm((prev) => ({ ...prev, globalPaymentDate: e.target.value }))

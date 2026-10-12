@@ -41,7 +41,7 @@ export const REVERSE_BLOCK_TEXT = {
   IS_REVERSAL: 'This record is a reversal.',
   ALREADY_REVERSED: 'Already reversed.',
   SETTLEMENT: 'Part of a finalized move-out settlement.',
-  ADJUSTMENT: 'Adjustments can’t be reversed; record a new adjustment instead.',
+  ADJUSTMENT: 'Adjustments can’t be reversed.',
   NOTHING: 'Nothing to reverse.',
   CANCELLED: 'The invoice is cancelled.',
   NEGATIVE: 'An adjustment already took back part of this payment.',

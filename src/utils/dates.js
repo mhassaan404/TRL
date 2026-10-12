@@ -7,3 +7,12 @@ export const toLocalDateString = (date) =>
   `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 
 export const todayLocal = () => toLocalDateString(new Date())
+
+// YYYY-MM-DD plus whole months, kept on the last day of a shorter month (31 Jan + 1 month = 28/29 Feb), the same as
+// SQL Server's DATEADD(MONTH, ...) that computes a lease's end date
+export const addMonths = (ymd, months) => {
+  const [y, m, d] = String(ymd).slice(0, 10).split('-').map(Number)
+  const first = new Date(y, m - 1 + Number(months), 1)
+  const lastDay = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate()
+  return toLocalDateString(new Date(first.getFullYear(), first.getMonth(), Math.min(d, lastDay)))
+}

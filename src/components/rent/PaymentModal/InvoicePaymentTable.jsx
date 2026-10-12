@@ -14,7 +14,6 @@ import {
   CTableDataCell,
 } from '@coreui/react'
 import InvoiceHistoryModal from '../InvoiceHistoryModal'
-import AdjustmentModal from '../AdjustmentModal'
 import { fmt, formatDate, getRemainingRent } from '../../../utils/rentUtils'
 import CurrencyInput from '../../common/CurrencyInput'
 import { rentService } from '../../../services/rent.service'
@@ -42,13 +41,6 @@ const InvoicePaymentTable = ({
     loading: false,
   })
 
-  const [adjustmentState, setAdjustmentState] = useState({
-    visible: false,
-    invoiceId: null,
-  })
-
-  const [maxAdjustment, setMaxAdjustment] = useState(0)
-
   if (!invoices?.length) {
     return <div className="text-center py-5 text-muted fs-5">Select a tenant to view invoices</div>
   }
@@ -65,19 +57,6 @@ const InvoicePaymentTable = ({
     }
   }
 
-
-  const handleOpenAdjustment = () => {
-    if (historyState.invoice) {
-      const maxFromPaid = Number(
-        historyState.data?.[0]?.totalPaid ?? historyState.invoice?.paidAmount ?? 0,
-      )
-      setMaxAdjustment(maxFromPaid)
-      setAdjustmentState({
-        visible: true,
-        invoiceId: historyState.invoice.invoiceId,
-      })
-    }
-  }
 
   return (
     <>
@@ -305,27 +284,6 @@ const InvoicePaymentTable = ({
         data={historyState.data}
         loading={historyState.loading}
         onClose={() => setHistoryState((prev) => ({ ...prev, visible: false }))}
-        onOpenAdjustment={handleOpenAdjustment}
-      />
-
-      <AdjustmentModal
-        visible={adjustmentState.visible}
-        onClose={() => setAdjustmentState({ visible: false, invoiceId: null })}
-        invoiceId={adjustmentState.invoiceId}
-        maxAdjustment={maxAdjustment}
-        tenantId={rentForm.tenantId}
-        onAdjustmentSuccess={async () => {
-          if (!historyState.invoice) return
-          await openPaymentHistory(historyState.invoice)
-          await handleTenantChange(rentForm.tenantId)
-          setRentForm((latest) => {
-            if (openFrom !== 'ROW_CLICK') return latest
-            const targetId = historyState.invoice?.invoiceId
-            if (!targetId) return latest
-            const updated = latest.invoices.find((i) => i.invoiceId === targetId)
-            return updated ? { ...latest, invoices: [updated] } : { ...latest, invoices: [] }
-          })
-        }}
       />
     </>
   )

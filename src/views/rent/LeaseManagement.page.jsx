@@ -11,9 +11,10 @@ import SearchableSelect from '../../components/rent/SearchableSelect'
 import CurrencyInput from '../../components/common/CurrencyInput'
 import { PAGE_SIZES, TablePagination, DEFAULT_PAGE_SIZE } from '../../components/common/TablePagination'
 import { fmt, formatDate } from '../../utils/rentUtils'
-import { todayLocal } from '../../utils/dates'
+import { addMonths, todayLocal } from '../../utils/dates'
 
-const emptyForm = { tenantId: '', unitId: '', rentAmount: '', unitRent: 0, startDate: todayLocal(), tenureMonths: 12 }
+// A fresh form each time (today's date is taken when the form opens, not when the page first loaded)
+const newForm = () => ({ tenantId: '', unitId: '', rentAmount: '', unitRent: 0, startDate: todayLocal(), tenureMonths: 12 })
 const FILTERS = ['All', 'Active', 'Upcoming', 'Expired', 'Ended']
 
 const day = (d) => String(d || '').slice(0, 10)
@@ -45,7 +46,7 @@ const LeaseManagement = () => {
   const [leases, setLeases] = useState([])
   const [tenants, setTenants] = useState([])
   const [modal, setModal] = useState({ visible: false })
-  const [form, setForm] = useState(emptyForm)
+  const [form, setForm] = useState(newForm)
   const [renewState, setRenewState] = useState(null)
   const [editState, setEditState] = useState(null)
   const editSavingRef = useRef(false)
@@ -103,7 +104,7 @@ const LeaseManagement = () => {
       })
       toast.success('Lease created')
       setModal({ visible: false })
-      setForm(emptyForm)
+      setForm(newForm())
       load()
     } catch (err) {
       toast.error(err.message)
@@ -181,7 +182,12 @@ const LeaseManagement = () => {
     }
   }
 
+  // Blocks a second click on End Lease / Cancel Renewal in the same instant (saving state applies on the next render)
+  const actionRef = useRef(false)
+
   const handleCancelRenewal = async () => {
+    if (actionRef.current || cancelState?.saving) return
+    actionRef.current = true
     setCancelState((p) => ({ ...p, saving: true }))
     try {
       const res = await leaseService.cancelRenewal(cancelState.lease.leaseId)
@@ -191,6 +197,8 @@ const LeaseManagement = () => {
     } catch (err) {
       toast.error(err.message)
       setCancelState((p) => p && { ...p, saving: false })
+    } finally {
+      actionRef.current = false
     }
   }
 
@@ -240,6 +248,8 @@ const LeaseManagement = () => {
     const moveOut = endState.moveOut
     setEndState((p) => ({ ...p, submitted: true }))
     if (!reason || !moveOut || moveOut > todayLocal() || moveOutBeforeStart(endState)) return
+    if (actionRef.current || endState.saving) return
+    actionRef.current = true
 
     setEndState((p) => ({ ...p, saving: true }))
     try {
@@ -251,6 +261,8 @@ const LeaseManagement = () => {
     } catch (err) {
       toast.error(err.message)
       setEndState((p) => p && { ...p, saving: false })
+    } finally {
+      actionRef.current = false
     }
   }
 
@@ -261,7 +273,7 @@ const LeaseManagement = () => {
           <div className="fw-semibold fs-5">Lease Management</div>
           <div className="small text-body-secondary">{leases.length} leases in total</div>
         </div>
-        <CButton color="primary" onClick={() => setModal({ visible: true })}>+ New Lease</CButton>
+        <CButton color="primary" onClick={() => { setForm(newForm()); setModal({ visible: true }) }}>+ New Lease</CButton>
       </CCardHeader>
       <CCardBody>
         {/* Filters: search + tenant on the left, status on the right */}
@@ -401,7 +413,7 @@ const LeaseManagement = () => {
             />
           </div>
           <div className="mb-3">
-            <UnitPicker value={form.unitId} onChange={({ unitId, rent }) => setForm((p) => ({ ...p, unitId, unitRent: rent, rentAmount: rent || p.rentAmount }))} />
+            <UnitPicker value={form.unitId} onChange={({ unitId, rent }) => setForm((p) => ({ ...p, unitId, unitRent: rent, rentAmount: rent || '' }))} />
           </div>
           <div className="mb-3">
             <CFormLabel>Monthly Rent</CFormLabel>
@@ -448,8 +460,8 @@ const LeaseManagement = () => {
             const billed = !!l.hasRentInvoices
             const startLocked = billed || editState.isRenewal
             const tenureOptions = [...new Set([1, 3, 6, 12, 24, Number(l.tenureMonths)])].sort((a, b) => a - b)
-            const end = new Date(`${editState.startDate || day(l.startDate)}T00:00:00`)
-            end.setMonth(end.getMonth() + Number(editState.tenureMonths))
+            // Same rule as the database's end date (DATEADD MONTH): 31 Jan + 1 month = end of February
+            const end = new Date(`${addMonths(editState.startDate || day(l.startDate), editState.tenureMonths)}T00:00:00`)
             return (
               <>
                 <p className="text-body-secondary small mb-3">

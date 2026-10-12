@@ -201,7 +201,7 @@ const AgreedModal = ({ t, onClose, onSaved }) => {
         </CModalBody>
         <CModalFooter>
           {t.agreedAmount != null && (
-            <CButton color="danger" variant="outline" className="me-auto" disabled={saving} onClick={() => save(null)}>Clear</CButton>
+            <CButton color="danger" variant="outline" className="me-auto" disabled={saving} onClick={() => window.confirm('Remove the agreed deposit for this tenancy? The deposit already held is not changed.') && save(null)}>Clear</CButton>
           )}
           <CButton color="secondary" variant="outline" onClick={onClose} disabled={saving}>Cancel</CButton>
           <CButton type="submit" color="primary" disabled={saving}>{saving ? 'Saving...' : 'Save'}</CButton>

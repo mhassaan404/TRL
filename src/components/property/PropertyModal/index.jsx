@@ -6,6 +6,7 @@ const PropertyModal = ({
   visible,
   editData,
   handleSubmit,
+  saving,
   closeModal,
   buildings,
   floors,
@@ -24,6 +25,7 @@ const PropertyModal = ({
         <PropertyForm
           editData={editData}
           handleSubmit={handleSubmit}
+          saving={saving}
           closeModal={closeModal}
           buildings={buildings}
           floors={floors}

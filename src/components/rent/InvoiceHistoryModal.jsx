@@ -1,8 +1,16 @@
 // src/components/rent/InvoiceHistoryModal.jsx
 import React from 'react'
-import { CModal, CModalHeader, CModalBody, CModalFooter, CButton } from '@coreui/react'
+import { CBadge, CModal, CModalHeader, CModalBody, CModalFooter, CButton } from '@coreui/react'
 import { useIsDarkMode } from '../../hooks/useIsDarkMode'
 import { fmt, formatDate } from '../../utils/rentUtils'
+import { isReversed, paymentType, PAYMENT_TYPE_COLOR } from '../../utils/payments'
+
+// This list uses older field names (paidAmount, waveLateFee): map them for the shared payment-type rule
+const rowFor = (item) => ({
+  ...item,
+  paymentAmount: item.paidAmount,
+  isLateFeeWaived: item.waveLateFee,
+})
 
 const InvoiceHistoryModal = ({
   visible,
@@ -10,7 +18,6 @@ const InvoiceHistoryModal = ({
   data,
   loading,
   onClose,
-  onOpenAdjustment, // ← New prop to open the 3rd modal
 }) => {
   const isDark = useIsDarkMode()
 
@@ -32,6 +39,7 @@ const InvoiceHistoryModal = ({
               <thead className={isDark ? 'table-head-dark' : 'table-light'}>
                 <tr>
                   <th>Date</th>
+                  <th>Type</th>
                   <th className="text-end">Rent</th>
                   <th className="text-end">Paid</th>
                   <th className="text-end">Disc</th>
@@ -44,8 +52,12 @@ const InvoiceHistoryModal = ({
               </thead>
               <tbody>
                 {data.map((item, index) => (
-                  <tr key={index}>
+                  <tr key={item.paymentId ?? index} className={isReversed(item) ? 'text-body-secondary' : ''}>
                     <td>{formatDate(item.paymentDate)}</td>
+                    <td>
+                      <CBadge color={PAYMENT_TYPE_COLOR[paymentType(rowFor(item))]}>{paymentType(rowFor(item))}</CBadge>
+                      {isReversed(item) && <CBadge color="danger" className="ms-1">Reversed</CBadge>}
+                    </td>
                     <td className="text-end">{fmt(item.monthlyRent)}</td>
                     <td className="text-end">
                       <span className={item.paidAmount < 0 ? 'text-danger' : ''}>
@@ -68,9 +80,6 @@ const InvoiceHistoryModal = ({
         )}
       </CModalBody>
       <CModalFooter>
-        <CButton color="warning" onClick={onOpenAdjustment}>
-          + Adjustment
-        </CButton>
         <CButton color="secondary" onClick={onClose}>
           Close
         </CButton>

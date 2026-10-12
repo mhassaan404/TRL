@@ -27,6 +27,7 @@ import { toLocalDateString } from '../../utils/dates'
 import { exportCSV } from '../../utils/exportUtils'
 import { invoiceNo, openInvoice } from '../../utils/documents'
 import { PageSizeSelect, TablePagination, tablePageProps, tablePageSizeProps, DEFAULT_PAGE_SIZE } from '../../components/common/TablePagination'
+import { invoiceStatusColor } from '../../utils/invoiceStatus'
 
 // CSV Export Helper
 
@@ -228,19 +229,8 @@ const RentHistory = () => {
         cell: ({ getValue }) => {
           const value = getValue()
 
-          const colors = {
-            Paid: 'success',
-            Partial: 'warning',
-            Unpaid: 'danger',
-            Pending: 'info',
-            'In Progress': 'primary',
-            Completed: 'success',
-            Overpaid: 'dark',
-            Cancelled: 'secondary',
-          }
-
           return (
-            <CBadge color={colors[value] || 'secondary'}>
+            <CBadge color={invoiceStatusColor(value)}>
               {value || '—'}
             </CBadge>
           )
@@ -385,8 +375,6 @@ const RentHistory = () => {
                   <option value="Partial">Partial</option>
                   <option value="Unpaid">Unpaid</option>
                   <option value="Pending">Pending</option>
-                  <option value="In Progress">In Progress</option>
-                  <option value="Completed">Completed</option>
                   <option value="Overpaid">Overpaid</option>
                   <option value="Cancelled">Cancelled</option>
                 </CFormSelect>

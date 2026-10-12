@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { propertyService } from '../services/property.service'
 import { getErrorMessage } from '../api/axios'
@@ -32,19 +32,21 @@ export const useProperties = () => {
   // ---------------- LOAD LOOKUPS ----------------
 
   const loadLookups = useCallback(async () => {
-    const safe = async (fn, setter) => {
+    // A failed lookup leaves its list empty and says so (otherwise the building/unit forms show empty dropdowns)
+    const safe = async (fn, setter, what) => {
       try {
         const res = await fn()
         setter(Array.isArray(res) ? res : [])
-      } catch {
+      } catch (err) {
         setter([])
+        toast.error(getErrorMessage(err, `Failed to load ${what}`), { toastId: 'property-lookups' }) // one toast, not three
       }
     }
 
     await Promise.all([
-      safe(propertyService.getCities, setCities),
-      safe(propertyService.getBuildingTypes, setBuildingTypes),
-      safe(propertyService.getUnitStatuses, setUnitStatuses),
+      safe(propertyService.getCities, setCities, 'cities'),
+      safe(propertyService.getBuildingTypes, setBuildingTypes, 'building types'),
+      safe(propertyService.getUnitStatuses, setUnitStatuses, 'unit statuses'),
     ])
   }, [])
 
@@ -196,8 +198,24 @@ export const useProperties = () => {
     setModalFloors([]) // only clears the modal's own floor list, not the page's
   }
 
+  // One save at a time for units, buildings and floors: the ref blocks a second click in the same instant (state only
+  // applies on the next render); saving disables the modal buttons.
+  const savingRef = useRef(false)
+  const [saving, setSaving] = useState(false)
+  const startSaving = () => {
+    if (savingRef.current) return false
+    savingRef.current = true
+    setSaving(true)
+    return true
+  }
+  const endSaving = () => {
+    savingRef.current = false
+    setSaving(false)
+  }
+
   // Returns true when the save succeeded, so "Add another" only clears the form after a successful save
   const handleSubmit = async (data, keepOpen = false) => {
+    if (!startSaving()) return false
     setLoading(true)
 
     try {
@@ -225,6 +243,7 @@ export const useProperties = () => {
       return false
     } finally {
       setLoading(false)
+      endSaving()
     }
   }
 
@@ -260,6 +279,7 @@ export const useProperties = () => {
   }
 
   const handleBuildingSubmit = async (data) => {
+    if (!startSaving()) return
     setLoading(true)
 
     try {
@@ -283,13 +303,14 @@ export const useProperties = () => {
       toast.error(getErrorMessage(err, 'Building operation failed'))
     } finally {
       setLoading(false)
+      endSaving()
     }
   }
 
   const handleBuildingDelete = async (id) => {
     if (
       !window.confirm(
-        'Delete this building? All associated properties will be affected.',
+        'Delete this building? Only a building without floors or units can be deleted.',
       )
     ) {
       return
@@ -330,6 +351,7 @@ export const useProperties = () => {
   }
 
   const handleFloorSubmit = async (data) => {
+    if (!startSaving()) return
     setLoading(true)
 
     try {
@@ -357,6 +379,7 @@ export const useProperties = () => {
       toast.error(getErrorMessage(err, 'Floor operation failed'))
     } finally {
       setLoading(false)
+      endSaving()
     }
   }
 
@@ -382,6 +405,7 @@ export const useProperties = () => {
     buildings,
     floors,
     loading,
+    saving, // a unit, building or floor save is in progress
 
     // Lookups
     cities,

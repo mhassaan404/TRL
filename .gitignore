@@ -2,7 +2,7 @@
 
 # dependencies
 /node_modules
-package-lock.json
+# package-lock.json is committed so installs are reproducible
 yarn.lock
 
 # testing

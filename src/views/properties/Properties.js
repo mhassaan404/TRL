@@ -81,6 +81,7 @@ const Properties = () => {
     closeFloorModal,
     handleFloorSubmit,
     handleFloorDelete,
+    saving,
   } = useProperties()
 
   // --------------------------------------------------
@@ -1257,6 +1258,7 @@ const Properties = () => {
         visible={modalOpen}
         editData={editData}
         handleSubmit={handleSubmit}
+        saving={saving}
         closeModal={() => {
           closeModal()
           // A floor may have been added inline: refresh the open building's floors and the totals
@@ -1276,6 +1278,7 @@ const Properties = () => {
         visible={buildingModalOpen}
         editData={editBuilding}
         handleSubmit={handleBuildingSubmit}
+        saving={saving}
         closeModal={closeBuildingModal}
         cities={cities}
         buildingTypes={buildingTypes}
@@ -1285,6 +1288,7 @@ const Properties = () => {
         visible={floorModalOpen}
         editData={editFloor}
         handleSubmit={handleFloorSubmit}
+        saving={saving}
         closeModal={closeFloorModal}
         buildingName={
           selectedBuilding?.buildingName || ''

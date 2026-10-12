@@ -64,7 +64,7 @@ export const rentService = {
 
   // ── Changes (throw Error(message) on failure) ──────────────────────────
   cancelInvoice: (id, reason) =>
-    request(() => api.patch('/RentHistory/CancelInvoice', id, { params: { reason } }), 'Invoice could not be cancelled'),
+    request(() => api.patch('/RentHistory/CancelInvoice', { invoiceId: id, reason }), 'Invoice could not be cancelled'),
 
   reinstateInvoice: (id) => request(() => api.patch('/RentHistory/ReinstateInvoice', id), 'Invoice could not be reinstated'),
 
@@ -73,9 +73,6 @@ export const rentService = {
   // Reverses one payment record as a whole (cash, discount and waiver); reason required. Not a refund.
   reversePayment: (paymentId, reason) =>
     request(() => api.post('/Rent/ReversePayment', { paymentId, reason }), 'Payment could not be reversed'),
-
-  createPaymentAdjustment: (payload) =>
-    request(() => api.post('/Rent/CreatePaymentAdjustment', payload), 'Adjustment failed'),
 
   // tenantIds: null = all tenants; otherwise only those tenants (an empty list is rejected by the caller)
   // dueInDays: leave out to use the Payment Due Days setting (Late Fee Settings)

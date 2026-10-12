@@ -29,6 +29,7 @@ const PropertyForm = ({
   unitStatuses = [],
   cities = [],
   buildingTypes = [],
+  saving = false, // a save is in progress: Save buttons are off
 }) => {
   const isEditMode = !!editData?.id
 
@@ -320,8 +321,9 @@ const PropertyForm = ({
               </small>
 
               <CFormInput
-                type="number"
-                placeholder="Floor number *"
+                type="text"
+                maxLength={50}
+                placeholder="Floor (e.g. G, 1, Mezzanine) *"
                 value={newFloorNumber}
                 onChange={(e) => setNewFloorNumber(e.target.value)}
                 className="mb-2"
@@ -432,11 +434,11 @@ const PropertyForm = ({
             Cancel
           </CButton>
           {!isEditMode && (
-            <CButton color="secondary" type="button" onClick={onAddAnother}>
+            <CButton color="secondary" type="button" onClick={onAddAnother} disabled={saving}>
               + Add Another
             </CButton>
           )}
-          <CButton color="primary" type="submit">
+          <CButton color="primary" type="submit" disabled={saving}>
             {isEditMode ? 'Update Property' : 'Save & Close'}
           </CButton>
         </CCol>

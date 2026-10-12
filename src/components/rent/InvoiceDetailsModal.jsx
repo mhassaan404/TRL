@@ -26,6 +26,7 @@ import { rentService } from '../../services/rent.service'
 import { fmt, formatDate } from '../../utils/rentUtils'
 import { hasReceipt, invoiceNo, openInvoice, openReceipts, receiptNo } from '../../utils/documents'
 import { todayLocal } from '../../utils/dates'
+import { INVOICE_STATUS_COLOR as STATUS_COLOR } from '../../utils/invoiceStatus'
 import {
   canReverse,
   isReversal,
@@ -47,6 +48,7 @@ const EVENT_LABEL = {
   RENT_ADJUSTED: 'Rent amount adjusted',
   DISCOUNT_REDUCED: 'Discount reduced',
   LATE_FEE_REVERSED: 'Late fee reversed',
+  DUE_DATE_CHANGED: 'Due date changed',
 }
 const EVENT_AMOUNT_LABEL = {
   RENT_ADJUSTED: 'New amount',
@@ -54,14 +56,6 @@ const EVENT_AMOUNT_LABEL = {
   LATE_FEE_REVERSED: 'Amount',
 }
 
-const STATUS_COLOR = {
-  Paid: 'success',
-  Partial: 'warning',
-  Unpaid: 'danger',
-  Pending: 'info',
-  Overpaid: 'dark',
-  Cancelled: 'secondary',
-}
 
 const dateTime = (d) =>
   d
@@ -164,7 +158,7 @@ const InvoiceDetailsModal = ({ invoiceId, onClose, onOpenInvoice, onChanged }) =
           at: e.createdAt,
           label: EVENT_LABEL[e.action] || e.action,
           amountLabel: EVENT_AMOUNT_LABEL[e.action] || 'Amount',
-          amount: e.action === 'CANCELLED' || e.action === 'REINSTATED' ? null : e.amount,
+          amount: ['CANCELLED', 'REINSTATED', 'DUE_DATE_CHANGED'].includes(e.action) ? null : e.amount,
           reason: e.reason || '',
           by: e.createdBy || '',
         })),

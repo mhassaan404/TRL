@@ -25,6 +25,7 @@ import { fmt, formatDate } from '../../utils/rentUtils'
 import { exportCSV } from '../../utils/exportUtils'
 import { useIsDarkMode } from '../../hooks/useIsDarkMode'
 import { todayLocal } from '../../utils/dates'
+import { invoiceStatusColor } from '../../utils/invoiceStatus'
 
 const RentCollection = () => {
   const {
@@ -161,14 +162,7 @@ const RentCollection = () => {
         header: 'Status',
         cell: ({ row }) => {
           const status = row.original.statusName || 'Unknown'
-          const variants = {
-            Paid: 'success',
-            Unpaid: 'danger',
-            Pending: 'warning',
-            Partial: 'info',
-            Overpaid: 'purple',
-          }
-          const variant = variants[status] || 'secondary'
+          const variant = invoiceStatusColor(status)
 
           return (
             <span className={`badge bg-${variant} text-white px-2 py-1 rounded-pill`}>
@@ -219,7 +213,8 @@ const RentCollection = () => {
   // Back to page 1 on a new search; stay on a real page if the list got shorter
   useEffect(() => { table.setPageIndex(0) }, [globalFilter, tenantFilter]) // eslint-disable-line react-hooks/exhaustive-deps
   // A new tenant / company choice clears the ticked invoices, so Update Due Date never acts on hidden rows
-  useEffect(() => { setSelectedIds([]) }, [tenantFilter])
+  // A selection only covers rows the Admin can see now: cleared when the search, tenant filter or the list itself changes
+  useEffect(() => { setSelectedIds([]) }, [tenantFilter, globalFilter, rentList])
   const pageCount = table.getPageCount()
   const { pageIndex } = table.getState().pagination
   useEffect(() => { if (pageCount > 0 && pageIndex > pageCount - 1) table.setPageIndex(pageCount - 1) }, [pageIndex, pageCount]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -243,7 +238,8 @@ const RentCollection = () => {
                 <CButton
                   color="success"
                   variant="outline"
-                  onClick={() => exportCSV(columns, rentList, 'rent_collection.csv')}
+                  // What the search and tenant filter show (all pages), like the other pages' exports
+                  onClick={() => exportCSV(columns, table.getFilteredRowModel().rows.map((r) => r.original), 'rent_collection.csv')}
                 >
                   Export CSV
                 </CButton>

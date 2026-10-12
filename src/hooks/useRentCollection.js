@@ -227,15 +227,21 @@ export const useRentCollection = () => {
   }
 
   // ── Tenant Change + Load Unpaid Invoices ──────────────────────────────────
+  const tenantRequestRef = useRef(0) // only the latest tenant's invoices may fill the form
+
   const handleTenantChange = async (tenantId) => {
-    setRentForm((prev) => ({ ...prev, tenantId }))
+    // Start empty: the previous tenant's invoices must never stay on screen under the new tenant
+    setRentForm({ ...emptyRentForm, tenantId })
+    const requestId = ++tenantRequestRef.current
     if (!tenantId) {
+      setLoading(false) // a load for the previous tenant may still be running; its result is ignored
       closeModal()
       return
     }
     setLoading(true)
     try {
       const { invoices, summary } = await rentService.getUnpaidInvoicesByTenant(tenantId)
+      if (requestId !== tenantRequestRef.current) return // another tenant was chosen meanwhile
       if (!invoices?.length) {
         toast.info('No unpaid invoices found for this tenant')
         return
@@ -265,7 +271,7 @@ export const useRentCollection = () => {
     } catch {
       // already shown by rentService.getUnpaidInvoicesByTenant
     } finally {
-      setLoading(false)
+      if (requestId === tenantRequestRef.current) setLoading(false)
     }
   }
 
@@ -341,6 +347,10 @@ export const useRentCollection = () => {
 
     if (selectedInvoices.some((i) => needsDateAndMethod(i) && !i.paymentDate)) {
       toast.error('Set a Payment Date for every invoice you are paying.')
+      return
+    }
+    if (selectedInvoices.some((i) => i.paymentDate && i.paymentDate > todayLocal())) {
+      toast.error("A payment date can't be in the future.")
       return
     }
     if (selectedInvoices.some((i) => needsDateAndMethod(i) && !i.paymentMethod)) {

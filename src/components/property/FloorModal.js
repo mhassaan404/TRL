@@ -13,7 +13,7 @@ import {
   CRow,
 } from '@coreui/react'
 
-const FloorModal = ({ visible, editData, handleSubmit, closeModal, buildingName }) => {
+const FloorModal = ({ visible, editData, handleSubmit, closeModal, buildingName, saving = false }) => {
   const [formData, setFormData] = useState({ floorNumber: '' })
   const [validated, setValidated] = useState(false)
 
@@ -68,7 +68,7 @@ const FloorModal = ({ visible, editData, handleSubmit, closeModal, buildingName 
           <CButton color="secondary" onClick={closeModal}>
             Cancel
           </CButton>
-          <CButton color="primary" type="submit">
+          <CButton color="primary" type="submit" disabled={saving}>
             {editData ? 'Update Floor' : 'Add Floor'}
           </CButton>
         </CModalFooter>

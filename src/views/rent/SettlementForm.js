@@ -49,6 +49,7 @@ const SettlementForm = () => {
 
   const load = () => {
     setPv(null)
+    setLoadError('') // a retry starts clean
     settlementService.getPreview(tenantId, unitId).then(setPv).catch((e) => setLoadError(e.message))
   }
   useEffect(() => { load() }, [tenantId, unitId]) // eslint-disable-line react-hooks/exhaustive-deps -- reload when the tenancy changes

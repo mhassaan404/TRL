@@ -15,7 +15,7 @@ import {
   CRow,
 } from '@coreui/react'
 
-const BuildingModal = ({ visible, editData, handleSubmit, closeModal, cities, buildingTypes }) => {
+const BuildingModal = ({ visible, editData, handleSubmit, closeModal, cities, buildingTypes, saving = false }) => {
   const [formData, setFormData] = useState({
     buildingName: '',
     cityId: '',
@@ -118,7 +118,7 @@ const BuildingModal = ({ visible, editData, handleSubmit, closeModal, cities, bu
         </CModalBody>
         <CModalFooter>
           <CButton color="secondary" onClick={closeModal}>Cancel</CButton>
-          <CButton color="primary" type="submit">
+          <CButton color="primary" type="submit" disabled={saving}>
             {editData ? 'Update Building' : 'Add Building'}
           </CButton>
         </CModalFooter>

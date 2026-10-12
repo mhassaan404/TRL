@@ -26,6 +26,8 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
+    // Not a request error (e.g. a network or setup failure without a request config): nothing to refresh or retry
+    if (!originalRequest) return Promise.reject(error)
 
     // Never refresh for the refresh call itself, and a failed login is not an expired session
     if (originalRequest.url.includes('/Auth/refresh') || originalRequest.url.includes('/Auth/login')) {
