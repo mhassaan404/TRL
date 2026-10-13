@@ -4,7 +4,6 @@ import { CButton } from '@coreui/react'
 import { fmt } from '../../../utils/rentUtils'
 
 const TotalsFooter = ({ totals, isEditMode, onSubmit, saving }) => {
-
   const isDisabled =
     saving ||
     totals.selectedCount === 0 ||

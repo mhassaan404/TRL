@@ -13,9 +13,20 @@ export const isOpenJob = (j) => j.status === 'Open' || j.status === 'In Progress
 
 export const totalsOf = (jobs) => {
   const t = {
-    jobs: jobs.length, completed: 0, open: 0, cancelled: 0,
-    spent: 0, openCost: 0, cost: 0, billed: 0, recovered: 0, net: 0,
-    noCost: 0, daysTotal: 0, daysCount: 0, avgDays: null,
+    jobs: jobs.length,
+    completed: 0,
+    open: 0,
+    cancelled: 0,
+    spent: 0,
+    openCost: 0,
+    cost: 0,
+    billed: 0,
+    recovered: 0,
+    net: 0,
+    noCost: 0,
+    daysTotal: 0,
+    daysCount: 0,
+    avgDays: null,
   }
   jobs.forEach((j) => {
     if (j.status === 'Cancelled') t.cancelled += 1
@@ -23,7 +34,10 @@ export const totalsOf = (jobs) => {
       t.completed += 1
       t.spent = round2(t.spent + num(j.cost))
       if (j.cost == null) t.noCost += 1
-      if (j.daysToComplete != null) { t.daysTotal += num(j.daysToComplete); t.daysCount += 1 }
+      if (j.daysToComplete != null) {
+        t.daysTotal += num(j.daysToComplete)
+        t.daysCount += 1
+      }
     } else {
       t.open += 1
       t.openCost = round2(t.openCost + num(j.cost))
@@ -37,7 +51,8 @@ export const totalsOf = (jobs) => {
   return t
 }
 
-const unitLabel = (j) => (j.unitNumber ? `${j.buildingName} – ${j.unitNumber}` : `${j.buildingName} (building)`)
+const unitLabel = (j) =>
+  j.unitNumber ? `${j.buildingName} – ${j.unitNumber}` : `${j.buildingName} (building)`
 
 export const GROUP_BY = {
   Category: { key: (j) => j.category || 'Other', label: (k) => k },
@@ -45,7 +60,10 @@ export const GROUP_BY = {
   Unit: { key: unitLabel, label: (k) => k },
   Month: {
     key: (j) => day(j.jobDate).slice(0, 7),
-    label: (k) => { const [y, m] = k.split('-'); return y && m ? `${MONTHS[Number(m) - 1]} ${y}` : k },
+    label: (k) => {
+      const [y, m] = k.split('-')
+      return y && m ? `${MONTHS[Number(m) - 1]} ${y}` : k
+    },
     sortByKey: true,
   },
   'Assigned To': { key: (j) => j.assignedTo || 'Not assigned', label: (k) => k },
@@ -62,5 +80,7 @@ export const groupJobs = (jobs, by) => {
   })
   return [...map.entries()]
     .map(([k, list]) => ({ key: k, label: g.label(k), ...totalsOf(list) }))
-    .sort((a, b) => (g.sortByKey ? a.key.localeCompare(b.key) : b.cost - a.cost || a.label.localeCompare(b.label)))
+    .sort((a, b) =>
+      g.sortByKey ? a.key.localeCompare(b.key) : b.cost - a.cost || a.label.localeCompare(b.label),
+    )
 }

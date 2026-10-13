@@ -12,21 +12,36 @@ const ymd = (y, m, d) => {
 const day = (d) => String(d || '').slice(0, 10) // YYYY-MM-DD
 
 export const PRESETS = ['This Month', 'Last Month', 'Last 30 Days', 'This Year', 'Last Year']
-export const STATEMENT_PRESETS = ['This Month', 'Last Month', 'Last 3 Months', 'This Year', 'Last Year', 'All Time']
+export const STATEMENT_PRESETS = [
+  'This Month',
+  'Last Month',
+  'Last 3 Months',
+  'This Year',
+  'Last Year',
+  'All Time',
+]
 export const ALL_TIME_FROM = '2000-01-01' // earliest date the API accepts
 
 // { from, to } (YYYY-MM-DD, both included) for a preset, relative to today (YYYY-MM-DD)
 export const presetRange = (preset, today) => {
   const [y, m, d] = today.split('-').map(Number)
   switch (preset) {
-    case 'This Month': return { from: ymd(y, m, 1), to: today }
-    case 'Last Month': return { from: ymd(y, m - 1, 1), to: ymd(y, m, 0) }
-    case 'Last 30 Days': return { from: ymd(y, m, d - 29), to: today }
-    case 'Last 3 Months': return { from: ymd(y, m - 2, 1), to: today }
-    case 'This Year': return { from: ymd(y, 1, 1), to: today }
-    case 'All Time': return { from: ALL_TIME_FROM, to: today }
-    case 'Last Year': return { from: ymd(y - 1, 1, 1), to: ymd(y - 1, 12, 31) }
-    default: return null
+    case 'This Month':
+      return { from: ymd(y, m, 1), to: today }
+    case 'Last Month':
+      return { from: ymd(y, m - 1, 1), to: ymd(y, m, 0) }
+    case 'Last 30 Days':
+      return { from: ymd(y, m, d - 29), to: today }
+    case 'Last 3 Months':
+      return { from: ymd(y, m - 2, 1), to: today }
+    case 'This Year':
+      return { from: ymd(y, 1, 1), to: today }
+    case 'All Time':
+      return { from: ALL_TIME_FROM, to: today }
+    case 'Last Year':
+      return { from: ymd(y - 1, 1, 1), to: ymd(y - 1, 12, 31) }
+    default:
+      return null
   }
 }
 
@@ -81,5 +96,9 @@ export const groupPayments = (payments, by) => {
     const t = totalsOf(list)
     return { key: k, label: g.label(k), ...t, share: total ? round2((t.amount / total) * 100) : 0 }
   })
-  return rows.sort((a, b) => (g.sortByKey ? a.key.localeCompare(b.key) : b.amount - a.amount || a.label.localeCompare(b.label)))
+  return rows.sort((a, b) =>
+    g.sortByKey
+      ? a.key.localeCompare(b.key)
+      : b.amount - a.amount || a.label.localeCompare(b.label),
+  )
 }

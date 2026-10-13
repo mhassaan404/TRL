@@ -13,7 +13,14 @@ import {
   CRow,
 } from '@coreui/react'
 
-const FloorModal = ({ visible, editData, handleSubmit, closeModal, buildingName, saving = false }) => {
+const FloorModal = ({
+  visible,
+  editData,
+  handleSubmit,
+  closeModal,
+  buildingName,
+  saving = false,
+}) => {
   const [formData, setFormData] = useState({ floorNumber: '' })
   const [validated, setValidated] = useState(false)
 

@@ -14,7 +14,12 @@ const PrintShell = ({ title, loading, error, children }) => {
       <div className="print-toolbar no-print">
         <div className="fw-semibold text-truncate">{title}</div>
         <div className="d-flex gap-2">
-          <CButton color="primary" size="sm" disabled={loading || !!error} onClick={() => window.print()}>
+          <CButton
+            color="primary"
+            size="sm"
+            disabled={loading || !!error}
+            onClick={() => window.print()}
+          >
             Print
           </CButton>
           <CButton color="secondary" variant="outline" size="sm" onClick={() => window.close()}>
@@ -29,7 +34,9 @@ const PrintShell = ({ title, loading, error, children }) => {
       )}
       {!loading && error && (
         <div className="print-sheet">
-          <CAlert color="danger" className="mb-0">{error}</CAlert>
+          <CAlert color="danger" className="mb-0">
+            {error}
+          </CAlert>
         </div>
       )}
       {!loading && !error && children}

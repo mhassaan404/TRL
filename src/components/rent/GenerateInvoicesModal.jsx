@@ -13,8 +13,18 @@ import {
 import TenantMultiSelect from './TenantMultiSelect'
 
 const monthNames = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ]
 
 const GenerateInvoicesModal = ({
@@ -58,7 +68,9 @@ const GenerateInvoicesModal = ({
               }}
             >
               {allowedMonths.map(({ month: m, year: y }) => (
-                <option key={`${y}-${m}`} value={`${y}-${m}`}>{monthNames[m - 1]} {y}</option>
+                <option key={`${y}-${m}`} value={`${y}-${m}`}>
+                  {monthNames[m - 1]} {y}
+                </option>
               ))}
             </CFormSelect>
           </div>
@@ -74,12 +86,15 @@ const GenerateInvoicesModal = ({
           </div>
 
           <small className="text-muted">
-            Creates an invoice for each selected tenant for this month, skipping anyone who already has one. Safe to run more than once.
+            Creates an invoice for each selected tenant for this month, skipping anyone who already
+            has one. Safe to run more than once.
           </small>
         </CForm>
       </CModalBody>
       <CModalFooter>
-        <CButton color="secondary" onClick={onClose}>Cancel</CButton>
+        <CButton color="secondary" onClick={onClose}>
+          Cancel
+        </CButton>
         <CButton color="primary" disabled={isSubmitting || noneSelected} onClick={onSubmit}>
           {isSubmitting ? 'Generating...' : 'Generate Invoices'}
         </CButton>

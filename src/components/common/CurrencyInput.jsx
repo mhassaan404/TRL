@@ -10,7 +10,13 @@ export const toPlainAmount = (text, allowDecimal = true) => {
   let s = String(text ?? '').replace(/[^\d.]/g, '')
   if (!allowDecimal) return s.replace(/\./g, '')
   const dot = s.indexOf('.')
-  if (dot !== -1) s = s.slice(0, dot + 1) + s.slice(dot + 1).replace(/\./g, '').slice(0, 2)
+  if (dot !== -1)
+    s =
+      s.slice(0, dot + 1) +
+      s
+        .slice(dot + 1)
+        .replace(/\./g, '')
+        .slice(0, 2)
   return s
 }
 

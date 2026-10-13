@@ -12,12 +12,7 @@ import {
   useColorModes,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import {
-  cilContrast,
-  cilMenu,
-  cilMoon,
-  cilSun,
-} from '@coreui/icons'
+import { cilContrast, cilMenu, cilMoon, cilSun } from '@coreui/icons'
 
 import { AppHeaderDropdown } from './header/index'
 import authService from '../services/auth.service'
@@ -51,8 +46,11 @@ const AppHeader = () => {
         <CHeaderNav className="ms-auto">
           {client?.clientName && (
             <li className="nav-item d-flex align-items-center px-2">
-              <span className="fw-semibold text-body-secondary text-truncate" style={{ maxWidth: 220 }}
-                title={`Client code: ${client.clientCode}`}>
+              <span
+                className="fw-semibold text-body-secondary text-truncate"
+                style={{ maxWidth: 220 }}
+                title={`Client code: ${client.clientCode}`}
+              >
                 {client.clientName}
               </span>
             </li>

@@ -30,7 +30,7 @@ const InvoicePaymentTable = ({
   handleTenantChange,
   setRentForm,
   handleChargeLateFee,
-  handleReverseLateFee
+  handleReverseLateFee,
 }) => {
   const isDark = useIsDarkMode()
 
@@ -56,7 +56,6 @@ const InvoicePaymentTable = ({
       toast.error(err.response?.data?.message || 'Could not load payment history')
     }
   }
-
 
   return (
     <>
@@ -142,13 +141,16 @@ const InvoicePaymentTable = ({
                   </CTableDataCell> */}
                   <CTableDataCell className="text-end text-danger fw-bold">
                     {fmt(inv.lateFee)}
-                    
 
                     {Number(inv.lateFeeCharged) > 0 && (
                       <div>
-                        <span className="badge bg-secondary me-1">Charged {fmt(inv.lateFeeCharged)}</span>
+                        <span className="badge bg-secondary me-1">
+                          Charged {fmt(inv.lateFeeCharged)}
+                        </span>
                         <CButton
-                          color="link" size="sm" className="p-0 text-danger"
+                          color="link"
+                          size="sm"
+                          className="p-0 text-danger"
                           disabled={!!inv.reversing}
                           onClick={() => {
                             const reason = window.prompt('Reason for reversing the late fee:')
@@ -172,7 +174,6 @@ const InvoicePaymentTable = ({
                         }
                       />
                       {Number(inv.lateFee) > 0 && !inv.waveLateFee && (
-
                         <CButton
                           color="warning"
                           size="sm"

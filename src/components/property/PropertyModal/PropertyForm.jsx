@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react'
 import SearchableSelect from '../../rent/SearchableSelect'
 import {
@@ -18,6 +17,18 @@ import CurrencyInput from '../../common/CurrencyInput'
 import { propertyService } from '../../../services/property.service'
 import { getErrorMessage } from '../../../api/axios'
 
+// Empty form (new unit); module level so effects need not depend on it
+const defaultForm = {
+  buildingId: '',
+  floorId: '',
+  unitNumber: '',
+  propertyType: '',
+  baseRent: '',
+  statusId: '',
+  note: '',
+  isActive: true,
+}
+
 const PropertyForm = ({
   editData,
   handleSubmit,
@@ -33,22 +44,16 @@ const PropertyForm = ({
 }) => {
   const isEditMode = !!editData?.id
 
-  const defaultForm = {
-    buildingId: '',
-    floorId: '',
-    unitNumber: '',
-    propertyType: '',
-    baseRent: '',
-    statusId: '',
-    note: '',
-    isActive: true,
-  }
-
   const [formData, setFormData] = useState(defaultForm)
   const [validated, setValidated] = useState(false)
 
   const [showNewBuilding, setShowNewBuilding] = useState(false)
-  const [newBuilding, setNewBuilding] = useState({ buildingName: '', cityId: '', typeId: '', address: '' })
+  const [newBuilding, setNewBuilding] = useState({
+    buildingName: '',
+    cityId: '',
+    typeId: '',
+    address: '',
+  })
   const [savingBuilding, setSavingBuilding] = useState(false)
 
   const [showNewFloor, setShowNewFloor] = useState(false)
@@ -208,18 +213,28 @@ const PropertyForm = ({
               />
             </div>
 
-            <CButton type="button" color="outline-primary" onClick={() => setShowNewBuilding((v) => !v)}>
+            <CButton
+              type="button"
+              color="outline-primary"
+              onClick={() => setShowNewBuilding((v) => !v)}
+            >
               +
             </CButton>
           </CInputGroup>
 
           {showNewBuilding && (
-            <div className="border rounded p-2 mt-2" style={{
-              background: "linear-gradient(145deg, #20252B, #181C21)",
-              border: "1px solid #343A40",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.25)"
-            }}>
-              <small className="fw-semibold d-block mb-2" style={{ color: "#F5F7FA", letterSpacing: "0.4px" }}>
+            <div
+              className="border rounded p-2 mt-2"
+              style={{
+                background: 'linear-gradient(145deg, #20252B, #181C21)',
+                border: '1px solid #343A40',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+              }}
+            >
+              <small
+                className="fw-semibold d-block mb-2"
+                style={{ color: '#F5F7FA', letterSpacing: '0.4px' }}
+              >
                 New Building
               </small>
 
@@ -248,7 +263,9 @@ const PropertyForm = ({
               >
                 <option value="">Select Type *</option>
                 {buildingTypes.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
                 ))}
               </CFormSelect>
 
@@ -261,7 +278,12 @@ const PropertyForm = ({
               />
 
               <div className="d-flex gap-2">
-                <CButton size="sm" color="primary" onClick={saveNewBuilding} disabled={savingBuilding}>
+                <CButton
+                  size="sm"
+                  color="primary"
+                  onClick={saveNewBuilding}
+                  disabled={savingBuilding}
+                >
                   {savingBuilding ? <CSpinner size="sm" /> : 'Save Building'}
                 </CButton>
 
@@ -311,12 +333,18 @@ const PropertyForm = ({
           </CInputGroup>
 
           {showNewFloor && (
-            <div className="rounded p-2 mt-2" style={{
-              background: "linear-gradient(145deg, #20252B, #181C21)",
-              border: "1px solid #343A40",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.25)"
-            }}>
-              <small className="fw-semibold d-block mb-2" style={{ color: "#F5F7FA", letterSpacing: "0.4px" }}>
+            <div
+              className="rounded p-2 mt-2"
+              style={{
+                background: 'linear-gradient(145deg, #20252B, #181C21)',
+                border: '1px solid #343A40',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+              }}
+            >
+              <small
+                className="fw-semibold d-block mb-2"
+                style={{ color: '#F5F7FA', letterSpacing: '0.4px' }}
+              >
                 New Floor
               </small>
 

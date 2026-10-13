@@ -15,7 +15,13 @@ export const showPaymentRecorded = (receiptIds) => {
     <div>
       <div>Payment recorded successfully</div>
       <div className="small">{ids.length === 1 ? receiptNo(ids[0]) : `${ids.length} receipts`}</div>
-      <CButton size="sm" color="success" variant="outline" className="mt-1" onClick={() => openReceipts(ids)}>
+      <CButton
+        size="sm"
+        color="success"
+        variant="outline"
+        className="mt-1"
+        onClick={() => openReceipts(ids)}
+      >
         Print Receipt{ids.length > 1 ? 's' : ''}
       </CButton>
     </div>,

@@ -13,7 +13,11 @@ import { rentService } from '../../services/rent.service'
 import { toast } from 'react-toastify'
 import Loader from '../../components/Loader'
 import RentListTable from '../../components/rent/RentListTable'
-import { PageSizeSelect, tablePageSizeProps, DEFAULT_PAGE_SIZE } from '../../components/common/TablePagination'
+import {
+  PageSizeSelect,
+  tablePageSizeProps,
+  DEFAULT_PAGE_SIZE,
+} from '../../components/common/TablePagination'
 import PaymentModal from '../../components/rent/PaymentModal'
 import BulkDueDateUpdateModal from '../../components/rent/BulkDueDateUpdateModal'
 import GenerateInvoicesModal from '../../components/rent/GenerateInvoicesModal'
@@ -107,7 +111,8 @@ const RentCollection = () => {
 
   // Invoices of the chosen tenant / company only; the search box then works within them
   const tableData = useMemo(
-    () => (tenantFilter ? (rentList || []).filter((r) => r.tenantName === tenantFilter) : rentList || []),
+    () =>
+      tenantFilter ? (rentList || []).filter((r) => r.tenantName === tenantFilter) : rentList || [],
     [rentList, tenantFilter],
   )
 
@@ -120,9 +125,17 @@ const RentCollection = () => {
 
   const columns = useMemo(
     () => [
-      { accessorKey: 'invoiceId', header: 'Invoice #', cell: ({ row }) => `#${row.original.invoiceId}` },
+      {
+        accessorKey: 'invoiceId',
+        header: 'Invoice #',
+        cell: ({ row }) => `#${row.original.invoiceId}`,
+      },
       // Extra charges have no lease
-      { accessorKey: 'leaseId', header: 'Lease #', cell: ({ row }) => (row.original.leaseId ? `#${row.original.leaseId}` : '—') },
+      {
+        accessorKey: 'leaseId',
+        header: 'Lease #',
+        cell: ({ row }) => (row.original.leaseId ? `#${row.original.leaseId}` : '—'),
+      },
       { accessorKey: 'tenantName', header: 'Tenant' },
       { accessorKey: 'buildingName', header: 'Building' },
       { accessorKey: 'floorNumber', header: 'Floor' },
@@ -144,9 +157,21 @@ const RentCollection = () => {
           </div>
         ),
       },
-      { accessorKey: 'paidAmount', header: 'Paid', cell: ({ row }) => fmt(row.original.paidAmount || 0) },
-      { accessorKey: 'lateFee', header: 'Late Fee', cell: ({ row }) => fmt(row.original.lateFee || 0) },
-      { accessorKey: 'remainingAmount', header: 'Balance', cell: ({ row }) => fmt(row.original.remainingAmount || 0) },
+      {
+        accessorKey: 'paidAmount',
+        header: 'Paid',
+        cell: ({ row }) => fmt(row.original.paidAmount || 0),
+      },
+      {
+        accessorKey: 'lateFee',
+        header: 'Late Fee',
+        cell: ({ row }) => fmt(row.original.lateFee || 0),
+      },
+      {
+        accessorKey: 'remainingAmount',
+        header: 'Balance',
+        cell: ({ row }) => fmt(row.original.remainingAmount || 0),
+      },
       {
         accessorKey: 'dueDate',
         header: 'Due Date',
@@ -188,10 +213,8 @@ const RentCollection = () => {
         ),
       },
     ],
-    [openEditPayment,
-      toggleExpand, expandedRows],
+    [openEditPayment],
   )
-
 
   const table = useReactTable({
     data: tableData,
@@ -211,13 +234,19 @@ const RentCollection = () => {
   })
 
   // Back to page 1 on a new search; stay on a real page if the list got shorter
-  useEffect(() => { table.setPageIndex(0) }, [globalFilter, tenantFilter]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    table.setPageIndex(0)
+  }, [globalFilter, tenantFilter]) // eslint-disable-line react-hooks/exhaustive-deps
   // A new tenant / company choice clears the ticked invoices, so Update Due Date never acts on hidden rows
   // A selection only covers rows the Admin can see now: cleared when the search, tenant filter or the list itself changes
-  useEffect(() => { setSelectedIds([]) }, [tenantFilter, globalFilter, rentList])
+  useEffect(() => {
+    setSelectedIds([])
+  }, [tenantFilter, globalFilter, rentList])
   const pageCount = table.getPageCount()
   const { pageIndex } = table.getState().pagination
-  useEffect(() => { if (pageCount > 0 && pageIndex > pageCount - 1) table.setPageIndex(pageCount - 1) }, [pageIndex, pageCount]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (pageCount > 0 && pageIndex > pageCount - 1) table.setPageIndex(pageCount - 1)
+  }, [pageIndex, pageCount]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
@@ -225,30 +254,31 @@ const RentCollection = () => {
       <CRow>
         <CCol xs={12}>
           <CCard className="border-0 shadow-sm mb-4">
-            <CCardHeader className={`border-0 py-3 px-4 ${isDark ? '' : 'bg-white'}`}
-            >
+            <CCardHeader className={`border-0 py-3 px-4 ${isDark ? '' : 'bg-white'}`}>
               {/* Header Row */}
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <div>
                   <div className="fw-semibold fs-5">Rent Collection</div>
-                  <div className="text-body-secondary small">
-                    Manage outstanding rent invoices
-                  </div>
+                  <div className="text-body-secondary small">Manage outstanding rent invoices</div>
                 </div>
                 <CButton
                   color="success"
                   variant="outline"
                   // What the search and tenant filter show (all pages), like the other pages' exports
-                  onClick={() => exportCSV(columns, table.getFilteredRowModel().rows.map((r) => r.original), 'rent_collection.csv')}
+                  onClick={() =>
+                    exportCSV(
+                      columns,
+                      table.getFilteredRowModel().rows.map((r) => r.original),
+                      'rent_collection.csv',
+                    )
+                  }
                 >
                   Export CSV
                 </CButton>
               </div>
               {/* Filters / Actions */}
               <div className="border-top pt-3">
-                <div className="text-body-secondary small fw-semibold mb-2">
-                  Filters & Actions
-                </div>
+                <div className="text-body-secondary small fw-semibold mb-2">Filters & Actions</div>
                 <div className="d-flex flex-column flex-xl-row gap-2">
                   {/* Search */}
                   <input
@@ -268,11 +298,7 @@ const RentCollection = () => {
                     />
                   </div>
                   {/* Generate Invoices (theme-aware colours: readable in light and dark mode) */}
-                  <CButton
-                    color="primary"
-                    variant="outline"
-                    onClick={openGenerateInvoices}
-                  >
+                  <CButton color="primary" variant="outline" onClick={openGenerateInvoices}>
                     + Generate Invoices
                   </CButton>
                   {/* Extra Charge: a separate one-time invoice (maintenance, utility, damage, rent correction...) */}
@@ -280,10 +306,7 @@ const RentCollection = () => {
                     + Extra Charge
                   </CButton>
                   {/* New Payment */}
-                  <CButton
-                    color="primary"
-                    onClick={openNewPayment}
-                  >
+                  <CButton color="primary" onClick={openNewPayment}>
                     + New Payment
                   </CButton>
                   {/* Update Due Date */}
@@ -294,16 +317,10 @@ const RentCollection = () => {
                     onClick={() => {
                       let prefill = todayLocal()
                       if (selectedIds.length === 1) {
-                        const invoice = rentList.find(
-                          (r) => r.invoiceId === selectedIds[0]
-                        )
+                        const invoice = rentList.find((r) => r.invoiceId === selectedIds[0])
                         if (invoice?.dueDate) {
                           const datePart = String(invoice.dueDate).split('T')[0]
-                          if (
-                            datePart &&
-                            datePart.includes('-') &&
-                            datePart.length >= 10
-                          ) {
+                          if (datePart && datePart.includes('-') && datePart.length >= 10) {
                             prefill = datePart
                           }
                         }
@@ -360,7 +377,9 @@ const RentCollection = () => {
             onYearChange={(year) => setGenerateModal((prev) => ({ ...prev, year }))}
             tenants={activeTenants}
             selectedTenants={generateModal.tenantIds}
-            onSelectedTenantsChange={(val) => setGenerateModal((prev) => ({ ...prev, tenantIds: val }))}
+            onSelectedTenantsChange={(val) =>
+              setGenerateModal((prev) => ({ ...prev, tenantIds: val }))
+            }
             onSubmit={handleGenerateInvoices}
             isSubmitting={isGenerating}
             isDark={isDark}

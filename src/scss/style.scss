@@ -1,8 +1,8 @@
-@use "@coreui/coreui/scss/coreui" as * with ( 
-  $enable-deprecation-messages: false,
+@use '@coreui/coreui/scss/coreui' as * with (
+  $enable-deprecation-messages: false
 );
-@use "@coreui/chartjs/scss/coreui-chartjs";
-@use "vendors/simplebar";
+@use '@coreui/chartjs/scss/coreui-chartjs';
+@use 'vendors/simplebar';
 
 body {
   background-color: var(--cui-tertiary-bg);
@@ -12,7 +12,7 @@ body {
   width: 100%;
   padding-inline: var(--cui-sidebar-occupy-start, 0) var(--cui-sidebar-occupy-end, 0);
   will-change: auto;
-  @include transition(padding .15s);
+  @include transition(padding 0.15s);
 }
 
 .header > .container-fluid,
@@ -87,7 +87,9 @@ body {
 // Printable documents (receipts, invoices): A4 sheets on a grey desk on screen, plain paper when printed.
 // The named page keeps these margins off the report pages.
 // The whole page behind a document is paper-coloured, even in dark mode
-body:has(.print-root) { background: #e9ecef !important; }
+body:has(.print-root) {
+  background: #e9ecef !important;
+}
 
 .print-root {
   min-height: 100vh;
@@ -123,7 +125,10 @@ body:has(.print-root) { background: #e9ecef !important; }
 }
 
 @media (max-width: 576px) {
-  .print-sheet { padding: 20px 16px; margin-top: 0; }
+  .print-sheet {
+    padding: 20px 16px;
+    margin-top: 0;
+  }
 }
 
 .print-watermark {
@@ -155,7 +160,9 @@ body:has(.print-root) { background: #e9ecef !important; }
     text-align: right;
   }
 
-  td { text-align: right; }
+  td {
+    text-align: right;
+  }
 }
 
 .doc-label {
@@ -177,7 +184,9 @@ body:has(.print-root) { background: #e9ecef !important; }
 .doc-table {
   font-size: 0.875rem;
 
-  thead th { background: #f1f3f5; }
+  thead th {
+    background: #f1f3f5;
+  }
 }
 
 .doc-kv {
@@ -189,13 +198,17 @@ body:has(.print-root) { background: #e9ecef !important; }
     vertical-align: top;
   }
 
-  td { padding: 2px 0; }
+  td {
+    padding: 2px 0;
+  }
 }
 
 .doc-summary {
   font-size: 0.95rem;
 
-  td { text-align: right; }
+  td {
+    text-align: right;
+  }
 
   .doc-summary-total th,
   .doc-summary-total td {
@@ -227,7 +240,9 @@ body:has(.print-root) { background: #e9ecef !important; }
   border-top: 1px solid #212529;
 }
 
-.text-pre-line { white-space: pre-line; }
+.text-pre-line {
+  white-space: pre-line;
+}
 
 @page doc {
   size: a4;
@@ -235,12 +250,19 @@ body:has(.print-root) { background: #e9ecef !important; }
 }
 
 @media print {
-  .print-root { padding: 0; background: #fff; }
+  .print-root {
+    padding: 0;
+    background: #fff;
+  }
 
-  body:has(.print-root) { background: #fff !important; }
+  body:has(.print-root) {
+    background: #fff !important;
+  }
 
   // Notifications never print
-  .Toastify { display: none !important; }
+  .Toastify {
+    display: none !important;
+  }
 
   .print-sheet {
     min-height: 0;
@@ -250,7 +272,9 @@ body:has(.print-root) { background: #e9ecef !important; }
     break-after: page;
   }
 
-  .print-sheet:last-child { break-after: auto; }
+  .print-sheet:last-child {
+    break-after: auto;
+  }
 
   .doc-table thead th,
   .doc-total {

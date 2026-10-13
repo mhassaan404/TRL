@@ -23,14 +23,26 @@ const DepositReceiptPrint = () => {
     let alive = true
     depositService
       .getReceipt(id)
-      .then((r) => { if (alive) setD(r) })
-      .catch((e) => { if (alive) setError(e.message) })
-      .finally(() => { if (alive) setLoading(false) })
-    return () => { alive = false }
+      .then((r) => {
+        if (alive) setD(r)
+      })
+      .catch((e) => {
+        if (alive) setError(e.message)
+      })
+      .finally(() => {
+        if (alive) setLoading(false)
+      })
+    return () => {
+      alive = false
+    }
   }, [id])
 
   return (
-    <PrintShell title={d ? `Deposit Receipt ${depositNo(d.depositId)}` : 'Deposit Receipt'} loading={loading} error={error}>
+    <PrintShell
+      title={d ? `Deposit Receipt ${depositNo(d.depositId)}` : 'Deposit Receipt'}
+      loading={loading}
+      error={error}
+    >
       {d && (
         <div className="print-sheet">
           <CompanyHeader />
@@ -38,21 +50,33 @@ const DepositReceiptPrint = () => {
             <div className="doc-title">Security Deposit Receipt</div>
             <table className="doc-meta">
               <tbody>
-                <tr><th>Receipt No.</th><td className="fw-bold">{depositNo(d.depositId)}</td></tr>
-                <tr><th>Received Date</th><td>{formatDay(d.entryDate)}</td></tr>
-                <tr><th>Printed</th><td>{formatDay(todayLocal())}</td></tr>
+                <tr>
+                  <th>Receipt No.</th>
+                  <td className="fw-bold">{depositNo(d.depositId)}</td>
+                </tr>
+                <tr>
+                  <th>Received Date</th>
+                  <td>{formatDay(d.entryDate)}</td>
+                </tr>
+                <tr>
+                  <th>Printed</th>
+                  <td>{formatDay(todayLocal())}</td>
+                </tr>
               </tbody>
             </table>
           </div>
 
           <CRow className="g-3 mb-3">
-            <CCol xs={6}><PartyBlock heading="Received From" doc={d} /></CCol>
+            <CCol xs={6}>
+              <PartyBlock heading="Received From" doc={d} />
+            </CCol>
             <CCol xs={6}>
               <PropertyBlock doc={d}>
                 {d.leaseId && (
                   <div>
                     Lease #{d.leaseId}
-                    {d.leaseStartDate && ` · ${formatDay(d.leaseStartDate)} – ${formatDay(d.leaseEndDate)}`}
+                    {d.leaseStartDate &&
+                      ` · ${formatDay(d.leaseStartDate)} – ${formatDay(d.leaseEndDate)}`}
                   </div>
                 )}
               </PropertyBlock>
@@ -65,14 +89,38 @@ const DepositReceiptPrint = () => {
                 <div className="doc-label">Deposit Details</div>
                 <table className="doc-kv">
                   <tbody>
-                    <tr><th>Payment Method</th><td>{d.paymentMethod}</td></tr>
-                    {d.reference && <tr><th>Reference</th><td>{d.reference}</td></tr>}
-                    {d.agreedAmount != null && <tr><th>Agreed Deposit</th><td>PKR {fmt(d.agreedAmount)}</td></tr>}
-                    <tr><th>Total Held</th><td>PKR {fmt(d.heldAfter)} (after this receipt)</td></tr>
-                    {d.agreedAmount != null && Number(d.agreedAmount) > Number(d.heldAfter) && (
-                      <tr><th>Still Due</th><td>PKR {fmt(Number(d.agreedAmount) - Number(d.heldAfter))}</td></tr>
+                    <tr>
+                      <th>Payment Method</th>
+                      <td>{d.paymentMethod}</td>
+                    </tr>
+                    {d.reference && (
+                      <tr>
+                        <th>Reference</th>
+                        <td>{d.reference}</td>
+                      </tr>
                     )}
-                    {d.notes && <tr><th>Notes</th><td className="text-pre-line">{d.notes}</td></tr>}
+                    {d.agreedAmount != null && (
+                      <tr>
+                        <th>Agreed Deposit</th>
+                        <td>PKR {fmt(d.agreedAmount)}</td>
+                      </tr>
+                    )}
+                    <tr>
+                      <th>Total Held</th>
+                      <td>PKR {fmt(d.heldAfter)} (after this receipt)</td>
+                    </tr>
+                    {d.agreedAmount != null && Number(d.agreedAmount) > Number(d.heldAfter) && (
+                      <tr>
+                        <th>Still Due</th>
+                        <td>PKR {fmt(Number(d.agreedAmount) - Number(d.heldAfter))}</td>
+                      </tr>
+                    )}
+                    {d.notes && (
+                      <tr>
+                        <th>Notes</th>
+                        <td className="text-pre-line">{d.notes}</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -87,8 +135,9 @@ const DepositReceiptPrint = () => {
           </CRow>
 
           <div className="doc-box mt-3 small">
-            This is a refundable security deposit held against the tenancy above. It is not rent and is not adjusted
-            against monthly rent; it will be settled at the end of the tenancy as per the lease terms.
+            This is a refundable security deposit held against the tenancy above. It is not rent and
+            is not adjusted against monthly rent; it will be settled at the end of the tenancy as
+            per the lease terms.
           </div>
 
           <DocFooter

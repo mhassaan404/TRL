@@ -42,11 +42,7 @@ const BulkDueDateUpdateModal = ({
         <CButton color="secondary" onClick={onClose}>
           Cancel
         </CButton>
-        <CButton
-          color="warning"
-          disabled={!newDueDate || isSubmitting}
-          onClick={onSubmit}
-        >
+        <CButton color="warning" disabled={!newDueDate || isSubmitting} onClick={onSubmit}>
           {isSubmitting ? 'Updating...' : 'Update Due Dates'}
         </CButton>
       </CModalFooter>

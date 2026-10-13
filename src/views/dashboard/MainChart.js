@@ -33,7 +33,7 @@ const MainChart = ({ tenants, totalRent, collected, pending }) => {
       ref={chartRef}
       style={{ height: '300px', marginTop: '40px' }}
       data={{
-        labels: getPastMonths(7),  // ✅ dynamic months
+        labels: getPastMonths(7), // ✅ dynamic months
         datasets: [
           {
             label: 'Total Tenants',
@@ -74,7 +74,11 @@ const MainChart = ({ tenants, totalRent, collected, pending }) => {
       options={{
         maintainAspectRatio: false,
         plugins: {
-          tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${Number(c.parsed.y).toLocaleString('en-US')}` } },
+          tooltip: {
+            callbacks: {
+              label: (c) => `${c.dataset.label}: ${Number(c.parsed.y).toLocaleString('en-US')}`,
+            },
+          },
           legend: {
             display: true, // ✅ show legend since your datasets matter
           },
@@ -127,8 +131,18 @@ const getPastMonths = (numMonths) => {
   const now = new Date()
   const months = []
   const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ]
 
   for (let i = numMonths - 1; i >= 0; i--) {

@@ -13,31 +13,62 @@ const load = async (call, empty, fallback) => {
 const list = (res) => (Array.isArray(res.data) ? res.data : [])
 
 export const depositService = {
-  getAll: () => load(async () => list(await api.get('/SecurityDeposits/GetAll')), [], 'Failed to load security deposits'),
+  getAll: () =>
+    load(
+      async () => list(await api.get('/SecurityDeposits/GetAll')),
+      [],
+      'Failed to load security deposits',
+    ),
 
   getHistory: (tenantId, unitId) =>
-    load(async () => list(await api.get('/SecurityDeposits/History', { params: { tenantId, unitId } })), [], 'Failed to load deposit history'),
+    load(
+      async () =>
+        list(await api.get('/SecurityDeposits/History', { params: { tenantId, unitId } })),
+      [],
+      'Failed to load deposit history',
+    ),
 
   record: ({ leaseId, amount, entryDate, paymentMethod, reference, notes }) =>
     request(
-      () => api.post('/SecurityDeposits/Record', {
-        LeaseId: leaseId, Amount: amount, EntryDate: entryDate, PaymentMethod: paymentMethod, Reference: reference, Notes: notes,
-      }),
+      () =>
+        api.post('/SecurityDeposits/Record', {
+          LeaseId: leaseId,
+          Amount: amount,
+          EntryDate: entryDate,
+          PaymentMethod: paymentMethod,
+          Reference: reference,
+          Notes: notes,
+        }),
       'Failed to record the deposit',
     ),
 
   correct: ({ tenantId, unitId, amount, entryDate, reason }) =>
     request(
-      () => api.post('/SecurityDeposits/Correct', { TenantId: tenantId, UnitId: unitId, Amount: amount, EntryDate: entryDate, Reason: reason }),
+      () =>
+        api.post('/SecurityDeposits/Correct', {
+          TenantId: tenantId,
+          UnitId: unitId,
+          Amount: amount,
+          EntryDate: entryDate,
+          Reason: reason,
+        }),
       'Failed to record the correction',
     ),
 
   setAgreed: ({ tenantId, unitId, agreedAmount }) =>
     request(
-      () => api.post('/SecurityDeposits/SetAgreed', { TenantId: tenantId, UnitId: unitId, AgreedAmount: agreedAmount }),
+      () =>
+        api.post('/SecurityDeposits/SetAgreed', {
+          TenantId: tenantId,
+          UnitId: unitId,
+          AgreedAmount: agreedAmount,
+        }),
       'Failed to save the agreed deposit',
     ),
 
   getReceipt: (depositId) =>
-    request(() => api.get('/SecurityDeposits/Receipt', { params: { depositId } }), 'Failed to load deposit receipt'),
+    request(
+      () => api.get('/SecurityDeposits/Receipt', { params: { depositId } }),
+      'Failed to load deposit receipt',
+    ),
 }

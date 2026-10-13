@@ -1,36 +1,31 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { format } from 'date-fns'
-import Loader from "../../components/Loader";
-import { rentService } from "../../services/rent.service";
+import Loader from '../../components/Loader'
+import { rentService } from '../../services/rent.service'
 
-import {
-  CCard,
-  CCardBody,
-  CCol,
-  CRow,
-} from '@coreui/react'
+import { CCard, CCardBody, CCol, CRow } from '@coreui/react'
 
 import WidgetsDropdown from '../widgets/WidgetsDropdown'
 import MainChart from './MainChart'
 
 const Dashboard = () => {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState([])
+  const [loading, setLoading] = useState(false)
 
   // Fetch dashboard data
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      setData(await rentService.getDashboard()); // the service shows load errors and returns []
-      setLoading(false);
-    })();
-  }, []);
+    ;(async () => {
+      setLoading(true)
+      setData(await rentService.getDashboard()) // the service shows load errors and returns []
+      setLoading(false)
+    })()
+  }, [])
 
   // Derived data for widgets/charts
-  const tenants = useMemo(() => data.map(x => x.totalTenants), [data]);
-  const totalRent = useMemo(() => data.map(x => x.totalRentDue), [data]);
-  const collected = useMemo(() => data.map(x => x.collectedAmount), [data]);
-  const pending = useMemo(() => data.map(x => x.pendingAmount), [data]);
+  const tenants = useMemo(() => data.map((x) => x.totalTenants), [data])
+  const totalRent = useMemo(() => data.map((x) => x.totalRentDue), [data])
+  const collected = useMemo(() => data.map((x) => x.collectedAmount), [data])
+  const pending = useMemo(() => data.map((x) => x.pendingAmount), [data])
 
   return (
     <>
@@ -51,9 +46,7 @@ const Dashboard = () => {
               <h4 id="rent-overview" className="card-title mb-0">
                 Rent Overview
               </h4>
-              <div className="small text-body-secondary">
-                {getPastMonthsRange(7)}
-              </div>
+              <div className="small text-body-secondary">{getPastMonthsRange(7)}</div>
             </CCol>
           </CRow>
 
@@ -66,8 +59,8 @@ const Dashboard = () => {
         </CCardBody>
       </CCard>
     </>
-  );
-};
+  )
+}
 
 // Utility to get month names
 const getPastMonthsRange = (numMonths) => {
@@ -82,4 +75,4 @@ const getPastMonthsRange = (numMonths) => {
   return `${months[0]} - ${months[months.length - 1]}`
 }
 
-export default Dashboard;
+export default Dashboard

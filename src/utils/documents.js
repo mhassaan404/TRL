@@ -1,7 +1,20 @@
 // Printable documents: numbers, labels, amount in words and the links that open them.
 // Self-contained (no React or API imports) so the rules are easy to test.
 
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+const MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+]
 
 // Receipt number = payment Id, invoice number = invoice Id: both already unique, so nothing extra is stored
 export const receiptNo = (paymentId) => `RCT-${String(paymentId).padStart(6, '0')}`
@@ -10,15 +23,38 @@ export const invoiceNo = (invoiceId) => `INV-${String(invoiceId).padStart(6, '0'
 // What an invoice is for: "Rent – October 2026" or the extra charge type ("Damage")
 export const invoiceTitle = (inv) => {
   if (inv.chargeType) return inv.chargeType
-  const [y, m] = String(inv.invoiceMonth || inv.invoiceDate || '').slice(0, 7).split('-')
+  const [y, m] = String(inv.invoiceMonth || inv.invoiceDate || '')
+    .slice(0, 7)
+    .split('-')
   return y && m ? `Rent – ${MONTHS[Number(m) - 1]} ${y}` : 'Rent'
 }
 
-const ONES = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve',
-  'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen']
+const ONES = [
+  '',
+  'One',
+  'Two',
+  'Three',
+  'Four',
+  'Five',
+  'Six',
+  'Seven',
+  'Eight',
+  'Nine',
+  'Ten',
+  'Eleven',
+  'Twelve',
+  'Thirteen',
+  'Fourteen',
+  'Fifteen',
+  'Sixteen',
+  'Seventeen',
+  'Eighteen',
+  'Nineteen',
+]
 const TENS = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety']
 
-const belowHundred = (n) => (n < 20 ? ONES[n] : `${TENS[Math.floor(n / 10)]}${n % 10 ? `-${ONES[n % 10]}` : ''}`)
+const belowHundred = (n) =>
+  n < 20 ? ONES[n] : `${TENS[Math.floor(n / 10)]}${n % 10 ? `-${ONES[n % 10]}` : ''}`
 const belowThousand = (n) => {
   const h = Math.floor(n / 100)
   const r = n % 100
@@ -54,7 +90,8 @@ export const amountInWords = (amount) => {
 // Print pages open in a new tab (outside the app layout), from a click so the browser allows it
 export const receiptsLink = (paymentIds) => `#/print/receipts/${[].concat(paymentIds).join(',')}`
 export const invoiceLink = (invoiceId) => `#/print/invoice/${invoiceId}`
-export const openReceipts = (paymentIds) => window.open(receiptsLink(paymentIds), '_blank', 'noopener')
+export const openReceipts = (paymentIds) =>
+  window.open(receiptsLink(paymentIds), '_blank', 'noopener')
 export const openInvoice = (invoiceId) => window.open(invoiceLink(invoiceId), '_blank', 'noopener')
 
 // Payments made at a move-out settlement that are not new money: paid from the security deposit, or a tenant credit

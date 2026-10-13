@@ -1,24 +1,55 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  CBadge, CButton, CButtonGroup, CCard, CCardBody, CCardHeader, CCol, CFormInput, CFormLabel, CFormSelect, CRow,
-  CTable, CTableBody, CTableDataCell, CTableFoot, CTableHead, CTableHeaderCell, CTableRow,
+  CBadge,
+  CButton,
+  CButtonGroup,
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CCol,
+  CFormInput,
+  CFormLabel,
+  CFormSelect,
+  CRow,
+  CTable,
+  CTableBody,
+  CTableDataCell,
+  CTableFoot,
+  CTableHead,
+  CTableHeaderCell,
+  CTableRow,
 } from '@coreui/react'
 import { reportService } from '../../services/report.service'
 import CompanyHeader from '../../components/common/CompanyHeader'
 import TenantFilter from '../../components/rent/TenantFilter'
-import { PageSizeSelect, TablePagination, DEFAULT_PAGE_SIZE } from '../../components/common/TablePagination'
+import {
+  PageSizeSelect,
+  TablePagination,
+  DEFAULT_PAGE_SIZE,
+} from '../../components/common/TablePagination'
 import { fmt } from '../../utils/rentUtils'
 import { exportCSV } from '../../utils/exportUtils'
 import { todayLocal } from '../../utils/dates'
 import { formatDay, invoiceLabel } from '../../utils/reminders'
-import { GROUP_BY, PRESETS, groupPayments, isReversalRow, presetRange, totalsOf } from '../../utils/collections'
+import {
+  GROUP_BY,
+  PRESETS,
+  groupPayments,
+  isReversalRow,
+  presetRange,
+  totalsOf,
+} from '../../utils/collections'
 
 // Collections: money actually received (by payment date), totalled by day, month, method, building or tenant.
 // Read only. The date range is loaded from the API; the other filters work on the loaded payments.
 const isWaived = (p) => p.lateFeeWaived === true || p.lateFeeWaived === 1
 // Reversal = a payment entered by mistake, taken back on this date (negative amounts); Reversed = taken back later
 const rowType = (p) =>
-  isReversalRow(p) ? `Reversal of #${p.reversalOfPaymentId}` : p.reversedByPaymentId != null ? 'Reversed' : ''
+  isReversalRow(p)
+    ? `Reversal of #${p.reversalOfPaymentId}`
+    : p.reversedByPaymentId != null
+      ? 'Reversed'
+      : ''
 const money = (v) => (Number(v) ? fmt(v) : '—')
 
 const Collections = () => {
@@ -61,7 +92,10 @@ const Collections = () => {
     const done = () => setPrinting(false)
     window.addEventListener('afterprint', done)
     const t = setTimeout(() => window.print(), 50)
-    return () => { clearTimeout(t); window.removeEventListener('afterprint', done) }
+    return () => {
+      clearTimeout(t)
+      window.removeEventListener('afterprint', done)
+    }
   }, [printing])
 
   const choosePreset = (p) => {
@@ -73,77 +107,103 @@ const Collections = () => {
     setRange((r) => ({ ...r, [field]: value }))
   }
 
-  const buildings = useMemo(() => [...new Set(rows.map((r) => r.buildingName).filter(Boolean))].sort(), [rows])
-  const methods = useMemo(() => [...new Set(rows.map((r) => r.method).filter(Boolean))].sort(), [rows])
+  const buildings = useMemo(
+    () => [...new Set(rows.map((r) => r.buildingName).filter(Boolean))].sort(),
+    [rows],
+  )
+  const methods = useMemo(
+    () => [...new Set(rows.map((r) => r.method).filter(Boolean))].sort(),
+    [rows],
+  )
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return rows.filter((p) =>
-      (!tenantFilter || p.tenantName === tenantFilter) &&
-      (!building || p.buildingName === building) &&
-      (!method || p.method === method) &&
-      (!q || String(p.tenantName || '').toLowerCase().includes(q) ||
-        String(p.unitNumber || '').toLowerCase().includes(q) ||
-        String(p.invoiceId || '').includes(q) || String(p.paymentId).includes(q)))
+    return rows.filter(
+      (p) =>
+        (!tenantFilter || p.tenantName === tenantFilter) &&
+        (!building || p.buildingName === building) &&
+        (!method || p.method === method) &&
+        (!q ||
+          String(p.tenantName || '')
+            .toLowerCase()
+            .includes(q) ||
+          String(p.unitNumber || '')
+            .toLowerCase()
+            .includes(q) ||
+          String(p.invoiceId || '').includes(q) ||
+          String(p.paymentId).includes(q)),
+    )
   }, [rows, search, tenantFilter, building, method])
 
   const totals = useMemo(() => totalsOf(filtered), [filtered])
   const groups = useMemo(() => groupPayments(filtered, groupBy), [filtered, groupBy])
 
-  useEffect(() => { setPageIndex(0) }, [search, tenantFilter, building, method, range.from, range.to])
-  const paged = printing ? filtered : filtered.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)
+  useEffect(() => {
+    setPageIndex(0)
+  }, [search, tenantFilter, building, method, range.from, range.to])
+  const paged = printing
+    ? filtered
+    : filtered.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)
 
   const rangeText = validRange ? `${formatDay(range.from)} to ${formatDay(range.to)}` : ''
   const fileSuffix = `${range.from}_to_${range.to}`
 
-  const exportSummary = () => exportCSV(
-    [
-      { accessorKey: 'label', header: groupBy },
-      { accessorKey: 'count', header: 'Payments' },
-      { accessorKey: 'amount', header: 'Received' },
-      { accessorKey: 'discount', header: 'Discount' },
-      { accessorKey: 'waived', header: 'Late Fees Waived' },
-      { accessorKey: 'share', header: '% of Received' },
-    ],
-    [...groups, { label: 'TOTAL', ...totals, share: totals.amount ? 100 : 0 }],
-    `collections-by-${groupBy.toLowerCase()}-${fileSuffix}.csv`,
-  )
+  const exportSummary = () =>
+    exportCSV(
+      [
+        { accessorKey: 'label', header: groupBy },
+        { accessorKey: 'count', header: 'Payments' },
+        { accessorKey: 'amount', header: 'Received' },
+        { accessorKey: 'discount', header: 'Discount' },
+        { accessorKey: 'waived', header: 'Late Fees Waived' },
+        { accessorKey: 'share', header: '% of Received' },
+      ],
+      [...groups, { label: 'TOTAL', ...totals, share: totals.amount ? 100 : 0 }],
+      `collections-by-${groupBy.toLowerCase()}-${fileSuffix}.csv`,
+    )
 
-  const exportPayments = () => exportCSV(
-    [
-      { accessorKey: 'paymentDate', header: 'Payment Date' },
-      { accessorKey: 'paymentId', header: 'Payment #' },
-      { accessorKey: 'tenantName', header: 'Tenant' },
-      { accessorKey: 'buildingName', header: 'Building' },
-      { accessorKey: 'unitNumber', header: 'Unit' },
-      { accessorKey: 'invoiceId', header: 'Invoice #' },
-      { accessorKey: 'for', header: 'For' },
-      { accessorKey: 'method', header: 'Method' },
-      { accessorKey: 'amount', header: 'Received' },
-      { accessorKey: 'discount', header: 'Discount' },
-      { accessorKey: 'waived', header: 'Late Fee Waived' },
-      { accessorKey: 'reversal', header: 'Reversal' },
-      { accessorKey: 'recordedBy', header: 'Recorded By' },
-      { accessorKey: 'notes', header: 'Notes' },
-    ],
-    filtered.map((p) => ({
-      ...p,
-      for: p.invoiceId ? invoiceLabel(p) : '',
-      waived: isWaived(p) ? 'Yes' : isReversalRow(p) && p.reversesWaiver ? 'Waiver reversed' : '',
-      reversal: rowType(p),
-    })),
-    `collections-payments-${fileSuffix}.csv`,
-  )
+  const exportPayments = () =>
+    exportCSV(
+      [
+        { accessorKey: 'paymentDate', header: 'Payment Date' },
+        { accessorKey: 'paymentId', header: 'Payment #' },
+        { accessorKey: 'tenantName', header: 'Tenant' },
+        { accessorKey: 'buildingName', header: 'Building' },
+        { accessorKey: 'unitNumber', header: 'Unit' },
+        { accessorKey: 'invoiceId', header: 'Invoice #' },
+        { accessorKey: 'for', header: 'For' },
+        { accessorKey: 'method', header: 'Method' },
+        { accessorKey: 'amount', header: 'Received' },
+        { accessorKey: 'discount', header: 'Discount' },
+        { accessorKey: 'waived', header: 'Late Fee Waived' },
+        { accessorKey: 'reversal', header: 'Reversal' },
+        { accessorKey: 'recordedBy', header: 'Recorded By' },
+        { accessorKey: 'notes', header: 'Notes' },
+      ],
+      filtered.map((p) => ({
+        ...p,
+        for: p.invoiceId ? invoiceLabel(p) : '',
+        waived: isWaived(p) ? 'Yes' : isReversalRow(p) && p.reversesWaiver ? 'Waiver reversed' : '',
+        reversal: rowType(p),
+      })),
+      `collections-payments-${fileSuffix}.csv`,
+    )
 
   const cards = [
     { label: 'Total Received', value: `PKR ${fmt(totals.amount)}`, strong: true },
     {
       label: 'Payments',
       value: `${totals.count} from ${totals.tenants} tenant${totals.tenants === 1 ? '' : 's'}${
-        totals.reversals ? ` · ${totals.reversals} reversal${totals.reversals === 1 ? '' : 's'}` : ''}`,
+        totals.reversals
+          ? ` · ${totals.reversals} reversal${totals.reversals === 1 ? '' : 's'}`
+          : ''
+      }`,
     },
     { label: 'Discounts Given', value: `PKR ${fmt(totals.discount)}` },
-    { label: 'Late Fees Waived', value: `${totals.waived} payment${totals.waived === 1 ? '' : 's'}` },
+    {
+      label: 'Late Fees Waived',
+      value: `${totals.waived} payment${totals.waived === 1 ? '' : 's'}`,
+    },
   ]
 
   return (
@@ -162,13 +222,31 @@ const Collections = () => {
           </div>
         </div>
         <div className="d-flex gap-2 no-print">
-          <CButton size="sm" color="secondary" variant="outline" disabled={!filtered.length} onClick={exportSummary}>
+          <CButton
+            size="sm"
+            color="secondary"
+            variant="outline"
+            disabled={!filtered.length}
+            onClick={exportSummary}
+          >
             Export Summary
           </CButton>
-          <CButton size="sm" color="secondary" variant="outline" disabled={!filtered.length} onClick={exportPayments}>
+          <CButton
+            size="sm"
+            color="secondary"
+            variant="outline"
+            disabled={!filtered.length}
+            onClick={exportPayments}
+          >
             Export Payments
           </CButton>
-          <CButton size="sm" color="primary" variant="outline" disabled={!filtered.length} onClick={() => setPrinting(true)}>
+          <CButton
+            size="sm"
+            color="primary"
+            variant="outline"
+            disabled={!filtered.length}
+            onClick={() => setPrinting(true)}
+          >
             Print
           </CButton>
         </div>
@@ -177,30 +255,56 @@ const Collections = () => {
         <div className="d-flex flex-wrap align-items-end gap-2 mb-3 no-print">
           <CButtonGroup className="flex-wrap">
             {PRESETS.map((p) => (
-              <CButton key={p} size="sm" color="primary" variant={preset === p ? undefined : 'outline'} onClick={() => choosePreset(p)}>
+              <CButton
+                key={p}
+                size="sm"
+                color="primary"
+                variant={preset === p ? undefined : 'outline'}
+                onClick={() => choosePreset(p)}
+              >
                 {p}
               </CButton>
             ))}
           </CButtonGroup>
           <div>
             <CFormLabel className="small mb-0">From</CFormLabel>
-            <CFormInput type="date" size="sm" value={range.from} max={range.to || undefined}
-              invalid={!validRange} onChange={(e) => setDate('from', e.target.value)} />
+            <CFormInput
+              type="date"
+              size="sm"
+              value={range.from}
+              max={range.to || undefined}
+              invalid={!validRange}
+              onChange={(e) => setDate('from', e.target.value)}
+            />
           </div>
           <div>
             <CFormLabel className="small mb-0">To</CFormLabel>
-            <CFormInput type="date" size="sm" value={range.to} min={range.from || undefined}
-              invalid={!validRange} onChange={(e) => setDate('to', e.target.value)} />
+            <CFormInput
+              type="date"
+              size="sm"
+              value={range.to}
+              min={range.from || undefined}
+              invalid={!validRange}
+              onChange={(e) => setDate('to', e.target.value)}
+            />
           </div>
-          {!validRange && <div className="small text-danger pb-1">Choose a From date on or before the To date.</div>}
+          {!validRange && (
+            <div className="small text-danger pb-1">
+              Choose a From date on or before the To date.
+            </div>
+          )}
         </div>
 
         <CRow className="g-2 mb-3">
           {cards.map((c) => (
             <CCol key={c.label} xs={6} lg={3}>
-              <div className={`h-100 rounded border p-2 ${c.strong ? 'bg-body-tertiary' : 'bg-body'}`}>
+              <div
+                className={`h-100 rounded border p-2 ${c.strong ? 'bg-body-tertiary' : 'bg-body'}`}
+              >
                 <div className="small fw-semibold text-body-secondary">{c.label}</div>
-                <div className={c.strong ? 'fw-bold' : 'fw-semibold'}>{loading ? '…' : c.value}</div>
+                <div className={c.strong ? 'fw-bold' : 'fw-semibold'}>
+                  {loading ? '…' : c.value}
+                </div>
               </div>
             </CCol>
           ))}
@@ -215,15 +319,35 @@ const Collections = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
           <div style={{ minWidth: 220 }}>
-            <TenantFilter names={rows.map((r) => r.tenantName)} value={tenantFilter} onChange={setTenantFilter} />
+            <TenantFilter
+              names={rows.map((r) => r.tenantName)}
+              value={tenantFilter}
+              onChange={setTenantFilter}
+            />
           </div>
-          <CFormSelect style={{ maxWidth: 200 }} value={building} onChange={(e) => setBuilding(e.target.value)}>
+          <CFormSelect
+            style={{ maxWidth: 200 }}
+            value={building}
+            onChange={(e) => setBuilding(e.target.value)}
+          >
             <option value="">All Buildings</option>
-            {buildings.map((b) => <option key={b} value={b}>{b}</option>)}
+            {buildings.map((b) => (
+              <option key={b} value={b}>
+                {b}
+              </option>
+            ))}
           </CFormSelect>
-          <CFormSelect style={{ maxWidth: 180 }} value={method} onChange={(e) => setMethod(e.target.value)}>
+          <CFormSelect
+            style={{ maxWidth: 180 }}
+            value={method}
+            onChange={(e) => setMethod(e.target.value)}
+          >
             <option value="">All Methods</option>
-            {methods.map((m) => <option key={m} value={m}>{m}</option>)}
+            {methods.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
           </CFormSelect>
         </div>
 
@@ -231,7 +355,13 @@ const Collections = () => {
           <div className="fw-semibold me-auto">Summary by {groupBy.toLowerCase()}</div>
           <CButtonGroup className="no-print">
             {Object.keys(GROUP_BY).map((g) => (
-              <CButton key={g} size="sm" color="secondary" variant={groupBy === g ? undefined : 'outline'} onClick={() => setGroupBy(g)}>
+              <CButton
+                key={g}
+                size="sm"
+                color="secondary"
+                variant={groupBy === g ? undefined : 'outline'}
+                onClick={() => setGroupBy(g)}
+              >
                 {g}
               </CButton>
             ))}
@@ -284,7 +414,13 @@ const Collections = () => {
         <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
           <div className="fw-semibold me-auto">Payments</div>
           <div className="no-print">
-            <PageSizeSelect pageSize={pageSize} onChange={(size) => { setPageSize(size); setPageIndex(0) }} />
+            <PageSizeSelect
+              pageSize={pageSize}
+              onChange={(size) => {
+                setPageSize(size)
+                setPageIndex(0)
+              }}
+            />
           </div>
         </div>
         <CTable hover responsive small className="align-middle">
@@ -305,13 +441,23 @@ const Collections = () => {
                 <CTableDataCell>#{p.paymentId}</CTableDataCell>
                 <CTableDataCell className="fw-semibold">{p.tenantName}</CTableDataCell>
                 <CTableDataCell className="small">
-                  {p.unitNumber ? `${p.buildingName ? `${p.buildingName} – ` : ''}${p.unitNumber}` : '—'}
+                  {p.unitNumber
+                    ? `${p.buildingName ? `${p.buildingName} – ` : ''}${p.unitNumber}`
+                    : '—'}
                 </CTableDataCell>
                 <CTableDataCell>{p.invoiceId ? `#${p.invoiceId}` : '—'}</CTableDataCell>
                 <CTableDataCell>
                   {p.invoiceId ? invoiceLabel(p) : '—'}
-                  {isWaived(p) && <CBadge color="warning" className="ms-1">Late fee waived</CBadge>}
-                  {rowType(p) && <CBadge color="danger" className="ms-1">{rowType(p)}</CBadge>}
+                  {isWaived(p) && (
+                    <CBadge color="warning" className="ms-1">
+                      Late fee waived
+                    </CBadge>
+                  )}
+                  {rowType(p) && (
+                    <CBadge color="danger" className="ms-1">
+                      {rowType(p)}
+                    </CBadge>
+                  )}
                 </CTableDataCell>
                 <CTableDataCell>{p.method}</CTableDataCell>
                 <CTableDataCell className="text-end fw-semibold">{fmt(p.amount)}</CTableDataCell>
@@ -329,7 +475,12 @@ const Collections = () => {
           </CTableBody>
         </CTable>
         <div className="no-print">
-          <TablePagination pageIndex={pageIndex} pageSize={pageSize} total={filtered.length} onPageChange={setPageIndex} />
+          <TablePagination
+            pageIndex={pageIndex}
+            pageSize={pageSize}
+            total={filtered.length}
+            onPageChange={setPageIndex}
+          />
         </div>
       </CCardBody>
     </CCard>

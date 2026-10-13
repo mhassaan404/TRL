@@ -3,7 +3,6 @@ import { toast } from 'react-toastify'
 import { propertyService } from '../services/property.service'
 import { getErrorMessage } from '../api/axios'
 
-
 export const useProperties = () => {
   const [properties, setProperties] = useState([])
   const [buildings, setBuildings] = useState([])
@@ -151,10 +150,7 @@ export const useProperties = () => {
     setLoading(true)
 
     try {
-      await Promise.all([
-        loadBuildings(),
-        loadLookups(),
-      ])
+      await Promise.all([loadBuildings(), loadLookups()])
 
       if (preselectedBuildingId) {
         await loadModalFloors(preselectedBuildingId)
@@ -178,10 +174,7 @@ export const useProperties = () => {
     setLoading(true)
 
     try {
-      await Promise.all([
-        loadBuildings(),
-        loadLookups(),
-      ])
+      await Promise.all([loadBuildings(), loadLookups()])
 
       await loadModalFloors(property.buildingId)
 
@@ -295,10 +288,7 @@ export const useProperties = () => {
 
       closeBuildingModal()
 
-      await Promise.all([
-        loadBuildings(),
-        loadProperties(),
-      ])
+      await Promise.all([loadBuildings(), loadProperties()])
     } catch (err) {
       toast.error(getErrorMessage(err, 'Building operation failed'))
     } finally {
@@ -321,10 +311,7 @@ export const useProperties = () => {
 
       toast.success('Building deleted')
 
-      await Promise.all([
-        loadBuildings(),
-        loadProperties(),
-      ])
+      await Promise.all([loadBuildings(), loadProperties()])
     } catch (err) {
       toast.error(getErrorMessage(err, 'Delete failed'))
     }

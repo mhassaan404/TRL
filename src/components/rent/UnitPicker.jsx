@@ -14,27 +14,40 @@ const UnitPicker = ({ value, onChange, disabled }) => {
       setUnits(d)
       setLoaded(true)
       const cur = d.find((u) => u.unitId === value)
-      if (cur) { setBuildingId(String(cur.buildingId)); setFloorId(String(cur.floorId)) }
+      if (cur) {
+        setBuildingId(String(cur.buildingId))
+        setFloorId(String(cur.floorId))
+      }
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const buildingOptions = useMemo(
-    () => [...new Map(units.map((u) => [u.buildingId, u.buildingName]))]
-      .map(([v, label]) => ({ value: v, label })),
+    () =>
+      [...new Map(units.map((u) => [u.buildingId, u.buildingName]))].map(([v, label]) => ({
+        value: v,
+        label,
+      })),
     [units],
   )
 
   const floorOptions = useMemo(
-    () => [...new Map(units.filter((u) => String(u.buildingId) === buildingId).map((u) => [u.floorId, u.floorNumber]))]
-      .map(([v, label]) => ({ value: v, label: String(label) })),
+    () =>
+      [
+        ...new Map(
+          units
+            .filter((u) => String(u.buildingId) === buildingId)
+            .map((u) => [u.floorId, u.floorNumber]),
+        ),
+      ].map(([v, label]) => ({ value: v, label: String(label) })),
     [units, buildingId],
   )
 
   const unitOptions = useMemo(
-    () => units
-      .filter((u) => String(u.floorId) === floorId)
-      .map((u) => ({ value: u.unitId, label: u.unitNumber })),
+    () =>
+      units
+        .filter((u) => String(u.floorId) === floorId)
+        .map((u) => ({ value: u.unitId, label: u.unitNumber })),
     [units, floorId],
   )
 
@@ -47,7 +60,11 @@ const UnitPicker = ({ value, onChange, disabled }) => {
           value={buildingId}
           disabled={disabled}
           placeholder="Select building..."
-          onChange={(v) => { setBuildingId(String(v)); setFloorId(''); onChange({ unitId: '', rent: 0 }) }}
+          onChange={(v) => {
+            setBuildingId(String(v))
+            setFloorId('')
+            onChange({ unitId: '', rent: 0 })
+          }}
         />
       </CCol>
 
@@ -58,7 +75,10 @@ const UnitPicker = ({ value, onChange, disabled }) => {
           value={floorId}
           disabled={disabled || !buildingId}
           placeholder="Select floor..."
-          onChange={(v) => { setFloorId(String(v)); onChange({ unitId: '', rent: 0 }) }}
+          onChange={(v) => {
+            setFloorId(String(v))
+            onChange({ unitId: '', rent: 0 })
+          }}
         />
       </CCol>
 
@@ -79,7 +99,8 @@ const UnitPicker = ({ value, onChange, disabled }) => {
       {loaded && units.length === 0 && (
         <CCol xs={12}>
           <div className="small text-danger">
-            No vacant units: every unit already has an active lease. End a lease or add a unit first.
+            No vacant units: every unit already has an active lease. End a lease or add a unit
+            first.
           </div>
         </CCol>
       )}

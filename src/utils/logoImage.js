@@ -15,8 +15,14 @@ const loadImage = (file) =>
   new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file)
     const img = new Image()
-    img.onload = () => { URL.revokeObjectURL(url); resolve(img) }
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('The logo file could not be read.')) }
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve(img)
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('The logo file could not be read.'))
+    }
     img.src = url
   })
 
@@ -37,7 +43,8 @@ const encode = (img, side, type, quality) => {
 // Resolves with a data URL of at most 200 KB, or rejects with a message for the user
 export const prepareLogo = async (file) => {
   if (!file) throw new Error('Choose a logo file.')
-  if (!['image/png', 'image/jpeg'].includes(file.type)) throw new Error('The logo must be a PNG or JPG image.')
+  if (!['image/png', 'image/jpeg'].includes(file.type))
+    throw new Error('The logo must be a PNG or JPG image.')
   if (file.size > MAX_SOURCE_BYTES) throw new Error('The logo file must be 5 MB or smaller.')
   const img = await loadImage(file)
 
@@ -52,5 +59,7 @@ export const prepareLogo = async (file) => {
     const url = encode(img, side, type, quality)
     if (dataUrlBytes(url) <= MAX_LOGO_BYTES) return url
   }
-  throw new Error('The logo is too detailed to fit in 200 KB. Please use a simpler or smaller image.')
+  throw new Error(
+    'The logo is too detailed to fit in 200 KB. Please use a simpler or smaller image.',
+  )
 }

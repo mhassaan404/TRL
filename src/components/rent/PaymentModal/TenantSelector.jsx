@@ -36,8 +36,15 @@ const TenantSelector = ({ tenantId, tenants, onChange, disabled }) => {
         <div
           className="border rounded shadow-sm bg-body"
           style={{
-            position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1060,
-            marginTop: '4px', maxHeight: '260px', overflowY: 'auto', padding: '8px',
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            zIndex: 1060,
+            marginTop: '4px',
+            maxHeight: '260px',
+            overflowY: 'auto',
+            padding: '8px',
           }}
         >
           <CFormInput

@@ -43,4 +43,5 @@ export const isValidCnicNtn = (value, tenantType) => {
 export const cnicNtnHint = (tenantType) =>
   tenantType === 'Company' ? 'NTN 1234567-8 or CNIC 12345-1234567-1' : 'CNIC 12345-1234567-1'
 
-export const isValidEmail = (value) => /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(String(value ?? '').trim())
+export const isValidEmail = (value) =>
+  /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(String(value ?? '').trim())

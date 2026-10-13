@@ -1,7 +1,26 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  CCard, CCardBody, CCardHeader, CButton, CButtonGroup, CModal, CModalHeader, CModalBody, CModalFooter,
-  CFormInput, CFormLabel, CFormTextarea, CFormFeedback, CInputGroup, CInputGroupText, CTable, CTableHead, CTableRow, CTableHeaderCell, CTableBody, CTableDataCell
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CButton,
+  CButtonGroup,
+  CModal,
+  CModalHeader,
+  CModalBody,
+  CModalFooter,
+  CFormInput,
+  CFormLabel,
+  CFormTextarea,
+  CFormFeedback,
+  CInputGroup,
+  CInputGroupText,
+  CTable,
+  CTableHead,
+  CTableRow,
+  CTableHeaderCell,
+  CTableBody,
+  CTableDataCell,
 } from '@coreui/react'
 import { toast } from 'react-toastify'
 import { leaseService, rentService } from '../../services/rent.service'
@@ -9,12 +28,23 @@ import UnitPicker from '../../components/rent/UnitPicker'
 import TenantFilter from '../../components/rent/TenantFilter'
 import SearchableSelect from '../../components/rent/SearchableSelect'
 import CurrencyInput from '../../components/common/CurrencyInput'
-import { PAGE_SIZES, TablePagination, DEFAULT_PAGE_SIZE } from '../../components/common/TablePagination'
+import {
+  PAGE_SIZES,
+  TablePagination,
+  DEFAULT_PAGE_SIZE,
+} from '../../components/common/TablePagination'
 import { fmt, formatDate } from '../../utils/rentUtils'
 import { addMonths, todayLocal } from '../../utils/dates'
 
 // A fresh form each time (today's date is taken when the form opens, not when the page first loaded)
-const newForm = () => ({ tenantId: '', unitId: '', rentAmount: '', unitRent: 0, startDate: todayLocal(), tenureMonths: 12 })
+const newForm = () => ({
+  tenantId: '',
+  unitId: '',
+  rentAmount: '',
+  unitRent: 0,
+  startDate: todayLocal(),
+  tenureMonths: 12,
+})
 const FILTERS = ['All', 'Active', 'Upcoming', 'Expired', 'Ended']
 
 const day = (d) => String(d || '').slice(0, 10)
@@ -34,11 +64,17 @@ const statusOf = (l) => {
     if (day(l.startDate) > today) return 'Upcoming'
     return l.isExpired ? 'Expired' : 'Active'
   }
-  if (isRenewed(l) && day(l.billedThrough) >= today) return day(l.startDate) > today ? 'Upcoming' : 'Active'
+  if (isRenewed(l) && day(l.billedThrough) >= today)
+    return day(l.startDate) > today ? 'Upcoming' : 'Active'
   return 'Ended'
 }
 
-const STATUS_BADGE = { Active: 'bg-success', Upcoming: 'bg-info', Expired: 'bg-warning', Ended: 'bg-secondary' }
+const STATUS_BADGE = {
+  Active: 'bg-success',
+  Upcoming: 'bg-info',
+  Expired: 'bg-warning',
+  Ended: 'bg-secondary',
+}
 // The term has begun (start date is today or earlier); only then can it be renewed
 const hasStarted = (l) => String(l.startDate || '').slice(0, 10) <= todayLocal()
 
@@ -61,7 +97,10 @@ const LeaseManagement = () => {
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
   const load = () => leaseService.getAll().then(setLeases)
-  useEffect(() => { load(); rentService.getActiveTenants().then(setTenants) }, [])
+  useEffect(() => {
+    load()
+    rentService.getActiveTenants().then(setTenants)
+  }, [])
 
   // The chosen tenant's leases matching the search; the status buttons (and their counts) then work within them
   const tenantLeases = useMemo(() => {
@@ -69,7 +108,11 @@ const LeaseManagement = () => {
     return leases.filter(
       (l) =>
         (!tenantFilter || l.tenantName === tenantFilter) &&
-        (!q || [l.tenantName, l.unitNumber, l.buildingName, l.floorNumber].join(' ').toLowerCase().includes(q)),
+        (!q ||
+          [l.tenantName, l.unitNumber, l.buildingName, l.floorNumber]
+            .join(' ')
+            .toLowerCase()
+            .includes(q)),
     )
   }, [leases, tenantFilter, search])
 
@@ -78,16 +121,22 @@ const LeaseManagement = () => {
     [tenantLeases, filter],
   )
 
-  useEffect(() => { setPageIndex(0) }, [filter, tenantFilter, search])
+  useEffect(() => {
+    setPageIndex(0)
+  }, [filter, tenantFilter, search])
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
   // Stay on a real page when the list shrinks (e.g. the last lease on the last page was ended)
-  useEffect(() => { if (pageIndex > pageCount - 1) setPageIndex(pageCount - 1) }, [pageIndex, pageCount])
+  useEffect(() => {
+    if (pageIndex > pageCount - 1) setPageIndex(pageCount - 1)
+  }, [pageIndex, pageCount])
   const paged = filtered.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)
 
   const counts = useMemo(() => {
     const c = { All: tenantLeases.length, Active: 0, Upcoming: 0, Expired: 0, Ended: 0 }
-    tenantLeases.forEach((l) => { c[statusOf(l)]++ })
+    tenantLeases.forEach((l) => {
+      c[statusOf(l)]++
+    })
     return c
   }, [tenantLeases])
 
@@ -133,8 +182,13 @@ const LeaseManagement = () => {
 
   // The current lease that an upcoming renewal replaces (shown in the Cancel Renewal / End windows)
   const previousOf = (renewal) =>
-    leases.find((p) => p.tenantId === renewal.tenantId && p.unitId === renewal.unitId && p.renewedIntoNext
-      && day(p.nextStartDate) === day(renewal.startDate))
+    leases.find(
+      (p) =>
+        p.tenantId === renewal.tenantId &&
+        p.unitId === renewal.unitId &&
+        p.renewedIntoNext &&
+        day(p.nextStartDate) === day(renewal.startDate),
+    )
 
   // Edit: same rules as the API (LeaseRepository.UpdateAsync). Tenure can always change; start date and rent
   // only before the lease is billed; a renewal's start date never (it follows on from the previous term).
@@ -154,14 +208,22 @@ const LeaseManagement = () => {
         rentAmount: Number(editState.rentAmount) > 0 ? '' : 'Rent must be greater than zero.',
       }
     : {}
-  const editChanged = !!editState && (
-    editState.startDate !== day(editState.lease.startDate)
-    || Number(editState.rentAmount) !== Number(editState.lease.rentAmount)
-    || Number(editState.tenureMonths) !== Number(editState.lease.tenureMonths))
+  const editChanged =
+    !!editState &&
+    (editState.startDate !== day(editState.lease.startDate) ||
+      Number(editState.rentAmount) !== Number(editState.lease.rentAmount) ||
+      Number(editState.tenureMonths) !== Number(editState.lease.tenureMonths))
 
   const handleEdit = async () => {
     // The ref blocks a second click in the same instant (state updates only apply on the next render)
-    if (editSavingRef.current || editState.saving || editErrors.startDate || editErrors.rentAmount || !editChanged) return
+    if (
+      editSavingRef.current ||
+      editState.saving ||
+      editErrors.startDate ||
+      editErrors.rentAmount ||
+      !editChanged
+    )
+      return
     editSavingRef.current = true
     setEditState((p) => ({ ...p, saving: true }))
     try {
@@ -219,8 +281,11 @@ const LeaseManagement = () => {
   // A lease made by mistake and then ended on its start day (one day billed) can still be cancelled (no rent).
   // Same rule as the API (LeaseRepository.CancelLeaseAsync); a renewal is refused there.
   const endedOnStartDay = (l) =>
-    !l.isActive && !!l.billedThrough && day(l.billedThrough) === day(l.startDate)
-    && !['Renewed', 'Lease cancelled', 'Renewal cancelled'].includes(l.terminationReason) && !previousOf(l)
+    !l.isActive &&
+    !!l.billedThrough &&
+    day(l.billedThrough) === day(l.startDate) &&
+    !['Renewed', 'Lease cancelled', 'Renewal cancelled'].includes(l.terminationReason) &&
+    !previousOf(l)
 
   // End Lease form: the window stays open until the lease is actually ended (missing reason, bad date or an
   // API error keep it open with the message shown)
@@ -254,7 +319,11 @@ const LeaseManagement = () => {
     setEndState((p) => ({ ...p, saving: true }))
     try {
       // Rent is billed through the move-out date (prorated) and stops after it
-      const res = await leaseService.terminate({ LeaseId: endState.lease.leaseId, Reason: reason, MoveOutDate: moveOut })
+      const res = await leaseService.terminate({
+        LeaseId: endState.lease.leaseId,
+        Reason: reason,
+        MoveOutDate: moveOut,
+      })
       toast.success(res?.message || 'Lease ended')
       setEndState(null)
       load()
@@ -273,7 +342,15 @@ const LeaseManagement = () => {
           <div className="fw-semibold fs-5">Lease Management</div>
           <div className="small text-body-secondary">{leases.length} leases in total</div>
         </div>
-        <CButton color="primary" onClick={() => { setForm(newForm()); setModal({ visible: true }) }}>+ New Lease</CButton>
+        <CButton
+          color="primary"
+          onClick={() => {
+            setForm(newForm())
+            setModal({ visible: true })
+          }}
+        >
+          + New Lease
+        </CButton>
       </CCardHeader>
       <CCardBody>
         {/* Filters: search + tenant on the left, status on the right */}
@@ -286,9 +363,18 @@ const LeaseManagement = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
           <div style={{ minWidth: 220, maxWidth: 260 }} title="Tenant / Company">
-            <TenantFilter names={leases.map((l) => l.tenantName)} value={tenantFilter} onChange={setTenantFilter} />
+            <TenantFilter
+              names={leases.map((l) => l.tenantName)}
+              value={tenantFilter}
+              onChange={setTenantFilter}
+            />
           </div>
-          <CButtonGroup size="sm" role="group" aria-label="Lease status" className="ms-lg-auto flex-wrap">
+          <CButtonGroup
+            size="sm"
+            role="group"
+            aria-label="Lease status"
+            className="ms-lg-auto flex-wrap"
+          >
             {FILTERS.map((f) => (
               <CButton
                 key={f}
@@ -311,25 +397,46 @@ const LeaseManagement = () => {
               className="form-select form-select-sm"
               style={{ width: 'auto' }}
               value={pageSize}
-              onChange={(e) => { setPageSize(Number(e.target.value)); setPageIndex(0) }}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value))
+                setPageIndex(0)
+              }}
             >
               {PAGE_SIZES.map((size) => (
-                <option key={size} value={size}>{size}</option>
+                <option key={size} value={size}>
+                  {size}
+                </option>
               ))}
             </select>
             entries
           </label>
           <div className="small text-body-secondary">
-            {filtered.length === leases.length ? `${filtered.length} leases` : `${filtered.length} of ${leases.length} leases`}
+            {filtered.length === leases.length
+              ? `${filtered.length} leases`
+              : `${filtered.length} of ${leases.length} leases`}
           </div>
         </div>
 
         <CTable hover responsive small>
-          <CTableHead><CTableRow>
-            {['Lease #', 'Tenant', 'Building', 'Floor', 'Unit', 'Rent', 'Start', 'End', 'Tenure', 'Status', 'Actions'].map((h) => (
-              <CTableHeaderCell key={h}>{h}</CTableHeaderCell>
-            ))}
-          </CTableRow></CTableHead>
+          <CTableHead>
+            <CTableRow>
+              {[
+                'Lease #',
+                'Tenant',
+                'Building',
+                'Floor',
+                'Unit',
+                'Rent',
+                'Start',
+                'End',
+                'Tenure',
+                'Status',
+                'Actions',
+              ].map((h) => (
+                <CTableHeaderCell key={h}>{h}</CTableHeaderCell>
+              ))}
+            </CTableRow>
+          </CTableHead>
           <CTableBody>
             {paged.map((l) => (
               <CTableRow key={l.leaseId}>
@@ -345,46 +452,86 @@ const LeaseManagement = () => {
                 <CTableDataCell>
                   <span className={'badge ' + STATUS_BADGE[statusOf(l)]}>{statusOf(l)}</span>
                   {isRenewed(l) && statusOf(l) !== 'Ended' && l.nextStartDate && (
-                    <div className="small text-body-secondary mt-1">Renewed – next term from {formatDate(l.nextStartDate)}</div>
+                    <div className="small text-body-secondary mt-1">
+                      Renewed – next term from {formatDate(l.nextStartDate)}
+                    </div>
                   )}
                   {l.isActive && statusOf(l) === 'Upcoming' && (
-                    <div className="small text-body-secondary mt-1">Starts {formatDate(l.startDate)}</div>
+                    <div className="small text-body-secondary mt-1">
+                      Starts {formatDate(l.startDate)}
+                    </div>
                   )}
                 </CTableDataCell>
                 <CTableDataCell>
                   {l.isActive && (
                     <div className="d-flex gap-1 text-nowrap">
-                      <CButton size="sm" color="secondary" variant="outline" onClick={() => openEdit(l)}>
+                      <CButton
+                        size="sm"
+                        color="secondary"
+                        variant="outline"
+                        onClick={() => openEdit(l)}
+                      >
                         Edit
                       </CButton>
                       {/* Same rule as the API: only a term that has started can be renewed, so an early renewal
                           can't be renewed again before its new term begins (no Renew on upcoming leases) */}
                       {hasStarted(l) && (
-                        <CButton size="sm" color="info" variant="outline"
-                          onClick={() => setRenewState({ leaseId: l.leaseId, rentAmount: '', tenureMonths: l.tenureMonths, saving: false })}>
+                        <CButton
+                          size="sm"
+                          color="info"
+                          variant="outline"
+                          onClick={() =>
+                            setRenewState({
+                              leaseId: l.leaseId,
+                              rentAmount: '',
+                              tenureMonths: l.tenureMonths,
+                              saving: false,
+                            })
+                          }
+                        >
                           Renew
                         </CButton>
                       )}
                       {/* Only for a lease made by mistake; a renewal is refused by the API (use End) */}
                       {statusOf(l) === 'Active' && !previousOf(l) && (
-                        <CButton size="sm" color="warning" variant="outline" onClick={() => setCancelLeaseState({ lease: l, saving: false })}>
+                        <CButton
+                          size="sm"
+                          color="warning"
+                          variant="outline"
+                          onClick={() => setCancelLeaseState({ lease: l, saving: false })}
+                        >
                           Cancel Lease
                         </CButton>
                       )}
                       {l.isPendingRenewal && (
-                        <CButton size="sm" color="warning" variant="outline" onClick={() => setCancelState({ lease: l, saving: false })}>
+                        <CButton
+                          size="sm"
+                          color="warning"
+                          variant="outline"
+                          onClick={() => setCancelState({ lease: l, saving: false })}
+                        >
                           Cancel Renewal
                         </CButton>
                       )}
-                      <CButton size="sm" color="danger" variant="outline" onClick={() => openTerminate(l)}>
+                      <CButton
+                        size="sm"
+                        color="danger"
+                        variant="outline"
+                        onClick={() => openTerminate(l)}
+                      >
                         End
                       </CButton>
                     </div>
                   )}
                   {endedOnStartDay(l) && (
-                    <CButton size="sm" color="warning" variant="outline" className="text-nowrap"
+                    <CButton
+                      size="sm"
+                      color="warning"
+                      variant="outline"
+                      className="text-nowrap"
                       title="Ended on its start day, so one day is billed. Cancel it if it was created by mistake (no rent)."
-                      onClick={() => setCancelLeaseState({ lease: l, saving: false })}>
+                      onClick={() => setCancelLeaseState({ lease: l, saving: false })}
+                    >
                       Cancel Lease
                     </CButton>
                   )}
@@ -392,16 +539,32 @@ const LeaseManagement = () => {
               </CTableRow>
             ))}
             {!paged.length && (
-              <CTableRow><CTableDataCell colSpan={11} className="text-center text-muted py-4">No leases</CTableDataCell></CTableRow>
+              <CTableRow>
+                <CTableDataCell colSpan={11} className="text-center text-muted py-4">
+                  No leases
+                </CTableDataCell>
+              </CTableRow>
             )}
           </CTableBody>
         </CTable>
 
-        <TablePagination pageIndex={pageIndex} pageSize={pageSize} total={filtered.length} onPageChange={setPageIndex} />
+        <TablePagination
+          pageIndex={pageIndex}
+          pageSize={pageSize}
+          total={filtered.length}
+          onPageChange={setPageIndex}
+        />
       </CCardBody>
 
-      <CModal visible={modal.visible} onClose={() => setModal({ visible: false })} size="lg" backdrop="static">
-        <CModalHeader><strong>New Lease</strong></CModalHeader>
+      <CModal
+        visible={modal.visible}
+        onClose={() => setModal({ visible: false })}
+        size="lg"
+        backdrop="static"
+      >
+        <CModalHeader>
+          <strong>New Lease</strong>
+        </CModalHeader>
         <CModalBody>
           <div className="mb-3">
             <CFormLabel>Tenant</CFormLabel>
@@ -413,28 +576,47 @@ const LeaseManagement = () => {
             />
           </div>
           <div className="mb-3">
-            <UnitPicker value={form.unitId} onChange={({ unitId, rent }) => setForm((p) => ({ ...p, unitId, unitRent: rent, rentAmount: rent || '' }))} />
+            <UnitPicker
+              value={form.unitId}
+              onChange={({ unitId, rent }) =>
+                setForm((p) => ({ ...p, unitId, unitRent: rent, rentAmount: rent || '' }))
+              }
+            />
           </div>
           <div className="mb-3">
             <CFormLabel>Monthly Rent</CFormLabel>
             <CInputGroup>
               <CInputGroupText>PKR</CInputGroupText>
-              <CurrencyInput value={form.rentAmount} placeholder="0" onValueChange={(v) => setForm((p) => ({ ...p, rentAmount: v }))} />
+              <CurrencyInput
+                value={form.rentAmount}
+                placeholder="0"
+                onValueChange={(v) => setForm((p) => ({ ...p, rentAmount: v }))}
+              />
             </CInputGroup>
-            {form.unitRent > 0 && Number(form.rentAmount) > 0 && Number(form.rentAmount) !== Number(form.unitRent) && (
-              <div className="small text-warning mt-1">
-                Unit rent is PKR {fmt(form.unitRent)}; this lease is PKR {fmt(form.rentAmount)}.
-              </div>
-            )}
+            {form.unitRent > 0 &&
+              Number(form.rentAmount) > 0 &&
+              Number(form.rentAmount) !== Number(form.unitRent) && (
+                <div className="small text-warning mt-1">
+                  Unit rent is PKR {fmt(form.unitRent)}; this lease is PKR {fmt(form.rentAmount)}.
+                </div>
+              )}
           </div>
           <div className="d-flex gap-2">
             <div className="flex-grow-1">
               <CFormLabel>Start Date</CFormLabel>
-              <CFormInput type="date" value={form.startDate} onChange={(e) => setForm((p) => ({ ...p, startDate: e.target.value }))} />
+              <CFormInput
+                type="date"
+                value={form.startDate}
+                onChange={(e) => setForm((p) => ({ ...p, startDate: e.target.value }))}
+              />
             </div>
             <div style={{ width: 160 }}>
               <CFormLabel>Tenure</CFormLabel>
-              <select className="form-select" value={form.tenureMonths} onChange={(e) => setForm((p) => ({ ...p, tenureMonths: e.target.value }))}>
+              <select
+                className="form-select"
+                value={form.tenureMonths}
+                onChange={(e) => setForm((p) => ({ ...p, tenureMonths: e.target.value }))}
+              >
                 <option value={1}>1 month</option>
                 <option value={3}>3 months</option>
                 <option value={6}>6 months</option>
@@ -445,89 +627,123 @@ const LeaseManagement = () => {
           </div>
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={() => setModal({ visible: false })}>Cancel</CButton>
-          <CButton color="primary" disabled={!form.tenantId || !form.unitId || !form.rentAmount || creating} onClick={handleCreate}>
+          <CButton color="secondary" onClick={() => setModal({ visible: false })}>
+            Cancel
+          </CButton>
+          <CButton
+            color="primary"
+            disabled={!form.tenantId || !form.unitId || !form.rentAmount || creating}
+            onClick={handleCreate}
+          >
             {creating ? 'Creating...' : 'Create Lease'}
           </CButton>
         </CModalFooter>
       </CModal>
 
       <CModal visible={!!editState} onClose={() => setEditState(null)} backdrop="static">
-        <CModalHeader><strong>Edit Lease</strong></CModalHeader>
+        <CModalHeader>
+          <strong>Edit Lease</strong>
+        </CModalHeader>
         <CModalBody>
-          {editState && (() => {
-            const l = editState.lease
-            const billed = !!l.hasRentInvoices
-            const startLocked = billed || editState.isRenewal
-            const tenureOptions = [...new Set([1, 3, 6, 12, 24, Number(l.tenureMonths)])].sort((a, b) => a - b)
-            // Same rule as the database's end date (DATEADD MONTH): 31 Jan + 1 month = end of February
-            const end = new Date(`${addMonths(editState.startDate || day(l.startDate), editState.tenureMonths)}T00:00:00`)
-            return (
-              <>
-                <p className="text-body-secondary small mb-3">
-                  {l.tenantName} · {l.buildingName}, Floor {l.floorNumber}, Unit {l.unitNumber}
-                </p>
-                {billed && (
-                  <div className="alert alert-info small">
-                    This lease already has rent invoices, so its start date and rent can&apos;t be changed here. To
-                    correct them, cancel its open rent invoices in Rent History first, then edit the lease and
-                    generate the rent again. The tenure can still be changed.
-                  </div>
-                )}
-                <div className="mb-3">
-                  <CFormLabel htmlFor="edit-start">Start Date <span className="text-danger">*</span></CFormLabel>
-                  <CFormInput
-                    id="edit-start"
-                    type="date"
-                    value={editState.startDate}
-                    disabled={startLocked}
-                    invalid={!!editErrors.startDate}
-                    onChange={(e) => setEditState((p) => ({ ...p, startDate: e.target.value }))}
-                  />
-                  <CFormFeedback invalid>{editErrors.startDate}</CFormFeedback>
-                  {editState.isRenewal && !billed && (
-                    <small className="text-body-secondary">
-                      This is a renewal: its start date follows on from the previous term and can&apos;t be changed.
-                    </small>
+          {editState &&
+            (() => {
+              const l = editState.lease
+              const billed = !!l.hasRentInvoices
+              const startLocked = billed || editState.isRenewal
+              const tenureOptions = [...new Set([1, 3, 6, 12, 24, Number(l.tenureMonths)])].sort(
+                (a, b) => a - b,
+              )
+              // Same rule as the database's end date (DATEADD MONTH): 31 Jan + 1 month = end of February
+              const end = new Date(
+                `${addMonths(editState.startDate || day(l.startDate), editState.tenureMonths)}T00:00:00`,
+              )
+              return (
+                <>
+                  <p className="text-body-secondary small mb-3">
+                    {l.tenantName} · {l.buildingName}, Floor {l.floorNumber}, Unit {l.unitNumber}
+                  </p>
+                  {billed && (
+                    <div className="alert alert-info small">
+                      This lease already has rent invoices, so its start date and rent can&apos;t be
+                      changed here. To correct them, cancel its open rent invoices in Rent History
+                      first, then edit the lease and generate the rent again. The tenure can still
+                      be changed.
+                    </div>
                   )}
-                </div>
-                <div className="mb-3">
-                  <CFormLabel htmlFor="edit-rent">Monthly Rent <span className="text-danger">*</span></CFormLabel>
-                  <CInputGroup className="has-validation">
-                    <CInputGroupText>PKR</CInputGroupText>
-                    <CurrencyInput
-                      id="edit-rent"
-                      value={editState.rentAmount}
-                      disabled={billed}
-                      invalid={!!editErrors.rentAmount}
-                      onValueChange={(v) => setEditState((p) => ({ ...p, rentAmount: v }))}
+                  <div className="mb-3">
+                    <CFormLabel htmlFor="edit-start">
+                      Start Date <span className="text-danger">*</span>
+                    </CFormLabel>
+                    <CFormInput
+                      id="edit-start"
+                      type="date"
+                      value={editState.startDate}
+                      disabled={startLocked}
+                      invalid={!!editErrors.startDate}
+                      onChange={(e) => setEditState((p) => ({ ...p, startDate: e.target.value }))}
                     />
-                    <CFormFeedback invalid>{editErrors.rentAmount}</CFormFeedback>
-                  </CInputGroup>
-                </div>
-                <div>
-                  <CFormLabel htmlFor="edit-tenure">Tenure</CFormLabel>
-                  <select
-                    id="edit-tenure"
-                    className="form-select"
-                    value={editState.tenureMonths}
-                    onChange={(e) => setEditState((p) => ({ ...p, tenureMonths: e.target.value }))}
-                  >
-                    {tenureOptions.map((m) => (
-                      <option key={m} value={m}>{m === 12 ? '1 year' : m === 24 ? '2 years' : `${m} month${m === 1 ? '' : 's'}`}</option>
-                    ))}
-                  </select>
-                  <small className="text-body-secondary">Ends {formatDate(end)}</small>
-                </div>
-              </>
-            )
-          })()}
+                    <CFormFeedback invalid>{editErrors.startDate}</CFormFeedback>
+                    {editState.isRenewal && !billed && (
+                      <small className="text-body-secondary">
+                        This is a renewal: its start date follows on from the previous term and
+                        can&apos;t be changed.
+                      </small>
+                    )}
+                  </div>
+                  <div className="mb-3">
+                    <CFormLabel htmlFor="edit-rent">
+                      Monthly Rent <span className="text-danger">*</span>
+                    </CFormLabel>
+                    <CInputGroup className="has-validation">
+                      <CInputGroupText>PKR</CInputGroupText>
+                      <CurrencyInput
+                        id="edit-rent"
+                        value={editState.rentAmount}
+                        disabled={billed}
+                        invalid={!!editErrors.rentAmount}
+                        onValueChange={(v) => setEditState((p) => ({ ...p, rentAmount: v }))}
+                      />
+                      <CFormFeedback invalid>{editErrors.rentAmount}</CFormFeedback>
+                    </CInputGroup>
+                  </div>
+                  <div>
+                    <CFormLabel htmlFor="edit-tenure">Tenure</CFormLabel>
+                    <select
+                      id="edit-tenure"
+                      className="form-select"
+                      value={editState.tenureMonths}
+                      onChange={(e) =>
+                        setEditState((p) => ({ ...p, tenureMonths: e.target.value }))
+                      }
+                    >
+                      {tenureOptions.map((m) => (
+                        <option key={m} value={m}>
+                          {m === 12
+                            ? '1 year'
+                            : m === 24
+                              ? '2 years'
+                              : `${m} month${m === 1 ? '' : 's'}`}
+                        </option>
+                      ))}
+                    </select>
+                    <small className="text-body-secondary">Ends {formatDate(end)}</small>
+                  </div>
+                </>
+              )
+            })()}
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={() => setEditState(null)}>Cancel</CButton>
+          <CButton color="secondary" onClick={() => setEditState(null)}>
+            Cancel
+          </CButton>
           <CButton
             color="primary"
-            disabled={!!editState?.saving || !editChanged || !!editErrors.startDate || !!editErrors.rentAmount}
+            disabled={
+              !!editState?.saving ||
+              !editChanged ||
+              !!editErrors.startDate ||
+              !!editErrors.rentAmount
+            }
             onClick={handleEdit}
           >
             {editState?.saving ? 'Saving...' : 'Save Changes'}
@@ -536,20 +752,28 @@ const LeaseManagement = () => {
       </CModal>
 
       <CModal visible={!!renewState} onClose={() => setRenewState(null)} backdrop="static">
-        <CModalHeader><strong>Renew Lease</strong></CModalHeader>
+        <CModalHeader>
+          <strong>Renew Lease</strong>
+        </CModalHeader>
         <CModalBody>
           <div className="mb-3">
             <CFormLabel>New Monthly Rent (leave blank to keep current)</CFormLabel>
             <CInputGroup>
               <CInputGroupText>PKR</CInputGroupText>
-              <CurrencyInput value={renewState?.rentAmount || ''} placeholder="Current rent"
-                onValueChange={(v) => setRenewState((p) => ({ ...p, rentAmount: v }))} />
+              <CurrencyInput
+                value={renewState?.rentAmount || ''}
+                placeholder="Current rent"
+                onValueChange={(v) => setRenewState((p) => ({ ...p, rentAmount: v }))}
+              />
             </CInputGroup>
           </div>
           <div>
             <CFormLabel>New Tenure</CFormLabel>
-            <select className="form-select" value={renewState?.tenureMonths || 12}
-              onChange={(e) => setRenewState((p) => ({ ...p, tenureMonths: e.target.value }))}>
+            <select
+              className="form-select"
+              value={renewState?.tenureMonths || 12}
+              onChange={(e) => setRenewState((p) => ({ ...p, tenureMonths: e.target.value }))}
+            >
               <option value={1}>1 month</option>
               <option value={3}>3 months</option>
               <option value={6}>6 months</option>
@@ -559,7 +783,9 @@ const LeaseManagement = () => {
           </div>
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={() => setRenewState(null)}>Cancel</CButton>
+          <CButton color="secondary" onClick={() => setRenewState(null)}>
+            Cancel
+          </CButton>
           <CButton color="primary" disabled={!!renewState?.saving} onClick={handleRenew}>
             {renewState?.saving ? 'Renewing...' : 'Renew'}
           </CButton>
@@ -567,77 +793,106 @@ const LeaseManagement = () => {
       </CModal>
 
       <CModal visible={!!cancelState} onClose={() => setCancelState(null)} backdrop="static">
-        <CModalHeader><strong>Cancel Renewal</strong></CModalHeader>
+        <CModalHeader>
+          <strong>Cancel Renewal</strong>
+        </CModalHeader>
         <CModalBody>
-          {cancelState && (() => {
-            const r = cancelState.lease
-            const prev = previousOf(r)
-            return (
-              <>
-                <p className="text-body-secondary small mb-3">
-                  {r.tenantName} · {r.buildingName}, Floor {r.floorNumber}, Unit {r.unitNumber}
-                </p>
-                <p className="mb-2">
-                  The renewed term from <strong>{formatDate(r.startDate)}</strong> ({fmt(r.rentAmount)}/month) will be cancelled
-                  and never billed.
-                </p>
-                {prev && (
-                  <p className="mb-2">
-                    The current lease ({formatDate(prev.startDate)} – {formatDate(prev.endDate)}, {fmt(prev.rentAmount)}/month)
-                    continues as before, and month to month after its end date until it is renewed or ended.
+          {cancelState &&
+            (() => {
+              const r = cancelState.lease
+              const prev = previousOf(r)
+              return (
+                <>
+                  <p className="text-body-secondary small mb-3">
+                    {r.tenantName} · {r.buildingName}, Floor {r.floorNumber}, Unit {r.unitNumber}
                   </p>
-                )}
-                <p className="small text-body-secondary mb-0">The tenant does not move out. To end the tenancy, use End instead.</p>
-              </>
-            )
-          })()}
+                  <p className="mb-2">
+                    The renewed term from <strong>{formatDate(r.startDate)}</strong> (
+                    {fmt(r.rentAmount)}/month) will be cancelled and never billed.
+                  </p>
+                  {prev && (
+                    <p className="mb-2">
+                      The current lease ({formatDate(prev.startDate)} – {formatDate(prev.endDate)},{' '}
+                      {fmt(prev.rentAmount)}/month) continues as before, and month to month after
+                      its end date until it is renewed or ended.
+                    </p>
+                  )}
+                  <p className="small text-body-secondary mb-0">
+                    The tenant does not move out. To end the tenancy, use End instead.
+                  </p>
+                </>
+              )
+            })()}
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={() => setCancelState(null)}>Keep Renewal</CButton>
+          <CButton color="secondary" onClick={() => setCancelState(null)}>
+            Keep Renewal
+          </CButton>
           <CButton color="warning" disabled={!!cancelState?.saving} onClick={handleCancelRenewal}>
             {cancelState?.saving ? 'Cancelling...' : 'Cancel Renewal'}
           </CButton>
         </CModalFooter>
       </CModal>
 
-      <CModal visible={!!cancelLeaseState} onClose={() => setCancelLeaseState(null)} backdrop="static">
-        <CModalHeader><strong>Cancel Lease</strong></CModalHeader>
+      <CModal
+        visible={!!cancelLeaseState}
+        onClose={() => setCancelLeaseState(null)}
+        backdrop="static"
+      >
+        <CModalHeader>
+          <strong>Cancel Lease</strong>
+        </CModalHeader>
         <CModalBody>
-          {cancelLeaseState && (() => {
-            const l = cancelLeaseState.lease
-            return (
-              <>
-                <p className="text-body-secondary small mb-3">
-                  {l.tenantName} · {l.buildingName}, Floor {l.floorNumber}, Unit {l.unitNumber}
-                </p>
-                <p className="mb-2">
-                  Use this only for a lease created by mistake. The lease from <strong>{formatDate(l.startDate)}</strong>{' '}
-                  ({fmt(l.rentAmount)}/month) will be cancelled and never billed, its rent invoices are cancelled and the
-                  unit becomes available.
-                </p>
-                <p className="small text-body-secondary mb-0">If the tenant actually lived there, use End instead.</p>
-              </>
-            )
-          })()}
+          {cancelLeaseState &&
+            (() => {
+              const l = cancelLeaseState.lease
+              return (
+                <>
+                  <p className="text-body-secondary small mb-3">
+                    {l.tenantName} · {l.buildingName}, Floor {l.floorNumber}, Unit {l.unitNumber}
+                  </p>
+                  <p className="mb-2">
+                    Use this only for a lease created by mistake. The lease from{' '}
+                    <strong>{formatDate(l.startDate)}</strong> ({fmt(l.rentAmount)}/month) will be
+                    cancelled and never billed, its rent invoices are cancelled and the unit becomes
+                    available.
+                  </p>
+                  <p className="small text-body-secondary mb-0">
+                    If the tenant actually lived there, use End instead.
+                  </p>
+                </>
+              )
+            })()}
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={() => setCancelLeaseState(null)}>Keep Lease</CButton>
-          <CButton color="warning" disabled={!!cancelLeaseState?.saving} onClick={handleCancelLease}>
+          <CButton color="secondary" onClick={() => setCancelLeaseState(null)}>
+            Keep Lease
+          </CButton>
+          <CButton
+            color="warning"
+            disabled={!!cancelLeaseState?.saving}
+            onClick={handleCancelLease}
+          >
             {cancelLeaseState?.saving ? 'Cancelling...' : 'Cancel Lease'}
           </CButton>
         </CModalFooter>
       </CModal>
 
       <CModal visible={!!endState} onClose={() => setEndState(null)} backdrop="static">
-        <CModalHeader><strong>End Lease</strong></CModalHeader>
+        <CModalHeader>
+          <strong>End Lease</strong>
+        </CModalHeader>
         <CModalBody>
           {endState && (
             <p className="text-body-secondary small mb-3">
-              {endState.lease.tenantName} · {endState.lease.buildingName}, Floor {endState.lease.floorNumber}, Unit {endState.lease.unitNumber}
+              {endState.lease.tenantName} · {endState.lease.buildingName}, Floor{' '}
+              {endState.lease.floorNumber}, Unit {endState.lease.unitNumber}
             </p>
           )}
           <div className="mb-3">
-            <CFormLabel htmlFor="end-reason">Reason <span className="text-danger">*</span></CFormLabel>
+            <CFormLabel htmlFor="end-reason">
+              Reason <span className="text-danger">*</span>
+            </CFormLabel>
             <CFormTextarea
               id="end-reason"
               rows={2}
@@ -650,11 +905,15 @@ const LeaseManagement = () => {
             <CFormFeedback invalid>{endErrors.reason}</CFormFeedback>
           </div>
           <div>
-            <CFormLabel htmlFor="end-moveout">Move-out date <span className="text-danger">*</span></CFormLabel>
+            <CFormLabel htmlFor="end-moveout">
+              Move-out date <span className="text-danger">*</span>
+            </CFormLabel>
             <CFormInput
               id="end-moveout"
               type="date"
-              min={endState && hasStarted(endState.lease) ? day(endState.lease.startDate) : undefined}
+              min={
+                endState && hasStarted(endState.lease) ? day(endState.lease.startDate) : undefined
+              }
               max={todayLocal()}
               value={endState?.moveOut || ''}
               invalid={!!endErrors.moveOut}
@@ -668,29 +927,42 @@ const LeaseManagement = () => {
                 : 'Rent is billed through this day.'}
             </small>
             {/* Moving out on the start day of a started, non-renewal lease bills one day: usually a lease made by mistake */}
-            {endState && hasStarted(endState.lease) && !endState.lease.isPendingRenewal && !previousOf(endState.lease)
-              && endState.moveOut === day(endState.lease.startDate) && (
-              <div className="alert alert-warning small mt-3 mb-0">
-                Ending on the start day bills <strong>1 day of rent</strong>. If this lease was created by mistake, cancel
-                it instead, so no rent is billed.
-                <div className="mt-2">
-                  <CButton size="sm" color="warning"
-                    onClick={() => { const lease = endState.lease; setEndState(null); setCancelLeaseState({ lease, saving: false }) }}>
-                    Cancel Lease instead
-                  </CButton>
+            {endState &&
+              hasStarted(endState.lease) &&
+              !endState.lease.isPendingRenewal &&
+              !previousOf(endState.lease) &&
+              endState.moveOut === day(endState.lease.startDate) && (
+                <div className="alert alert-warning small mt-3 mb-0">
+                  Ending on the start day bills <strong>1 day of rent</strong>. If this lease was
+                  created by mistake, cancel it instead, so no rent is billed.
+                  <div className="mt-2">
+                    <CButton
+                      size="sm"
+                      color="warning"
+                      onClick={() => {
+                        const lease = endState.lease
+                        setEndState(null)
+                        setCancelLeaseState({ lease, saving: false })
+                      }}
+                    >
+                      Cancel Lease instead
+                    </CButton>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
             {endState?.lease.isPendingRenewal && (
               <div className="alert alert-warning small mt-3 mb-0">
-                This is an upcoming renewal. Ending it ends the tenancy: the current term also stops on the move-out
-                date. To keep the tenant until the current term ends, use <strong>Cancel Renewal</strong> instead.
+                This is an upcoming renewal. Ending it ends the tenancy: the current term also stops
+                on the move-out date. To keep the tenant until the current term ends, use{' '}
+                <strong>Cancel Renewal</strong> instead.
               </div>
             )}
           </div>
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={() => setEndState(null)}>Cancel</CButton>
+          <CButton color="secondary" onClick={() => setEndState(null)}>
+            Cancel
+          </CButton>
           <CButton color="danger" disabled={!!endState?.saving} onClick={handleTerminate}>
             {endState?.saving ? 'Ending...' : 'End Lease'}
           </CButton>

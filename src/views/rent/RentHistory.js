@@ -26,7 +26,13 @@ import { useRentHistory } from '../../hooks/useRentHistory'
 import { toLocalDateString } from '../../utils/dates'
 import { exportCSV } from '../../utils/exportUtils'
 import { invoiceNo, openInvoice } from '../../utils/documents'
-import { PageSizeSelect, TablePagination, tablePageProps, tablePageSizeProps, DEFAULT_PAGE_SIZE } from '../../components/common/TablePagination'
+import {
+  PageSizeSelect,
+  TablePagination,
+  tablePageProps,
+  tablePageSizeProps,
+  DEFAULT_PAGE_SIZE,
+} from '../../components/common/TablePagination'
 import { invoiceStatusColor } from '../../utils/invoiceStatus'
 
 // CSV Export Helper
@@ -47,13 +53,8 @@ const normalizeDate = (value) => {
 }
 
 const RentHistory = () => {
-  const {
-    loading,
-    historyRecords,
-    loadRentHistory,
-    handleCancel,
-    handleReinstate,
-  } = useRentHistory()
+  const { loading, historyRecords, loadRentHistory, handleCancel, handleReinstate } =
+    useRentHistory()
 
   const [globalSearch, setGlobalSearch] = useState('')
   const [tenantFilter, setTenantFilter] = useState('')
@@ -122,10 +123,7 @@ const RentHistory = () => {
       }
 
       // Unit filter
-      if (
-        unitFilter &&
-        !record.unit?.toLowerCase().includes(unitFilter.toLowerCase().trim())
-      ) {
+      if (unitFilter && !record.unit?.toLowerCase().includes(unitFilter.toLowerCase().trim())) {
         return false
       }
 
@@ -143,15 +141,7 @@ const RentHistory = () => {
 
       return true
     })
-  }, [
-    historyRecords,
-    globalSearch,
-    tenantFilter,
-    unitFilter,
-    statusFilter,
-    dateFrom,
-    dateTo,
-  ])
+  }, [historyRecords, globalSearch, tenantFilter, unitFilter, statusFilter, dateFrom, dateTo])
 
   useEffect(() => {
     setPagination((prev) => ({
@@ -229,11 +219,7 @@ const RentHistory = () => {
         cell: ({ getValue }) => {
           const value = getValue()
 
-          return (
-            <CBadge color={invoiceStatusColor(value)}>
-              {value || '—'}
-            </CBadge>
-          )
+          return <CBadge color={invoiceStatusColor(value)}>{value || '—'}</CBadge>
         },
       },
       {
@@ -248,14 +234,24 @@ const RentHistory = () => {
               <CButton color="info" variant="outline" size="sm" onClick={() => setHistoryId(id)}>
                 History
               </CButton>
-              <CButton color="primary" variant="outline" size="sm" title={`Print invoice ${invoiceNo(id)}`} onClick={() => openInvoice(id)}>
+              <CButton
+                color="primary"
+                variant="outline"
+                size="sm"
+                title={`Print invoice ${invoiceNo(id)}`}
+                onClick={() => openInvoice(id)}
+              >
                 Print
               </CButton>
               {status === 'Cancelled' ? (
                 // Same rule as the API (CanReinstate): disabled when its lease no longer covers that month or a newer
                 // invoice already bills it
                 <span
-                  title={row.original.canReinstate ? '' : "Can't be reinstated: its lease no longer covers that month, or another invoice already bills it."}
+                  title={
+                    row.original.canReinstate
+                      ? ''
+                      : "Can't be reinstated: its lease no longer covers that month, or another invoice already bills it."
+                  }
                 >
                   <CButton
                     color="success"
@@ -274,7 +270,13 @@ const RentHistory = () => {
                   title="This invoice has payment records (payments, discounts, waivers or adjustments), so it can't be cancelled. To cancel it, first reverse its records in History."
                   style={{ cursor: 'not-allowed' }}
                 >
-                  <CButton color="warning" variant="outline" size="sm" disabled style={{ pointerEvents: 'none' }}>
+                  <CButton
+                    color="warning"
+                    variant="outline"
+                    size="sm"
+                    disabled
+                    style={{ pointerEvents: 'none' }}
+                  >
                     Cancel Invoice
                   </CButton>
                 </span>
@@ -322,9 +324,7 @@ const RentHistory = () => {
 
             <CButton
               color="success"
-              onClick={() =>
-                exportCSV(columns, filteredData, 'rent_history.csv')
-              }
+              onClick={() => exportCSV(columns, filteredData, 'rent_history.csv')}
             >
               Export CSV
             </CButton>
@@ -334,23 +334,17 @@ const RentHistory = () => {
             {/* Filters */}
             <div className="row g-3 mb-4">
               <div className="col-md-3">
-                <label className="form-label small text-muted mb-1">
-                  Search
-                </label>
+                <label className="form-label small text-muted mb-1">Search</label>
 
                 <CFormInput
                   placeholder="Tenant, unit, invoice ID, amount..."
                   value={globalSearch}
-                  onChange={(e) =>
-                    setGlobalSearch(e.target.value)
-                  }
+                  onChange={(e) => setGlobalSearch(e.target.value)}
                 />
               </div>
 
               <div className="col-md-3">
-                <label className="form-label small text-muted mb-1">
-                  Tenant / Company
-                </label>
+                <label className="form-label small text-muted mb-1">Tenant / Company</label>
 
                 <TenantFilter
                   names={historyRecords.map((r) => r.tenant)}
@@ -360,16 +354,9 @@ const RentHistory = () => {
               </div>
 
               <div className="col-md-3">
-                <label className="form-label small text-muted mb-1">
-                  Status
-                </label>
+                <label className="form-label small text-muted mb-1">Status</label>
 
-                <CFormSelect
-                  value={statusFilter}
-                  onChange={(e) =>
-                    setStatusFilter(e.target.value)
-                  }
-                >
+                <CFormSelect value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                   <option value="">All Status</option>
                   <option value="Paid">Paid</option>
                   <option value="Partial">Partial</option>
@@ -381,16 +368,9 @@ const RentHistory = () => {
               </div>
 
               <div className="col-md-3">
-                <label className="form-label small text-muted mb-1">
-                  Date Range
-                </label>
+                <label className="form-label small text-muted mb-1">Date Range</label>
 
-                <CFormSelect
-                  value={datePreset}
-                  onChange={(e) =>
-                    applyDatePreset(e.target.value)
-                  }
-                >
+                <CFormSelect value={datePreset} onChange={(e) => applyDatePreset(e.target.value)}>
                   <option value="all">All Time</option>
                   <option value="thisMonth">This Month</option>
                   <option value="last3">Last 3 Months</option>
@@ -402,30 +382,22 @@ const RentHistory = () => {
               {datePreset === 'custom' && (
                 <>
                   <div className="col-md-3">
-                    <label className="form-label small text-muted mb-1">
-                      From
-                    </label>
+                    <label className="form-label small text-muted mb-1">From</label>
 
                     <CFormInput
                       type="date"
                       value={dateFrom}
-                      onChange={(e) =>
-                        setDateFrom(e.target.value)
-                      }
+                      onChange={(e) => setDateFrom(e.target.value)}
                     />
                   </div>
 
                   <div className="col-md-3">
-                    <label className="form-label small text-muted mb-1">
-                      To
-                    </label>
+                    <label className="form-label small text-muted mb-1">To</label>
 
                     <CFormInput
                       type="date"
                       value={dateTo}
-                      onChange={(e) =>
-                        setDateTo(e.target.value)
-                      }
+                      onChange={(e) => setDateTo(e.target.value)}
                     />
                   </div>
                 </>
@@ -437,66 +409,44 @@ const RentHistory = () => {
             </div>
 
             {loading ? (
-              <div className="text-center py-5">
-                Loading rent history...
-              </div>
+              <div className="text-center py-5">Loading rent history...</div>
             ) : (
               <>
                 <div className="table-responsive">
                   <table className="table table-bordered table-striped">
                     <thead>
-                      {table.getHeaderGroups().map(
-                        (headerGroup) => (
-                          <tr key={headerGroup.id}>
-                            {headerGroup.headers.map(
-                              (header) => (
-                                <th
-                                  key={header.id}
-                                  onClick={header.column.getToggleSortingHandler?.()}
-                                  style={{
-                                    cursor:
-                                      header.column.getCanSort()
-                                        ? 'pointer'
-                                        : 'default',
-                                  }}
-                                >
-                                  {flexRender(
-                                    header.column.columnDef
-                                      .header,
-                                    header.getContext(),
-                                  )}
+                      {table.getHeaderGroups().map((headerGroup) => (
+                        <tr key={headerGroup.id}>
+                          {headerGroup.headers.map((header) => (
+                            <th
+                              key={header.id}
+                              onClick={header.column.getToggleSortingHandler?.()}
+                              style={{
+                                cursor: header.column.getCanSort() ? 'pointer' : 'default',
+                              }}
+                            >
+                              {flexRender(header.column.columnDef.header, header.getContext())}
 
-                                  {{
-                                    asc: ' ↑',
-                                    desc: ' ↓',
-                                  }[
-                                    header.column.getIsSorted()
-                                  ] ?? null}
-                                </th>
-                              ),
-                            )}
-                          </tr>
-                        ),
-                      )}
+                              {{
+                                asc: ' ↑',
+                                desc: ' ↓',
+                              }[header.column.getIsSorted()] ?? null}
+                            </th>
+                          ))}
+                        </tr>
+                      ))}
                     </thead>
 
                     <tbody>
-                      {table.getRowModel().rows.map(
-                        (row) => (
-                          <tr key={row.id}>
-                            {row
-                              .getVisibleCells()
-                              .map((cell) => (
-                                <td key={cell.id}>
-                                  {flexRender(
-                                    cell.column.columnDef.cell,
-                                    cell.getContext(),
-                                  )}
-                                </td>
-                              ))}
-                          </tr>
-                        ),
-                      )}
+                      {table.getRowModel().rows.map((row) => (
+                        <tr key={row.id}>
+                          {row.getVisibleCells().map((cell) => (
+                            <td key={cell.id}>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
 
@@ -504,9 +454,7 @@ const RentHistory = () => {
                 </div>
 
                 {filteredData.length === 0 && !loading && (
-                  <div className="text-center text-muted py-5">
-                    No records found.
-                  </div>
+                  <div className="text-center text-muted py-5">No records found.</div>
                 )}
               </>
             )}

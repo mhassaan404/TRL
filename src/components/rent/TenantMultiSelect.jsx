@@ -21,7 +21,8 @@ const TenantMultiSelect = ({ tenants = [], selected, onChange, isDark }) => {
   const isAll = selected === 'ALL'
   const selectedIds = isAll ? [] : selected
   // Every tenant ticked, either as 'ALL' or one by one
-  const everyoneTicked = isAll || (tenants.length > 0 && tenants.every((t) => selectedIds.includes(t.id)))
+  const everyoneTicked =
+    isAll || (tenants.length > 0 && tenants.every((t) => selectedIds.includes(t.id)))
   const someTicked = !everyoneTicked && selectedIds.length > 0
   const allRef = useRef(null)
   // Re-applied after every render: the checkbox can lose the partial state when it re-renders or is clicked
@@ -54,11 +55,7 @@ const TenantMultiSelect = ({ tenants = [], selected, onChange, isDark }) => {
 
   return (
     <div ref={wrapperRef} style={{ position: 'relative' }}>
-      <button
-        type="button"
-        className="form-select text-start"
-        onClick={() => setOpen((v) => !v)}
-      >
+      <button type="button" className="form-select text-start" onClick={() => setOpen((v) => !v)}>
         {label}
       </button>
 

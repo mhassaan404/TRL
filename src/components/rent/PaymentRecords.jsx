@@ -1,6 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { CBadge, CButton, CCard, CCardBody, CCardHeader, CFormInput, CTable, CTableHead, CTableRow,
-  CTableHeaderCell, CTableBody, CTableDataCell } from '@coreui/react'
+import {
+  CBadge,
+  CButton,
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CFormInput,
+  CTable,
+  CTableHead,
+  CTableRow,
+  CTableHeaderCell,
+  CTableBody,
+  CTableDataCell,
+} from '@coreui/react'
 import { rentService } from '../../services/rent.service'
 import { fmt, formatDate } from '../../utils/rentUtils'
 import { exportCSV } from '../../utils/exportUtils'
@@ -8,7 +20,11 @@ import { toLocalDateString } from '../../utils/dates'
 import { PageSizeSelect, TablePagination, DEFAULT_PAGE_SIZE } from '../common/TablePagination'
 import TenantFilter from './TenantFilter'
 import { hasReceipt, openReceipts, receiptNo } from '../../utils/documents'
-import { isReversed, paymentType as typeOf, PAYMENT_TYPE_COLOR as TYPE_COLOR } from '../../utils/payments'
+import {
+  isReversed,
+  paymentType as typeOf,
+  PAYMENT_TYPE_COLOR as TYPE_COLOR,
+} from '../../utils/payments'
 
 const iso = toLocalDateString
 
@@ -46,9 +62,14 @@ const PaymentRecords = () => {
     let alive = true
     setLoading(true)
     rentService.getAllPayments(from, to).then((d) => {
-      if (alive) { setRows(d); setLoading(false) }
+      if (alive) {
+        setRows(d)
+        setLoading(false)
+      }
     })
-    return () => { alive = false }
+    return () => {
+      alive = false
+    }
   }, [from, to])
 
   const filtered = useMemo(() => {
@@ -56,13 +77,28 @@ const PaymentRecords = () => {
     const byTenant = tenantFilter ? rows.filter((r) => r.tenantName === tenantFilter) : rows
     if (!q) return byTenant
     return byTenant.filter((r) =>
-      [r.tenantName, r.buildingName, r.floorNumber, r.unitNumber, r.invoiceId, r.paymentMethod, r.notes, r.chargeType, typeText(r),
-        hasReceipt(r) ? receiptNo(r.paymentId) : '']
-        .join(' ').toLowerCase().includes(q))
+      [
+        r.tenantName,
+        r.buildingName,
+        r.floorNumber,
+        r.unitNumber,
+        r.invoiceId,
+        r.paymentMethod,
+        r.notes,
+        r.chargeType,
+        typeText(r),
+        hasReceipt(r) ? receiptNo(r.paymentId) : '',
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(q),
+    )
   }, [rows, search, tenantFilter])
 
   // Back to page 1 whenever the dates, tenant, search or page size change the list
-  useEffect(() => { setPageIndex(0) }, [from, to, tenantFilter, search, pageSize])
+  useEffect(() => {
+    setPageIndex(0)
+  }, [from, to, tenantFilter, search, pageSize])
   const paged = filtered.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)
 
   const totalPaid = filtered.reduce((s, r) => s + Number(r.paymentAmount || 0), 0)
@@ -74,22 +110,56 @@ const PaymentRecords = () => {
         <div className="d-flex justify-content-between align-items-center gap-2 mb-2">
           <div className="fw-semibold fs-5">Payment Records</div>
           {/* Exports what the filters show (all pages) */}
-          <CButton color="success" variant="outline" disabled={loading || !filtered.length}
-            onClick={() => exportCSV(CSV_COLUMNS, filtered.map((r) => ({ ...r, type: typeText(r), receiptNo: hasReceipt(r) ? receiptNo(r.paymentId) : '' })), `payments_${from}_to_${to}.csv`)}>
+          <CButton
+            color="success"
+            variant="outline"
+            disabled={loading || !filtered.length}
+            onClick={() =>
+              exportCSV(
+                CSV_COLUMNS,
+                filtered.map((r) => ({
+                  ...r,
+                  type: typeText(r),
+                  receiptNo: hasReceipt(r) ? receiptNo(r.paymentId) : '',
+                })),
+                `payments_${from}_to_${to}.csv`,
+              )
+            }
+          >
             Export CSV
           </CButton>
         </div>
         <div className="d-flex flex-wrap gap-2">
-          <CFormInput type="date" style={{ maxWidth: 170 }} value={from} onChange={(e) => setFrom(e.target.value)} />
-          <CFormInput type="date" style={{ maxWidth: 170 }} value={to} onChange={(e) => setTo(e.target.value)} />
+          <CFormInput
+            type="date"
+            style={{ maxWidth: 170 }}
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+          />
+          <CFormInput
+            type="date"
+            style={{ maxWidth: 170 }}
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+          />
           <div style={{ minWidth: 240, maxWidth: 260 }} title="Tenant / Company">
-            <TenantFilter names={rows.map((r) => r.tenantName)} value={tenantFilter} onChange={setTenantFilter} />
+            <TenantFilter
+              names={rows.map((r) => r.tenantName)}
+              value={tenantFilter}
+              onChange={setTenantFilter}
+            />
           </div>
-          <CFormInput placeholder="Search tenant, invoice, method..." style={{ maxWidth: 260 }}
-            value={search} onChange={(e) => setSearch(e.target.value)} />
+          <CFormInput
+            placeholder="Search tenant, invoice, method..."
+            style={{ maxWidth: 260 }}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
         <div className="text-body-secondary small mt-2">
-          {loading ? 'Loading...' : `${filtered.length} records | Paid ${fmt(totalPaid)} | Discounts ${fmt(totalDisc)}`}
+          {loading
+            ? 'Loading...'
+            : `${filtered.length} records | Paid ${fmt(totalPaid)} | Discounts ${fmt(totalDisc)}`}
         </div>
       </CCardHeader>
       <CCardBody>
@@ -121,37 +191,62 @@ const PaymentRecords = () => {
                 <CTableDataCell>{r.buildingName}</CTableDataCell>
                 <CTableDataCell>{r.floorNumber}</CTableDataCell>
                 <CTableDataCell>{r.unitNumber}</CTableDataCell>
-                <CTableDataCell>#{r.invoiceId}{r.chargeType ? ` (${r.chargeType})` : ''}</CTableDataCell>
+                <CTableDataCell>
+                  #{r.invoiceId}
+                  {r.chargeType ? ` (${r.chargeType})` : ''}
+                </CTableDataCell>
                 <CTableDataCell>
                   <CBadge color={TYPE_COLOR[typeOf(r)]}>{typeOf(r)}</CBadge>
                   {isReversed(r) && (
-                    <CBadge color="danger" className="ms-1" title={`Reversed on ${formatDate(r.reversedAt)}: ${r.reversalReason || ''}`}>
+                    <CBadge
+                      color="danger"
+                      className="ms-1"
+                      title={`Reversed on ${formatDate(r.reversedAt)}: ${r.reversalReason || ''}`}
+                    >
                       Reversed
                     </CBadge>
                   )}
                 </CTableDataCell>
-                <CTableDataCell className={`text-end ${Number(r.paymentAmount) < 0 ? 'text-danger' : ''}`}>{fmt(r.paymentAmount)}</CTableDataCell>
+                <CTableDataCell
+                  className={`text-end ${Number(r.paymentAmount) < 0 ? 'text-danger' : ''}`}
+                >
+                  {fmt(r.paymentAmount)}
+                </CTableDataCell>
                 <CTableDataCell className="text-end">{fmt(r.discountAmount)}</CTableDataCell>
                 <CTableDataCell>{r.paymentMethod}</CTableDataCell>
                 <CTableDataCell>{r.notes}</CTableDataCell>
                 <CTableDataCell className="text-nowrap">
                   {hasReceipt(r) ? (
-                    <CButton size="sm" color="primary" variant="outline" title={`Print receipt ${receiptNo(r.paymentId)}`}
-                      onClick={() => openReceipts(r.paymentId)}>
+                    <CButton
+                      size="sm"
+                      color="primary"
+                      variant="outline"
+                      title={`Print receipt ${receiptNo(r.paymentId)}`}
+                      onClick={() => openReceipts(r.paymentId)}
+                    >
                       {receiptNo(r.paymentId)}
                     </CButton>
-                  ) : <span className="text-body-secondary small">—</span>}
+                  ) : (
+                    <span className="text-body-secondary small">—</span>
+                  )}
                 </CTableDataCell>
               </CTableRow>
             ))}
             {!loading && !filtered.length && (
               <CTableRow>
-                <CTableDataCell colSpan={12} className="text-center text-muted py-4">No records</CTableDataCell>
+                <CTableDataCell colSpan={12} className="text-center text-muted py-4">
+                  No records
+                </CTableDataCell>
               </CTableRow>
             )}
           </CTableBody>
         </CTable>
-        <TablePagination pageIndex={pageIndex} pageSize={pageSize} total={filtered.length} onPageChange={setPageIndex} />
+        <TablePagination
+          pageIndex={pageIndex}
+          pageSize={pageSize}
+          total={filtered.length}
+          onPageChange={setPageIndex}
+        />
       </CCardBody>
     </CCard>
   )

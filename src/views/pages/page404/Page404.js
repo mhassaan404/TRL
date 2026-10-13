@@ -12,7 +12,9 @@ const Page404 = () => {
             <div className="clearfix mb-3">
               <h1 className="float-start display-3 me-4">404</h1>
               <h4 className="pt-3">Page not found</h4>
-              <p className="text-body-secondary float-start">The page you are looking for doesn't exist or was moved.</p>
+              <p className="text-body-secondary float-start">
+                The page you are looking for doesn't exist or was moved.
+              </p>
             </div>
             <CButton color="primary" onClick={() => navigate('/dashboard')}>
               Go to Dashboard

@@ -13,9 +13,19 @@ const load = async (call, empty, fallback) => {
 const list = (res) => (Array.isArray(res.data) ? res.data : [])
 
 export const maintenanceService = {
-  getAll: () => load(async () => list(await api.get('/Maintenance/GetAll')), [], 'Failed to load maintenance jobs'),
+  getAll: () =>
+    load(
+      async () => list(await api.get('/Maintenance/GetAll')),
+      [],
+      'Failed to load maintenance jobs',
+    ),
 
-  getLog: (jobId) => load(async () => list(await api.get('/Maintenance/GetLog', { params: { jobId } })), [], 'Failed to load job history'),
+  getLog: (jobId) =>
+    load(
+      async () => list(await api.get('/Maintenance/GetLog', { params: { jobId } })),
+      [],
+      'Failed to load job history',
+    ),
 
   // { buildings: [...], units: [...] } for the job form
   getLocations: () =>
@@ -28,9 +38,12 @@ export const maintenanceService = {
       'Failed to load buildings and units',
     ),
 
-  save: (payload) => request(() => api.post('/Maintenance/Save', payload), 'Failed to save the job'),
+  save: (payload) =>
+    request(() => api.post('/Maintenance/Save', payload), 'Failed to save the job'),
 
-  changeStatus: (payload) => request(() => api.post('/Maintenance/ChangeStatus', payload), 'Failed to change the status'),
+  changeStatus: (payload) =>
+    request(() => api.post('/Maintenance/ChangeStatus', payload), 'Failed to change the status'),
 
-  bill: (payload) => request(() => api.post('/Maintenance/Bill', payload), 'Failed to bill the tenant'),
+  bill: (payload) =>
+    request(() => api.post('/Maintenance/Bill', payload), 'Failed to bill the tenant'),
 }

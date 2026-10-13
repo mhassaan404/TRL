@@ -8,8 +8,8 @@ const SummaryCards = ({ rentForm }) => {
   const isDark = useIsDarkMode()
 
   const cardClass = isDark
-    ? 'bg-dark border border-secondary shadow'          // dark mode: visible dark bg + subtle border + shadow
-    : 'bg-white border-0 shadow'                     // light mode: classic white card + shadow
+    ? 'bg-dark border border-secondary shadow' // dark mode: visible dark bg + subtle border + shadow
+    : 'bg-white border-0 shadow' // light mode: classic white card + shadow
 
   const stats = [
     {
@@ -43,9 +43,7 @@ const SummaryCards = ({ rentForm }) => {
           style={{ minWidth: '180px', maxWidth: '220px' }}
         >
           <CCardBody className="text-center py-3 px-2">
-            <div className={`small ${isDark ? 'text-light' : 'text-muted'} mb-1`}>
-              {stat.label}
-            </div>
+            <div className={`small ${isDark ? 'text-light' : 'text-muted'} mb-1`}>{stat.label}</div>
             <div className={`fs-5 ${stat.color}`}>{stat.value}</div>
           </CCardBody>
         </CCard>

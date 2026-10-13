@@ -36,8 +36,12 @@ export const useCompanyProfile = () => {
   const [profile, setProfile] = useState(() => (cache.key === clientKey() ? cache.value : null))
   useEffect(() => {
     let alive = true
-    load().then((p) => { if (alive) setProfile(p) })
-    return () => { alive = false }
+    load().then((p) => {
+      if (alive) setProfile(p)
+    })
+    return () => {
+      alive = false
+    }
   }, [])
   return profile
 }

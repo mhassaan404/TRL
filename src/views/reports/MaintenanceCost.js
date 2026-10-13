@@ -1,11 +1,31 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  CBadge, CButton, CButtonGroup, CCard, CCardBody, CCardHeader, CCol, CFormInput, CFormLabel, CFormSelect, CRow,
-  CTable, CTableBody, CTableDataCell, CTableFoot, CTableHead, CTableHeaderCell, CTableRow,
+  CBadge,
+  CButton,
+  CButtonGroup,
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CCol,
+  CFormInput,
+  CFormLabel,
+  CFormSelect,
+  CRow,
+  CTable,
+  CTableBody,
+  CTableDataCell,
+  CTableFoot,
+  CTableHead,
+  CTableHeaderCell,
+  CTableRow,
 } from '@coreui/react'
 import { reportService } from '../../services/report.service'
 import CompanyHeader from '../../components/common/CompanyHeader'
-import { PageSizeSelect, TablePagination, DEFAULT_PAGE_SIZE } from '../../components/common/TablePagination'
+import {
+  PageSizeSelect,
+  TablePagination,
+  DEFAULT_PAGE_SIZE,
+} from '../../components/common/TablePagination'
 import { fmt } from '../../utils/rentUtils'
 import { exportCSV } from '../../utils/exportUtils'
 import { todayLocal } from '../../utils/dates'
@@ -16,7 +36,12 @@ import { GROUP_BY, groupJobs, totalsOf } from '../../utils/maintenanceCost'
 // Maintenance Cost: jobs in a period (completed date, else reported date) with their cost, what was billed to the
 // tenant and recovered, and the net cost to the owner. Read only.
 const STATUSES = ['Completed', 'Open', 'In Progress', 'Cancelled']
-const STATUS_COLOR = { Open: 'secondary', 'In Progress': 'info', Completed: 'success', Cancelled: 'dark' }
+const STATUS_COLOR = {
+  Open: 'secondary',
+  'In Progress': 'info',
+  Completed: 'success',
+  Cancelled: 'dark',
+}
 const money = (v) => (Number(v) ? fmt(v) : '—')
 
 const MaintenanceCost = () => {
@@ -58,7 +83,10 @@ const MaintenanceCost = () => {
     const done = () => setPrinting(false)
     window.addEventListener('afterprint', done)
     const t = setTimeout(() => window.print(), 50)
-    return () => { clearTimeout(t); window.removeEventListener('afterprint', done) }
+    return () => {
+      clearTimeout(t)
+      window.removeEventListener('afterprint', done)
+    }
   }, [printing])
 
   const choosePreset = (p) => {
@@ -70,74 +98,108 @@ const MaintenanceCost = () => {
     setRange((r) => ({ ...r, [field]: value }))
   }
 
-  const buildings = useMemo(() => [...new Set(rows.map((r) => r.buildingName).filter(Boolean))].sort(), [rows])
-  const categories = useMemo(() => [...new Set(rows.map((r) => r.category).filter(Boolean))].sort(), [rows])
+  const buildings = useMemo(
+    () => [...new Set(rows.map((r) => r.buildingName).filter(Boolean))].sort(),
+    [rows],
+  )
+  const categories = useMemo(
+    () => [...new Set(rows.map((r) => r.category).filter(Boolean))].sort(),
+    [rows],
+  )
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return rows.filter((j) =>
-      (!building || j.buildingName === building) &&
-      (!category || j.category === category) &&
-      (!status || j.status === status) &&
-      (!q || [j.title, j.unitNumber, j.tenantName, j.assignedTo, String(j.jobId)]
-        .some((v) => String(v || '').toLowerCase().includes(q))))
+    return rows.filter(
+      (j) =>
+        (!building || j.buildingName === building) &&
+        (!category || j.category === category) &&
+        (!status || j.status === status) &&
+        (!q ||
+          [j.title, j.unitNumber, j.tenantName, j.assignedTo, String(j.jobId)].some((v) =>
+            String(v || '')
+              .toLowerCase()
+              .includes(q),
+          )),
+    )
   }, [rows, building, category, status, search])
 
   const totals = useMemo(() => totalsOf(filtered), [filtered])
   const groups = useMemo(() => groupJobs(filtered, groupBy), [filtered, groupBy])
 
-  useEffect(() => { setPageIndex(0) }, [building, category, status, search, range.from, range.to])
-  const paged = printing ? filtered : filtered.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)
+  useEffect(() => {
+    setPageIndex(0)
+  }, [building, category, status, search, range.from, range.to])
+  const paged = printing
+    ? filtered
+    : filtered.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)
 
   const fileSuffix = `${range.from}_to_${range.to}`
-  const exportSummary = () => exportCSV(
-    [
-      { accessorKey: 'label', header: groupBy },
-      { accessorKey: 'jobs', header: 'Jobs' },
-      { accessorKey: 'completed', header: 'Completed' },
-      { accessorKey: 'open', header: 'Open' },
-      { accessorKey: 'cancelled', header: 'Cancelled' },
-      { accessorKey: 'spent', header: 'Cost (Completed)' },
-      { accessorKey: 'openCost', header: 'Cost (Open)' },
-      { accessorKey: 'cost', header: 'Total Cost' },
-      { accessorKey: 'billed', header: 'Billed To Tenants' },
-      { accessorKey: 'recovered', header: 'Recovered' },
-      { accessorKey: 'net', header: 'Net Cost' },
-      { accessorKey: 'avgDays', header: 'Avg Days To Complete' },
-    ],
-    [...groups, { label: 'TOTAL', ...totals }],
-    `maintenance-cost-by-${groupBy.toLowerCase().replace(/\s+/g, '-')}-${fileSuffix}.csv`,
-  )
-  const exportJobs = () => exportCSV(
-    [
-      { accessorKey: 'jobId', header: 'Job #' },
-      { accessorKey: 'title', header: 'Title' },
-      { accessorKey: 'category', header: 'Category' },
-      { accessorKey: 'priority', header: 'Priority' },
-      { accessorKey: 'status', header: 'Status' },
-      { accessorKey: 'buildingName', header: 'Building' },
-      { accessorKey: 'floorNumber', header: 'Floor' },
-      { accessorKey: 'unitNumber', header: 'Unit' },
-      { accessorKey: 'tenantName', header: 'Tenant' },
-      { accessorKey: 'assignedTo', header: 'Assigned To' },
-      { accessorKey: 'reportedDate', header: 'Reported Date' },
-      { accessorKey: 'completedDate', header: 'Completed Date' },
-      { accessorKey: 'daysToComplete', header: 'Days To Complete' },
-      { accessorKey: 'cost', header: 'Cost' },
-      { accessorKey: 'chargeInvoiceId', header: 'Charge Invoice #' },
-      { accessorKey: 'billed', header: 'Billed' },
-      { accessorKey: 'recovered', header: 'Recovered' },
-    ],
-    filtered,
-    `maintenance-jobs-${fileSuffix}.csv`,
-  )
+  const exportSummary = () =>
+    exportCSV(
+      [
+        { accessorKey: 'label', header: groupBy },
+        { accessorKey: 'jobs', header: 'Jobs' },
+        { accessorKey: 'completed', header: 'Completed' },
+        { accessorKey: 'open', header: 'Open' },
+        { accessorKey: 'cancelled', header: 'Cancelled' },
+        { accessorKey: 'spent', header: 'Cost (Completed)' },
+        { accessorKey: 'openCost', header: 'Cost (Open)' },
+        { accessorKey: 'cost', header: 'Total Cost' },
+        { accessorKey: 'billed', header: 'Billed To Tenants' },
+        { accessorKey: 'recovered', header: 'Recovered' },
+        { accessorKey: 'net', header: 'Net Cost' },
+        { accessorKey: 'avgDays', header: 'Avg Days To Complete' },
+      ],
+      [...groups, { label: 'TOTAL', ...totals }],
+      `maintenance-cost-by-${groupBy.toLowerCase().replace(/\s+/g, '-')}-${fileSuffix}.csv`,
+    )
+  const exportJobs = () =>
+    exportCSV(
+      [
+        { accessorKey: 'jobId', header: 'Job #' },
+        { accessorKey: 'title', header: 'Title' },
+        { accessorKey: 'category', header: 'Category' },
+        { accessorKey: 'priority', header: 'Priority' },
+        { accessorKey: 'status', header: 'Status' },
+        { accessorKey: 'buildingName', header: 'Building' },
+        { accessorKey: 'floorNumber', header: 'Floor' },
+        { accessorKey: 'unitNumber', header: 'Unit' },
+        { accessorKey: 'tenantName', header: 'Tenant' },
+        { accessorKey: 'assignedTo', header: 'Assigned To' },
+        { accessorKey: 'reportedDate', header: 'Reported Date' },
+        { accessorKey: 'completedDate', header: 'Completed Date' },
+        { accessorKey: 'daysToComplete', header: 'Days To Complete' },
+        { accessorKey: 'cost', header: 'Cost' },
+        { accessorKey: 'chargeInvoiceId', header: 'Charge Invoice #' },
+        { accessorKey: 'billed', header: 'Billed' },
+        { accessorKey: 'recovered', header: 'Recovered' },
+      ],
+      filtered,
+      `maintenance-jobs-${fileSuffix}.csv`,
+    )
 
   const cards = [
-    { label: 'Total Cost', value: `PKR ${fmt(totals.cost)}`, sub: `${fmt(totals.spent)} completed · ${fmt(totals.openCost)} open` },
-    { label: 'Billed to Tenants', value: `PKR ${fmt(totals.billed)}`, sub: `PKR ${fmt(totals.recovered)} recovered` },
+    {
+      label: 'Total Cost',
+      value: `PKR ${fmt(totals.cost)}`,
+      sub: `${fmt(totals.spent)} completed · ${fmt(totals.openCost)} open`,
+    },
+    {
+      label: 'Billed to Tenants',
+      value: `PKR ${fmt(totals.billed)}`,
+      sub: `PKR ${fmt(totals.recovered)} recovered`,
+    },
     { label: 'Net Cost (Owner)', value: `PKR ${fmt(totals.net)}`, sub: 'total cost − billed' },
-    { label: 'Jobs', value: totals.jobs, sub: `${totals.completed} done · ${totals.open} open · ${totals.cancelled} cancelled` },
-    { label: 'Avg Days to Complete', value: totals.avgDays == null ? '—' : totals.avgDays, sub: 'completed jobs' },
+    {
+      label: 'Jobs',
+      value: totals.jobs,
+      sub: `${totals.completed} done · ${totals.open} open · ${totals.cancelled} cancelled`,
+    },
+    {
+      label: 'Avg Days to Complete',
+      value: totals.avgDays == null ? '—' : totals.avgDays,
+      sub: 'completed jobs',
+    },
   ]
 
   return (
@@ -157,13 +219,31 @@ const MaintenanceCost = () => {
           </div>
         </div>
         <div className="d-flex gap-2 no-print">
-          <CButton size="sm" color="secondary" variant="outline" disabled={!filtered.length} onClick={exportSummary}>
+          <CButton
+            size="sm"
+            color="secondary"
+            variant="outline"
+            disabled={!filtered.length}
+            onClick={exportSummary}
+          >
             Export Summary
           </CButton>
-          <CButton size="sm" color="secondary" variant="outline" disabled={!filtered.length} onClick={exportJobs}>
+          <CButton
+            size="sm"
+            color="secondary"
+            variant="outline"
+            disabled={!filtered.length}
+            onClick={exportJobs}
+          >
             Export Jobs
           </CButton>
-          <CButton size="sm" color="primary" variant="outline" disabled={!filtered.length} onClick={() => setPrinting(true)}>
+          <CButton
+            size="sm"
+            color="primary"
+            variant="outline"
+            disabled={!filtered.length}
+            onClick={() => setPrinting(true)}
+          >
             Print
           </CButton>
         </div>
@@ -172,22 +252,44 @@ const MaintenanceCost = () => {
         <div className="d-flex flex-wrap align-items-end gap-2 mb-3 no-print">
           <CButtonGroup className="flex-wrap">
             {PRESETS.map((p) => (
-              <CButton key={p} size="sm" color="primary" variant={preset === p ? undefined : 'outline'} onClick={() => choosePreset(p)}>
+              <CButton
+                key={p}
+                size="sm"
+                color="primary"
+                variant={preset === p ? undefined : 'outline'}
+                onClick={() => choosePreset(p)}
+              >
                 {p}
               </CButton>
             ))}
           </CButtonGroup>
           <div>
             <CFormLabel className="small mb-0">From</CFormLabel>
-            <CFormInput type="date" size="sm" value={range.from} max={range.to || undefined}
-              invalid={!validRange} onChange={(e) => setDate('from', e.target.value)} />
+            <CFormInput
+              type="date"
+              size="sm"
+              value={range.from}
+              max={range.to || undefined}
+              invalid={!validRange}
+              onChange={(e) => setDate('from', e.target.value)}
+            />
           </div>
           <div>
             <CFormLabel className="small mb-0">To</CFormLabel>
-            <CFormInput type="date" size="sm" value={range.to} min={range.from || undefined}
-              invalid={!validRange} onChange={(e) => setDate('to', e.target.value)} />
+            <CFormInput
+              type="date"
+              size="sm"
+              value={range.to}
+              min={range.from || undefined}
+              invalid={!validRange}
+              onChange={(e) => setDate('to', e.target.value)}
+            />
           </div>
-          {!validRange && <div className="small text-danger pb-1">Choose a From date on or before the To date.</div>}
+          {!validRange && (
+            <div className="small text-danger pb-1">
+              Choose a From date on or before the To date.
+            </div>
+          )}
         </div>
 
         <CRow className="g-2 mb-3">
@@ -210,17 +312,41 @@ const MaintenanceCost = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <CFormSelect style={{ maxWidth: 190 }} value={building} onChange={(e) => setBuilding(e.target.value)}>
+          <CFormSelect
+            style={{ maxWidth: 190 }}
+            value={building}
+            onChange={(e) => setBuilding(e.target.value)}
+          >
             <option value="">All Buildings</option>
-            {buildings.map((b) => <option key={b} value={b}>{b}</option>)}
+            {buildings.map((b) => (
+              <option key={b} value={b}>
+                {b}
+              </option>
+            ))}
           </CFormSelect>
-          <CFormSelect style={{ maxWidth: 170 }} value={category} onChange={(e) => setCategory(e.target.value)}>
+          <CFormSelect
+            style={{ maxWidth: 170 }}
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
             <option value="">All Categories</option>
-            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+            {categories.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
           </CFormSelect>
-          <CFormSelect style={{ maxWidth: 160 }} value={status} onChange={(e) => setStatus(e.target.value)}>
+          <CFormSelect
+            style={{ maxWidth: 160 }}
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
             <option value="">All Statuses</option>
-            {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+            {STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
           </CFormSelect>
         </div>
 
@@ -228,7 +354,13 @@ const MaintenanceCost = () => {
           <div className="fw-semibold me-auto">Summary by {groupBy.toLowerCase()}</div>
           <CButtonGroup className="no-print flex-wrap">
             {Object.keys(GROUP_BY).map((g) => (
-              <CButton key={g} size="sm" color="secondary" variant={groupBy === g ? undefined : 'outline'} onClick={() => setGroupBy(g)}>
+              <CButton
+                key={g}
+                size="sm"
+                color="secondary"
+                variant={groupBy === g ? undefined : 'outline'}
+                onClick={() => setGroupBy(g)}
+              >
                 {g}
               </CButton>
             ))}
@@ -254,13 +386,17 @@ const MaintenanceCost = () => {
                 <CTableDataCell className="fw-semibold">{g.label}</CTableDataCell>
                 <CTableDataCell className="text-end">
                   {g.jobs}
-                  {g.cancelled > 0 && <span className="small text-body-secondary"> ({g.cancelled} cancelled)</span>}
+                  {g.cancelled > 0 && (
+                    <span className="small text-body-secondary"> ({g.cancelled} cancelled)</span>
+                  )}
                 </CTableDataCell>
                 <CTableDataCell className="text-end">{money(g.spent)}</CTableDataCell>
                 <CTableDataCell className="text-end">{money(g.openCost)}</CTableDataCell>
                 <CTableDataCell className="text-end fw-semibold">{money(g.cost)}</CTableDataCell>
                 <CTableDataCell className="text-end">{money(g.billed)}</CTableDataCell>
-                <CTableDataCell className="text-end text-success">{money(g.recovered)}</CTableDataCell>
+                <CTableDataCell className="text-end text-success">
+                  {money(g.recovered)}
+                </CTableDataCell>
                 <CTableDataCell className="text-end fw-semibold">{fmt(g.net)}</CTableDataCell>
                 <CTableDataCell className="text-end">{g.avgDays ?? '—'}</CTableDataCell>
               </CTableRow>
@@ -282,7 +418,9 @@ const MaintenanceCost = () => {
                 <CTableDataCell className="text-end">{fmt(totals.openCost)}</CTableDataCell>
                 <CTableDataCell className="text-end">{fmt(totals.cost)}</CTableDataCell>
                 <CTableDataCell className="text-end">{fmt(totals.billed)}</CTableDataCell>
-                <CTableDataCell className="text-end text-success">{fmt(totals.recovered)}</CTableDataCell>
+                <CTableDataCell className="text-end text-success">
+                  {fmt(totals.recovered)}
+                </CTableDataCell>
                 <CTableDataCell className="text-end">{fmt(totals.net)}</CTableDataCell>
                 <CTableDataCell className="text-end">{totals.avgDays ?? '—'}</CTableDataCell>
               </CTableRow>
@@ -293,7 +431,13 @@ const MaintenanceCost = () => {
         <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
           <div className="fw-semibold me-auto">Jobs</div>
           <div className="no-print">
-            <PageSizeSelect pageSize={pageSize} onChange={(size) => { setPageSize(size); setPageIndex(0) }} />
+            <PageSizeSelect
+              pageSize={pageSize}
+              onChange={(size) => {
+                setPageSize(size)
+                setPageIndex(0)
+              }}
+            />
           </div>
         </div>
         <CTable hover responsive small className="align-middle">
@@ -313,29 +457,53 @@ const MaintenanceCost = () => {
             {paged.map((j) => (
               <CTableRow key={j.jobId}>
                 <CTableDataCell>
-                  <div className="fw-semibold">#{j.jobId} {j.title}</div>
+                  <div className="fw-semibold">
+                    #{j.jobId} {j.title}
+                  </div>
                   <div className="small text-body-secondary">
-                    {j.category} · {j.priority}{j.assignedTo ? ` · ${j.assignedTo}` : ''}
+                    {j.category} · {j.priority}
+                    {j.assignedTo ? ` · ${j.assignedTo}` : ''}
                   </div>
                 </CTableDataCell>
                 <CTableDataCell className="small">
-                  <div>{j.buildingName}{j.unitNumber ? ` – ${j.unitNumber}` : ''}</div>
+                  <div>
+                    {j.buildingName}
+                    {j.unitNumber ? ` – ${j.unitNumber}` : ''}
+                  </div>
                   {j.tenantName && <div className="text-body-secondary">{j.tenantName}</div>}
                 </CTableDataCell>
-                <CTableDataCell><CBadge color={STATUS_COLOR[j.status] || 'secondary'}>{j.status}</CBadge></CTableDataCell>
-                <CTableDataCell className="small text-nowrap">{formatDay(j.reportedDate)}</CTableDataCell>
+                <CTableDataCell>
+                  <CBadge color={STATUS_COLOR[j.status] || 'secondary'}>{j.status}</CBadge>
+                </CTableDataCell>
+                <CTableDataCell className="small text-nowrap">
+                  {formatDay(j.reportedDate)}
+                </CTableDataCell>
                 <CTableDataCell className="small text-nowrap">
                   {j.completedDate ? formatDay(j.completedDate) : '—'}
-                  {j.daysToComplete != null && <div className="text-body-secondary">{j.daysToComplete} days</div>}
+                  {j.daysToComplete != null && (
+                    <div className="text-body-secondary">{j.daysToComplete} days</div>
+                  )}
                 </CTableDataCell>
-                <CTableDataCell className={`text-end ${j.status === 'Cancelled' ? 'text-decoration-line-through text-body-secondary' : 'fw-semibold'}`}>
-                  {j.cost == null ? <span className="text-body-secondary" title="No cost entered">—</span> : fmt(j.cost)}
+                <CTableDataCell
+                  className={`text-end ${j.status === 'Cancelled' ? 'text-decoration-line-through text-body-secondary' : 'fw-semibold'}`}
+                >
+                  {j.cost == null ? (
+                    <span className="text-body-secondary" title="No cost entered">
+                      —
+                    </span>
+                  ) : (
+                    fmt(j.cost)
+                  )}
                 </CTableDataCell>
                 <CTableDataCell className="text-end">
                   {money(j.billed)}
-                  {j.chargeInvoiceId && <div className="small text-body-secondary">Inv #{j.chargeInvoiceId}</div>}
+                  {j.chargeInvoiceId && (
+                    <div className="small text-body-secondary">Inv #{j.chargeInvoiceId}</div>
+                  )}
                 </CTableDataCell>
-                <CTableDataCell className="text-end text-success">{money(j.recovered)}</CTableDataCell>
+                <CTableDataCell className="text-end text-success">
+                  {money(j.recovered)}
+                </CTableDataCell>
               </CTableRow>
             ))}
             {!paged.length && (
@@ -348,12 +516,25 @@ const MaintenanceCost = () => {
           </CTableBody>
         </CTable>
         <div className="no-print">
-          <TablePagination pageIndex={pageIndex} pageSize={pageSize} total={filtered.length} onPageChange={setPageIndex} />
+          <TablePagination
+            pageIndex={pageIndex}
+            pageSize={pageSize}
+            total={filtered.length}
+            onPageChange={setPageIndex}
+          />
         </div>
         <ul className="small text-body-secondary mt-2 mb-0 ps-3">
-          <li>A job counts in the period of its completed date, or its reported date while it is not completed.</li>
-          <li>Cost of cancelled jobs is not counted. Cost of open jobs is the cost entered so far.</li>
-          <li>Billed = the job&apos;s charge invoice to the tenant (unless cancelled); Recovered = what the tenant has paid on it.</li>
+          <li>
+            A job counts in the period of its completed date, or its reported date while it is not
+            completed.
+          </li>
+          <li>
+            Cost of cancelled jobs is not counted. Cost of open jobs is the cost entered so far.
+          </li>
+          <li>
+            Billed = the job&apos;s charge invoice to the tenant (unless cancelled); Recovered =
+            what the tenant has paid on it.
+          </li>
           {totals.noCost > 0 && (
             <li className="text-warning">{totals.noCost} completed job(s) have no cost entered.</li>
           )}

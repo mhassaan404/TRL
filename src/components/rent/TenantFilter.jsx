@@ -13,10 +13,7 @@ const TenantFilter = ({ names, value, onChange }) => {
     const unique = [...new Set([...names, value].filter(Boolean).map((n) => String(n)))].sort(
       (a, b) => a.localeCompare(b),
     )
-    return [
-      { value: ALL, label: 'All Tenants' },
-      ...unique.map((n) => ({ value: n, label: n })),
-    ]
+    return [{ value: ALL, label: 'All Tenants' }, ...unique.map((n) => ({ value: n, label: n }))]
   }, [names, value])
 
   return <SearchableSelect options={options} value={value} onChange={(v) => onChange(String(v))} />

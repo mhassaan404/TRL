@@ -28,7 +28,12 @@ import FloorModal from '../../components/property/FloorModal'
 
 import { useProperties } from '../../hooks/useProperties'
 import { fmt } from '../../utils/rentUtils'
-import { UNIT_STATUS, unitStatusOf, unitStatusColor, countUnitStatuses } from '../../utils/unitStatus'
+import {
+  UNIT_STATUS,
+  unitStatusOf,
+  unitStatusColor,
+  countUnitStatuses,
+} from '../../utils/unitStatus'
 import { useIsDarkMode } from '../../hooks/useIsDarkMode'
 
 const statusColor = unitStatusColor
@@ -165,9 +170,7 @@ const Properties = () => {
     const q = searchQuery.toLowerCase()
 
     return groupedBuildings.filter(
-      (b) =>
-        b.buildingName?.toLowerCase().includes(q) ||
-        b.cityName?.toLowerCase().includes(q),
+      (b) => b.buildingName?.toLowerCase().includes(q) || b.cityName?.toLowerCase().includes(q),
     )
   }, [groupedBuildings, searchQuery])
 
@@ -181,11 +184,7 @@ const Properties = () => {
     const q = searchQuery.toLowerCase()
 
     return floors.filter((floor) => {
-      const floorName =
-        floor.name ||
-        floor.floorName ||
-        floor.floorNumber?.toString() ||
-        ''
+      const floorName = floor.name || floor.floorName || floor.floorNumber?.toString() || ''
 
       return floorName.toLowerCase().includes(q)
     })
@@ -203,15 +202,11 @@ const Properties = () => {
     // If a floor is selected,
     // only show units belonging to that floor.
     if (selectedFloor) {
-      const floorNumber =
-        selectedFloor.floorNumber ??
-        selectedFloor.number ??
-        selectedFloor.name
+      const floorNumber = selectedFloor.floorNumber ?? selectedFloor.number ?? selectedFloor.name
 
       units = units.filter((p) => {
         return (
-          p.floorId === selectedFloor.id ||
-          p.floorNumber?.toString() === floorNumber?.toString()
+          p.floorId === selectedFloor.id || p.floorNumber?.toString() === floorNumber?.toString()
         )
       })
     }
@@ -219,30 +214,19 @@ const Properties = () => {
     return units.filter((p) => {
       const statusName = unitStatusOf(p)
 
-      const matchStatus = statusFilter
-        ? statusName === statusFilter
-        : true
+      const matchStatus = statusFilter ? statusName === statusFilter : true
 
-      const matchType = typeFilter
-        ? p.propertyType === typeFilter
-        : true
+      const matchType = typeFilter ? p.propertyType === typeFilter : true
 
       const q = searchQuery.toLowerCase()
 
       const matchSearch = searchQuery
-        ? p.unitNumber?.toLowerCase().includes(q) ||
-          p.propertyType?.toLowerCase().includes(q)
+        ? p.unitNumber?.toLowerCase().includes(q) || p.propertyType?.toLowerCase().includes(q)
         : true
 
       return matchStatus && matchType && matchSearch
     })
-  }, [
-    selectedBuilding,
-    selectedFloor,
-    statusFilter,
-    typeFilter,
-    searchQuery,
-  ])
+  }, [selectedBuilding, selectedFloor, statusFilter, typeFilter, searchQuery])
 
   // --------------------------------------------------
   // STATISTICS
@@ -339,16 +323,10 @@ const Properties = () => {
   const getFloorUnits = (floor) => {
     if (!selectedBuilding) return []
 
-    const floorNumber =
-      floor.floorNumber ??
-      floor.number ??
-      floor.name
+    const floorNumber = floor.floorNumber ?? floor.number ?? floor.name
 
     return (selectedBuilding.items || []).filter((p) => {
-      return (
-        p.floorId === floor.id ||
-        p.floorNumber?.toString() === floorNumber?.toString()
-      )
+      return p.floorId === floor.id || p.floorNumber?.toString() === floorNumber?.toString()
     })
   }
 
@@ -356,81 +334,50 @@ const Properties = () => {
   // LOADER
   // --------------------------------------------------
 
-  if (
-    loading &&
-    !properties.length &&
-    !buildings.length
-  ) {
+  if (loading && !properties.length && !buildings.length) {
     return <Loader />
   }
 
-
   return (
     <div className="container-fluid py-3">
-
       {/* HEADER */}
       <CCard className="border-0 shadow-sm mb-4">
-
         <CCardHeader
           className={`d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 py-3 ${
             isDark ? '' : 'bg-white'
           }`}
         >
-
           <div className="d-flex align-items-center gap-2">
-
             {(selectedBuilding || selectedFloor) && (
-              <CButton
-                color="secondary"
-                variant="outline"
-                size="sm"
-                onClick={handleBack}
-              >
+              <CButton color="secondary" variant="outline" size="sm" onClick={handleBack}>
                 ← Back
               </CButton>
             )}
 
             <strong className="fs-5">
-
               {!selectedBuilding
                 ? 'Buildings & Units'
                 : selectedFloor
                   ? `${selectedBuilding.buildingName} — Floor ${
-                      selectedFloor.floorNumber ??
-                      selectedFloor.number ??
-                      selectedFloor.name
+                      selectedFloor.floorNumber ?? selectedFloor.number ?? selectedFloor.name
                     }`
                   : `${selectedBuilding.buildingName} — Floors`}
-
             </strong>
 
             {selectedBuilding?.cityName && (
-              <small className="text-muted">
-                ({selectedBuilding.cityName})
-              </small>
+              <small className="text-muted">({selectedBuilding.cityName})</small>
             )}
-
           </div>
 
-
           <div className="d-flex flex-wrap gap-2 justify-content-md-end">
-
             {/* ---------- LEVEL 1: BUILDINGS ---------- */}
             {!selectedBuilding && (
               <>
-                <CButton
-                  color="outline-secondary"
-                  size="sm"
-                  onClick={openAddBuildingModal}
-                >
+                <CButton color="outline-secondary" size="sm" onClick={openAddBuildingModal}>
                   + Add Building
                 </CButton>
 
-                <CButton
-                  color="primary"
-                  size="sm"
-                  onClick={() => openAddModal()}
-                >
+                <CButton color="primary" size="sm" onClick={() => openAddModal()}>
                   + Add Property
                 </CButton>
               </>
@@ -441,21 +388,12 @@ const Properties = () => {
               <>
                 {selectedBuildingObj && (
                   <CDropdown>
-
-                    <CDropdownToggle
-                      color="outline-secondary"
-                      size="sm"
-                    >
+                    <CDropdownToggle color="outline-secondary" size="sm">
                       Building Actions
                     </CDropdownToggle>
 
                     <CDropdownMenu>
-
-                      <CDropdownItem
-                        onClick={() =>
-                          openEditBuildingModal(selectedBuildingObj)
-                        }
-                      >
+                      <CDropdownItem onClick={() => openEditBuildingModal(selectedBuildingObj)}>
                         ✏️ Edit Building
                       </CDropdownItem>
 
@@ -469,9 +407,7 @@ const Properties = () => {
                       >
                         🗑 Delete Building
                       </CDropdownItem>
-
                     </CDropdownMenu>
-
                   </CDropdown>
                 )}
 
@@ -489,35 +425,24 @@ const Properties = () => {
             {selectedBuilding && selectedFloor && (
               <>
                 <CDropdown>
-
-                  <CDropdownToggle
-                    color="outline-secondary"
-                    size="sm"
-                  >
+                  <CDropdownToggle color="outline-secondary" size="sm">
                     Floor Actions
                   </CDropdownToggle>
 
                   <CDropdownMenu>
-
                     <CDropdownItem
-                      onClick={() =>
-                        openEditFloorModal(selectedFloor, selectedBuildingId)
-                      }
+                      onClick={() => openEditFloorModal(selectedFloor, selectedBuildingId)}
                     >
                       ✏️ Edit Floor
                     </CDropdownItem>
 
                     <CDropdownItem
                       className="text-danger"
-                      onClick={() =>
-                        handleFloorDelete(selectedFloor.id, selectedBuildingId)
-                      }
+                      onClick={() => handleFloorDelete(selectedFloor.id, selectedBuildingId)}
                     >
                       🗑 Delete Floor
                     </CDropdownItem>
-
                   </CDropdownMenu>
-
                 </CDropdown>
 
                 <CButton
@@ -529,17 +454,13 @@ const Properties = () => {
                 </CButton>
               </>
             )}
-
           </div>
-
         </CCardHeader>
-
       </CCard>
 
       {/* KPI CARDS */}
 
       <CRow className="mb-4 g-3">
-
         {[
           { label: 'Total Buildings', value: stats.buildings, color: 'body-secondary' },
           { label: 'Total Floors', value: stats.floors, color: 'body-secondary' },
@@ -548,44 +469,21 @@ const Properties = () => {
           { label: 'Available', value: stats.available, color: 'success' },
           { label: 'Maintenance', value: stats.maintenance, color: 'warning' },
         ].map((s) => (
-
-          <CCol
-            key={s.label}
-            xs={6}
-            sm={4}
-            lg={2}
-          >
-
+          <CCol key={s.label} xs={6} sm={4} lg={2}>
             <CCard className="p-3 shadow-sm border-0 text-center">
+              <small className={`text-${s.color} fw-semibold`}>{s.label}</small>
 
-              <small
-                className={`text-${s.color} fw-semibold`}
-              >
-                {s.label}
-              </small>
-
-              <h4
-                className={`fw-bold mb-0 text-${s.color}`}
-              >
-                {s.value}
-              </h4>
-
+              <h4 className={`fw-bold mb-0 text-${s.color}`}>{s.value}</h4>
             </CCard>
-
           </CCol>
-
         ))}
-
       </CRow>
 
       {/* SEARCH + FILTERS */}
 
       <CRow className="mb-3 g-2 align-items-center">
-
         <CCol xs={12} sm={5} md={4}>
-
           <CInputGroup size="sm">
-
             <CInputGroupText>
               <CIcon icon={cilSearch} />
             </CInputGroupText>
@@ -599,77 +497,48 @@ const Properties = () => {
                     : 'Search units...'
               }
               value={searchQuery}
-              onChange={(e) =>
-                setSearchQuery(e.target.value)
-              }
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
-
           </CInputGroup>
-
         </CCol>
 
         {selectedFloor && (
           <>
             <CCol xs={6} sm={3} md={2}>
-
               <CFormSelect
                 size="sm"
                 value={statusFilter}
-                onChange={(e) =>
-                  setStatusFilter(e.target.value)
-                }
+                onChange={(e) => setStatusFilter(e.target.value)}
               >
-
-                <option value="">
-                  All Status
-                </option>
+                <option value="">All Status</option>
 
                 {Object.values(UNIT_STATUS).map((s) => (
                   <option key={s} value={s}>
                     {s}
                   </option>
                 ))}
-
               </CFormSelect>
-
             </CCol>
 
             <CCol xs={6} sm={3} md={2}>
-
               <CFormSelect
                 size="sm"
                 value={typeFilter}
-                onChange={(e) =>
-                  setTypeFilter(e.target.value)
-                }
+                onChange={(e) => setTypeFilter(e.target.value)}
               >
+                <option value="">All Types</option>
 
-                <option value="">
-                  All Types
-                </option>
+                <option value="Apartment">Apartment</option>
 
-                <option value="Apartment">
-                  Apartment
-                </option>
+                <option value="House">House</option>
 
-                <option value="House">
-                  House
-                </option>
+                <option value="Office">Office</option>
 
-                <option value="Office">
-                  Office
-                </option>
-
-                <option value="Shop">
-                  Shop
-                </option>
-
+                <option value="Shop">Shop</option>
               </CFormSelect>
-
             </CCol>
           </>
         )}
-
       </CRow>
 
       {/* ==================================================
@@ -677,120 +546,68 @@ const Properties = () => {
       ================================================== */}
 
       {!selectedBuilding && (
-
         <>
           {filteredBuildings.length === 0 ? (
-
             <CCard className="border-0 shadow-sm">
-
               <CCardBody className="text-center py-5 text-muted">
+                <div style={{ fontSize: '3rem' }}>🏢</div>
 
-                <div style={{ fontSize: '3rem' }}>
-                  🏢
-                </div>
+                <p className="mt-2 mb-3">No buildings found.</p>
 
-                <p className="mt-2 mb-3">
-                  No buildings found.
-                </p>
-
-                <CButton
-                  color="primary"
-                  size="sm"
-                  onClick={openAddBuildingModal}
-                >
+                <CButton color="primary" size="sm" onClick={openAddBuildingModal}>
                   + Add Your First Building
                 </CButton>
-
               </CCardBody>
-
             </CCard>
-
           ) : (
-
             <CRow className="g-3">
-
               {filteredBuildings.map((b, i) => {
-
                 const { available, occupied: rented } = countUnitStatuses(b.items)
 
-                const bObj = buildings.find(
-                  (x) => x.id === b.buildingId,
-                )
+                const bObj = buildings.find((x) => x.id === b.buildingId)
 
-                const typeName =
-                  buildingTypes.find(
-                    (t) => t.id === bObj?.typeId,
-                  )?.name || ''
+                const typeName = buildingTypes.find((t) => t.id === bObj?.typeId)?.name || ''
 
                 return (
-
-                  <CCol
-                    key={b.buildingId || i}
-                    xs={12}
-                    sm={6}
-                    lg={4}
-                    xl={3}
-                  >
-
+                  <CCol key={b.buildingId || i} xs={12} sm={6} lg={4} xl={3}>
                     <CCard
                       className="shadow-sm border-0 h-100"
                       style={{
                         borderRadius: '14px',
                         cursor: 'pointer',
                       }}
-                      onClick={() =>
-                        handleSelectBuilding(b)
-                      }
+                      onClick={() => handleSelectBuilding(b)}
                     >
-
                       <div
                         style={{
                           height: '110px',
-                          background:
-                            'linear-gradient(135deg, #667eea22, #764ba222)',
+                          background: 'linear-gradient(135deg, #667eea22, #764ba222)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           fontSize: '3rem',
-                          borderRadius:
-                            '14px 14px 0 0',
+                          borderRadius: '14px 14px 0 0',
                         }}
                       >
                         🏢
                       </div>
 
                       <CCardBody>
-
                         <div className="d-flex justify-content-between align-items-start">
-
                           <div>
+                            <h6 className="mb-0 fw-bold">{b.buildingName}</h6>
 
-                            <h6 className="mb-0 fw-bold">
-                              {b.buildingName}
-                            </h6>
-
-                            <small className="text-muted">
-                              {b.cityName || '—'}
-                            </small>
+                            <small className="text-muted">{b.cityName || '—'}</small>
 
                             {typeName && (
                               <div>
-                                <small className="text-muted">
-                                  {typeName}
-                                </small>
+                                <small className="text-muted">{typeName}</small>
                               </div>
                             )}
-
                           </div>
 
-                          <div
-                            onClick={(e) =>
-                              e.stopPropagation()
-                            }
-                          >
-
+                          <div onClick={(e) => e.stopPropagation()}>
                             <CDropdown>
-
                               <CDropdownToggle
                                 color="light"
                                 size="sm"
@@ -803,88 +620,52 @@ const Properties = () => {
                               </CDropdownToggle>
 
                               <CDropdownMenu>
-
                                 <CDropdownItem
                                   onClick={() => {
                                     if (bObj) {
-                                      openEditBuildingModal(
-                                        bObj,
-                                      )
+                                      openEditBuildingModal(bObj)
                                     }
                                   }}
                                 >
                                   ✏️ Edit
                                 </CDropdownItem>
 
-                                <CDropdownItem
-                                  onClick={() =>
-                                    openAddFloorModal(
-                                      b.buildingId,
-                                    )
-                                  }
-                                >
+                                <CDropdownItem onClick={() => openAddFloorModal(b.buildingId)}>
                                   + Add Floor
                                 </CDropdownItem>
 
                                 <CDropdownItem
                                   className="text-danger"
-                                  onClick={() =>
-                                    handleBuildingDelete(
-                                      b.buildingId,
-                                    )
-                                  }
+                                  onClick={() => handleBuildingDelete(b.buildingId)}
                                 >
                                   🗑 Delete
                                 </CDropdownItem>
-
                               </CDropdownMenu>
-
                             </CDropdown>
-
                           </div>
-
                         </div>
 
                         <hr className="my-2" />
 
                         <div className="d-flex justify-content-between align-items-center">
-
                           <span className="text-muted small">
-                            Units:{' '}
-                            <strong>
-                              {b.items.length}
-                            </strong>
+                            Units: <strong>{b.items.length}</strong>
                           </span>
 
                           <div className="d-flex gap-1">
+                            <CBadge color="success">{available} free</CBadge>
 
-                            <CBadge color="success">
-                              {available} free
-                            </CBadge>
-
-                            <CBadge color="primary">
-                              {rented} occupied
-                            </CBadge>
-
+                            <CBadge color="primary">{rented} occupied</CBadge>
                           </div>
-
                         </div>
-
                       </CCardBody>
-
                     </CCard>
-
                   </CCol>
-
                 )
               })}
-
             </CRow>
-
           )}
-
         </>
-
       )}
 
       {/* ==================================================
@@ -892,115 +673,66 @@ const Properties = () => {
       ================================================== */}
 
       {selectedBuilding && !selectedFloor && (
-
         <>
-
           {filteredFloors.length === 0 ? (
-
             <CCard className="border-0 shadow-sm">
-
               <CCardBody className="text-center py-5 text-muted">
+                <div style={{ fontSize: '3rem' }}>🏢</div>
 
-                <div style={{ fontSize: '3rem' }}>
-                  🏢
-                </div>
-
-                <p className="mt-2 mb-3">
-                  No floors found.
-                </p>
+                <p className="mt-2 mb-3">No floors found.</p>
 
                 <CButton
                   color="primary"
                   size="sm"
-                  onClick={() =>
-                    openAddFloorModal(selectedBuildingId)
-                  }
+                  onClick={() => openAddFloorModal(selectedBuildingId)}
                 >
                   + Add First Floor
                 </CButton>
-
               </CCardBody>
-
             </CCard>
-
           ) : (
-
             <CRow className="g-3">
-
               {filteredFloors.map((floor, i) => {
-
-                const floorUnits =
-                  getFloorUnits(floor)
+                const floorUnits = getFloorUnits(floor)
 
                 const { available, occupied: rented } = countUnitStatuses(floorUnits)
 
-                const floorNumber =
-                  floor.floorNumber ??
-                  floor.number ??
-                  floor.name ??
-                  i + 1
+                const floorNumber = floor.floorNumber ?? floor.number ?? floor.name ?? i + 1
 
                 return (
-
-                  <CCol
-                    key={floor.id || i}
-                    xs={12}
-                    sm={6}
-                    lg={4}
-                    xl={3}
-                  >
-
+                  <CCol key={floor.id || i} xs={12} sm={6} lg={4} xl={3}>
                     <CCard
                       className="shadow-sm border-0 h-100"
                       style={{
                         borderRadius: '14px',
                         cursor: 'pointer',
                       }}
-                      onClick={() =>
-                        handleSelectFloor(floor)
-                      }
+                      onClick={() => handleSelectFloor(floor)}
                     >
-
                       <div
                         style={{
                           height: '110px',
-                          background:
-                            'linear-gradient(135deg, #667eea22, #764ba222)',
+                          background: 'linear-gradient(135deg, #667eea22, #764ba222)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           fontSize: '3rem',
-                          borderRadius:
-                            '14px 14px 0 0',
+                          borderRadius: '14px 14px 0 0',
                         }}
                       >
                         🏢
                       </div>
 
                       <CCardBody>
-
                         <div className="d-flex justify-content-between align-items-start">
-
                           <div>
+                            <h6 className="mb-0 fw-bold">Floor {floorNumber}</h6>
 
-                            <h6 className="mb-0 fw-bold">
-                              Floor {floorNumber}
-                            </h6>
-
-                            <small className="text-muted">
-                              {floorUnits.length} Units
-                            </small>
-
+                            <small className="text-muted">{floorUnits.length} Units</small>
                           </div>
 
-                          <div
-                            onClick={(e) =>
-                              e.stopPropagation()
-                            }
-                          >
-
+                          <div onClick={(e) => e.stopPropagation()}>
                             <CDropdown>
-
                               <CDropdownToggle
                                 color="light"
                                 size="sm"
@@ -1013,78 +745,44 @@ const Properties = () => {
                               </CDropdownToggle>
 
                               <CDropdownMenu>
-
                                 <CDropdownItem
-                                  onClick={() =>
-                                    openEditFloorModal(
-                                      floor,
-                                      selectedBuildingId,
-                                    )
-                                  }
+                                  onClick={() => openEditFloorModal(floor, selectedBuildingId)}
                                 >
                                   ✏️ Edit
                                 </CDropdownItem>
 
                                 <CDropdownItem
                                   className="text-danger"
-                                  onClick={() =>
-                                    handleFloorDelete(
-                                      floor.id,
-                                      selectedBuildingId,
-                                    )
-                                  }
+                                  onClick={() => handleFloorDelete(floor.id, selectedBuildingId)}
                                 >
                                   🗑 Delete
                                 </CDropdownItem>
-
                               </CDropdownMenu>
-
                             </CDropdown>
-
                           </div>
-
                         </div>
 
                         <hr className="my-2" />
 
                         <div className="d-flex justify-content-between align-items-center">
-
                           <span className="text-muted small">
-                            Units:{' '}
-                            <strong>
-                              {floorUnits.length}
-                            </strong>
+                            Units: <strong>{floorUnits.length}</strong>
                           </span>
 
                           <div className="d-flex gap-1">
+                            <CBadge color="success">{available} free</CBadge>
 
-                            <CBadge color="success">
-                              {available} free
-                            </CBadge>
-
-                            <CBadge color="primary">
-                              {rented} occupied
-                            </CBadge>
-
+                            <CBadge color="primary">{rented} occupied</CBadge>
                           </div>
-
                         </div>
-
                       </CCardBody>
-
                     </CCard>
-
                   </CCol>
-
                 )
               })}
-
             </CRow>
-
           )}
-
         </>
-
       )}
 
       {/* ==================================================
@@ -1092,129 +790,72 @@ const Properties = () => {
       ================================================== */}
 
       {selectedBuilding && selectedFloor && (
-
         <>
-
           {buildingUnits.length === 0 ? (
-
             <CCard className="border-0 shadow-sm">
-
               <CCardBody className="text-center py-5 text-muted">
+                <div style={{ fontSize: '3rem' }}>🏠</div>
 
-                <div style={{ fontSize: '3rem' }}>
-                  🏠
-                </div>
-
-                <p className="mt-2 mb-3">
-                  No units found on this floor.
-                </p>
+                <p className="mt-2 mb-3">No units found on this floor.</p>
 
                 <CButton
                   color="primary"
                   size="sm"
-                  onClick={() =>
-                    openAddModal(selectedBuildingId, selectedFloorId)
-                  }
+                  onClick={() => openAddModal(selectedBuildingId, selectedFloorId)}
                 >
                   + Add First Unit
                 </CButton>
-
               </CCardBody>
-
             </CCard>
-
           ) : (
-
             <CRow className="g-3">
-
               {buildingUnits.map((p) => {
-
                 const statusName = unitStatusOf(p)
 
                 return (
-
-                  <CCol
-                    key={p.id}
-                    xs={12}
-                    sm={6}
-                    md={4}
-                    xl={3}
-                  >
-
+                  <CCol key={p.id} xs={12} sm={6} md={4} xl={3}>
                     <CCard
                       className="shadow-sm border-0 h-100"
                       style={{
                         borderRadius: '12px',
                       }}
                     >
-
                       <CCardBody>
-
                         <div className="d-flex justify-content-between align-items-start">
-
                           <div>
-
                             <div className="fw-bold">
-
-                              {typeIcon[
-                                p.propertyType
-                              ] || '🏠'}{' '}
-
-                              Unit {p.unitNumber}
-
+                              {typeIcon[p.propertyType] || '🏠'} Unit {p.unitNumber}
                             </div>
 
                             <small className="text-muted">
-
-                              Floor {p.floorNumber} ·{' '}
-                              {p.propertyType}
-
+                              Floor {p.floorNumber} · {p.propertyType}
                             </small>
-
                           </div>
 
-                          <CBadge
-                            color={
-                              statusColor[
-                                statusName
-                              ] || 'secondary'
-                            }
-                          >
+                          <CBadge color={statusColor[statusName] || 'secondary'}>
                             {statusName}
                           </CBadge>
-
                         </div>
 
                         <div className="mt-3 text-primary fw-bold fs-5">
-
                           {fmt(p.baseRent)}
 
-                          <small className="text-muted fw-normal fs-6">
-                            {' '}
-                            /mo
-                          </small>
-
+                          <small className="text-muted fw-normal fs-6"> /mo</small>
                         </div>
 
                         {p.note && (
-                          <small
-                            className="text-muted d-block mt-1 text-truncate"
-                            title={p.note}
-                          >
+                          <small className="text-muted d-block mt-1 text-truncate" title={p.note}>
                             📝 {p.note}
                           </small>
                         )}
 
                         <div className="d-flex gap-2 mt-3">
-
                           <CButton
                             size="sm"
                             color="primary"
                             variant="outline"
                             className="flex-grow-1"
-                            onClick={() =>
-                              openEditModal(p)
-                            }
+                            onClick={() => openEditModal(p)}
                           >
                             ✏️ Edit
                           </CButton>
@@ -1224,30 +865,19 @@ const Properties = () => {
                             color="danger"
                             variant="outline"
                             className="flex-grow-1"
-                            onClick={() =>
-                              handleDelete(p.id)
-                            }
+                            onClick={() => handleDelete(p.id)}
                           >
                             🗑 Delete
                           </CButton>
-
                         </div>
-
                       </CCardBody>
-
                     </CCard>
-
                   </CCol>
-
                 )
               })}
-
             </CRow>
-
           )}
-
         </>
-
       )}
 
       {/* ==================================================
@@ -1290,11 +920,8 @@ const Properties = () => {
         handleSubmit={handleFloorSubmit}
         saving={saving}
         closeModal={closeFloorModal}
-        buildingName={
-          selectedBuilding?.buildingName || ''
-        }
+        buildingName={selectedBuilding?.buildingName || ''}
       />
-
     </div>
   )
 }

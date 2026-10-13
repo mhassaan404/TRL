@@ -14,11 +14,16 @@ export const MONTH_PRESETS = ['This Year', 'Last Year', 'Last 12 Months', 'Last 
 export const monthPresetRange = (preset, today) => {
   const [y, m] = today.split('-').map(Number)
   switch (preset) {
-    case 'This Year': return { from: ym(y, 1), to: ym(y, m) }
-    case 'Last Year': return { from: ym(y - 1, 1), to: ym(y - 1, 12) }
-    case 'Last 12 Months': return { from: ym(y, m - 11), to: ym(y, m) }
-    case 'Last 6 Months': return { from: ym(y, m - 5), to: ym(y, m) }
-    default: return null
+    case 'This Year':
+      return { from: ym(y, 1), to: ym(y, m) }
+    case 'Last Year':
+      return { from: ym(y - 1, 1), to: ym(y - 1, 12) }
+    case 'Last 12 Months':
+      return { from: ym(y, m - 11), to: ym(y, m) }
+    case 'Last 6 Months':
+      return { from: ym(y, m - 5), to: ym(y, m) }
+    default:
+      return null
   }
 }
 
@@ -37,12 +42,28 @@ export const collectionRate = (row) => {
 }
 
 const SUM_FIELDS = [
-  'invoices', 'rentBilled', 'extraBilled', 'lateFeesCharged', 'totalBilled', 'discounts', 'collected', 'outstanding',
-  'credit', 'waivedInvoices', 'accruingLateFee', 'cancelledInvoices', 'cancelledAmount', 'cashReceived',
+  'invoices',
+  'rentBilled',
+  'extraBilled',
+  'lateFeesCharged',
+  'totalBilled',
+  'discounts',
+  'collected',
+  'outstanding',
+  'credit',
+  'waivedInvoices',
+  'accruingLateFee',
+  'cancelledInvoices',
+  'cancelledAmount',
+  'cashReceived',
 ]
 
 export const totalsOf = (rows) => {
   const t = Object.fromEntries(SUM_FIELDS.map((f) => [f, 0]))
-  rows.forEach((r) => SUM_FIELDS.forEach((f) => { t[f] = round2(t[f] + num(r[f])) }))
+  rows.forEach((r) =>
+    SUM_FIELDS.forEach((f) => {
+      t[f] = round2(t[f] + num(r[f]))
+    }),
+  )
   return t
 }

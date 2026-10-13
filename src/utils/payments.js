@@ -59,6 +59,9 @@ export const reversalEffects = (p, inv, today) => {
   // The late fee builds up again from the original due date when rent is owed again on an overdue invoice
   // (not when a fee was already charged, or the invoice has no late fee)
   const lateFeeWarning =
-    overdue && Number(inv?.lateFeeCharged) === 0 && Number(inv?.lateFeePerDay) > 0 && (cash > 0 || disc > 0 || waived)
+    overdue &&
+    Number(inv?.lateFeeCharged) === 0 &&
+    Number(inv?.lateFeePerDay) > 0 &&
+    (cash > 0 || disc > 0 || waived)
   return { cash, disc, waived, balanceAfter, lateFeeWarning }
 }

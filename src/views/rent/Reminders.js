@@ -1,19 +1,45 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import {
-  CBadge, CButton, CButtonGroup, CCard, CCardBody, CCardHeader, CFormInput, CTable, CTableBody, CTableDataCell,
-  CTableHead, CTableHeaderCell, CTableRow,
+  CBadge,
+  CButton,
+  CButtonGroup,
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CFormInput,
+  CTable,
+  CTableBody,
+  CTableDataCell,
+  CTableHead,
+  CTableHeaderCell,
+  CTableRow,
 } from '@coreui/react'
 import { rentService } from '../../services/rent.service'
 import TenantFilter from '../../components/rent/TenantFilter'
-import { PageSizeSelect, TablePagination, DEFAULT_PAGE_SIZE } from '../../components/common/TablePagination'
+import {
+  PageSizeSelect,
+  TablePagination,
+  DEFAULT_PAGE_SIZE,
+} from '../../components/common/TablePagination'
 import { todayLocal } from '../../utils/dates'
 import { fmt } from '../../utils/rentUtils'
-import { formatDay, groupByTenant, invoiceLabel, outstanding, whatsAppLink } from '../../utils/reminders'
+import {
+  formatDay,
+  groupByTenant,
+  invoiceLabel,
+  outstanding,
+  whatsAppLink,
+} from '../../utils/reminders'
 
 // Payment reminders: open invoices grouped by tenant. The WhatsApp button opens one ready message with all of the
 // tenant's open invoices; the admin presses Send in WhatsApp. Nothing is stored.
 const FILTERS = ['Overdue', 'Due today', 'Due soon', 'All unpaid']
-const STATE_BADGE = { Overdue: 'danger', 'Due today': 'warning', 'Due soon': 'info', Upcoming: 'secondary' }
+const STATE_BADGE = {
+  Overdue: 'danger',
+  'Due today': 'warning',
+  'Due soon': 'info',
+  Upcoming: 'secondary',
+}
 
 const Reminders = () => {
   const [rows, setRows] = useState([])
@@ -26,7 +52,10 @@ const Reminders = () => {
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
   useEffect(() => {
-    rentService.getUnpaidForReminders().then((d) => { setRows(d); setLoading(false) })
+    rentService.getUnpaidForReminders().then((d) => {
+      setRows(d)
+      setLoading(false)
+    })
   }, [])
 
   const groups = useMemo(() => groupByTenant(rows, todayLocal()), [rows])
@@ -37,21 +66,31 @@ const Reminders = () => {
     return groups.filter(
       (g) =>
         (!tenantFilter || g.tenantName === tenantFilter) &&
-        (!q || g.tenantName.toLowerCase().includes(q) ||
-          g.invoices.some((i) => String(i.unitNumber || '').toLowerCase().includes(q) || String(i.invoiceId).includes(q))),
+        (!q ||
+          g.tenantName.toLowerCase().includes(q) ||
+          g.invoices.some(
+            (i) =>
+              String(i.unitNumber || '')
+                .toLowerCase()
+                .includes(q) || String(i.invoiceId).includes(q),
+          )),
     )
   }, [groups, tenantFilter, search])
 
   // A tenant is listed under a status when any of their invoices has it
   const counts = useMemo(() => {
     const c = { 'All unpaid': searched.length }
-    FILTERS.slice(0, 3).forEach((f) => { c[f] = searched.filter((g) => g.states.has(f)).length })
+    FILTERS.slice(0, 3).forEach((f) => {
+      c[f] = searched.filter((g) => g.states.has(f)).length
+    })
     return c
   }, [searched])
 
   const filtered = filter === 'All unpaid' ? searched : searched.filter((g) => g.states.has(filter))
 
-  useEffect(() => { setPageIndex(0) }, [filter, tenantFilter, search])
+  useEffect(() => {
+    setPageIndex(0)
+  }, [filter, tenantFilter, search])
   const paged = filtered.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)
 
   return (
@@ -59,7 +98,8 @@ const Reminders = () => {
       <CCardHeader className="py-3 px-4">
         <div className="fw-semibold fs-5">Payment Reminders</div>
         <div className="small text-body-secondary">
-          Open invoices by tenant. WhatsApp opens with one message listing all of the tenant&apos;s unpaid invoices.
+          Open invoices by tenant. WhatsApp opens with one message listing all of the tenant&apos;s
+          unpaid invoices.
         </div>
       </CCardHeader>
       <CCardBody>
@@ -72,11 +112,21 @@ const Reminders = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
           <div style={{ minWidth: 220 }}>
-            <TenantFilter names={rows.map((r) => r.tenantName)} value={tenantFilter} onChange={setTenantFilter} />
+            <TenantFilter
+              names={rows.map((r) => r.tenantName)}
+              value={tenantFilter}
+              onChange={setTenantFilter}
+            />
           </div>
           <CButtonGroup className="ms-auto flex-wrap">
             {FILTERS.map((f) => (
-              <CButton key={f} size="sm" color="primary" variant={filter === f ? undefined : 'outline'} onClick={() => setFilter(f)}>
+              <CButton
+                key={f}
+                size="sm"
+                color="primary"
+                variant={filter === f ? undefined : 'outline'}
+                onClick={() => setFilter(f)}
+              >
                 {f} ({counts[f]})
               </CButton>
             ))}
@@ -84,7 +134,13 @@ const Reminders = () => {
         </div>
 
         <div className="mb-2">
-          <PageSizeSelect pageSize={pageSize} onChange={(size) => { setPageSize(size); setPageIndex(0) }} />
+          <PageSizeSelect
+            pageSize={pageSize}
+            onChange={(size) => {
+              setPageSize(size)
+              setPageIndex(0)
+            }}
+          />
         </div>
 
         <CTable hover responsive small className="align-middle">
@@ -107,25 +163,53 @@ const Reminders = () => {
                 <React.Fragment key={g.tenantId}>
                   <CTableRow>
                     <CTableDataCell>
-                      <CButton size="sm" color="link" className="p-0" title={open ? 'Hide invoices' : 'Show invoices'}
-                        onClick={() => setExpanded((p) => ({ ...p, [g.tenantId]: !p[g.tenantId] }))}>
+                      <CButton
+                        size="sm"
+                        color="link"
+                        className="p-0"
+                        title={open ? 'Hide invoices' : 'Show invoices'}
+                        onClick={() => setExpanded((p) => ({ ...p, [g.tenantId]: !p[g.tenantId] }))}
+                      >
                         {open ? '▾' : '▸'}
                       </CButton>
                     </CTableDataCell>
                     <CTableDataCell className="fw-semibold">{g.tenantName}</CTableDataCell>
-                    <CTableDataCell>{g.phone || <span className="text-body-secondary">—</span>}</CTableDataCell>
+                    <CTableDataCell>
+                      {g.phone || <span className="text-body-secondary">—</span>}
+                    </CTableDataCell>
                     <CTableDataCell>{g.invoices.length}</CTableDataCell>
                     <CTableDataCell>
-                      {FILTERS.slice(0, 3).filter((f) => g.states.has(f)).map((f) => (
-                        <CBadge key={f} color={STATE_BADGE[f]} className="me-1">{f}</CBadge>
-                      ))}
-                      {[...g.states].every((s) => s === 'Upcoming') && <CBadge color="secondary">Upcoming</CBadge>}
+                      {FILTERS.slice(0, 3)
+                        .filter((f) => g.states.has(f))
+                        .map((f) => (
+                          <CBadge key={f} color={STATE_BADGE[f]} className="me-1">
+                            {f}
+                          </CBadge>
+                        ))}
+                      {[...g.states].every((s) => s === 'Upcoming') && (
+                        <CBadge color="secondary">Upcoming</CBadge>
+                      )}
                     </CTableDataCell>
-                    <CTableDataCell className="text-end fw-semibold">PKR {fmt(g.total)}</CTableDataCell>
+                    <CTableDataCell className="text-end fw-semibold">
+                      PKR {fmt(g.total)}
+                    </CTableDataCell>
                     <CTableDataCell>
-                      <span title={link ? 'Open WhatsApp with the reminder message' : 'Add a phone number in Tenants'}>
-                        <CButton size="sm" color="success" variant="outline" disabled={!link}
-                          href={link || undefined} target="_blank" rel="noopener noreferrer">
+                      <span
+                        title={
+                          link
+                            ? 'Open WhatsApp with the reminder message'
+                            : 'Add a phone number in Tenants'
+                        }
+                      >
+                        <CButton
+                          size="sm"
+                          color="success"
+                          variant="outline"
+                          disabled={!link}
+                          href={link || undefined}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           WhatsApp
                         </CButton>
                       </span>
@@ -137,7 +221,17 @@ const Reminders = () => {
                         <CTable small className="mb-0">
                           <CTableHead>
                             <CTableRow>
-                              {['Invoice #', 'Building', 'Floor', 'Unit', 'For', 'Balance', 'Late Fee', 'Due Date', 'Status'].map((h) => (
+                              {[
+                                'Invoice #',
+                                'Building',
+                                'Floor',
+                                'Unit',
+                                'For',
+                                'Balance',
+                                'Late Fee',
+                                'Due Date',
+                                'Status',
+                              ].map((h) => (
                                 <CTableHeaderCell key={h}>{h}</CTableHeaderCell>
                               ))}
                             </CTableRow>
@@ -151,11 +245,15 @@ const Reminders = () => {
                                 <CTableDataCell>{i.unitNumber}</CTableDataCell>
                                 <CTableDataCell>{invoiceLabel(i)}</CTableDataCell>
                                 <CTableDataCell>{fmt(i.balance)}</CTableDataCell>
-                                <CTableDataCell>{Number(i.lateFee) > 0 ? fmt(i.lateFee) : '—'}</CTableDataCell>
+                                <CTableDataCell>
+                                  {Number(i.lateFee) > 0 ? fmt(i.lateFee) : '—'}
+                                </CTableDataCell>
                                 <CTableDataCell>{formatDay(i.dueDate)}</CTableDataCell>
                                 <CTableDataCell>
                                   <CBadge color={STATE_BADGE[i.state]}>{i.state}</CBadge>
-                                  <span className="small text-body-secondary ms-2">PKR {fmt(outstanding(i))}</span>
+                                  <span className="small text-body-secondary ms-2">
+                                    PKR {fmt(outstanding(i))}
+                                  </span>
                                 </CTableDataCell>
                               </CTableRow>
                             ))}
@@ -176,7 +274,12 @@ const Reminders = () => {
             )}
           </CTableBody>
         </CTable>
-        <TablePagination pageIndex={pageIndex} pageSize={pageSize} total={filtered.length} onPageChange={setPageIndex} />
+        <TablePagination
+          pageIndex={pageIndex}
+          pageSize={pageSize}
+          total={filtered.length}
+          onPageChange={setPageIndex}
+        />
       </CCardBody>
     </CCard>
   )

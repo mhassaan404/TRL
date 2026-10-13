@@ -53,13 +53,20 @@ export const groupByTenant = (rows, today) => {
   const map = new Map()
   rows.forEach((r) => {
     if (!map.has(r.tenantId)) {
-      map.set(r.tenantId, { tenantId: r.tenantId, tenantName: r.tenantName, phone: r.phone, invoices: [] })
+      map.set(r.tenantId, {
+        tenantId: r.tenantId,
+        tenantName: r.tenantName,
+        phone: r.phone,
+        invoices: [],
+      })
     }
     map.get(r.tenantId).invoices.push({ ...r, state: dueState(r.dueDate, today) })
   })
   return [...map.values()]
     .map((g) => {
-      g.invoices.sort((a, b) => day(a.dueDate).localeCompare(day(b.dueDate)) || a.invoiceId - b.invoiceId)
+      g.invoices.sort(
+        (a, b) => day(a.dueDate).localeCompare(day(b.dueDate)) || a.invoiceId - b.invoiceId,
+      )
       return {
         ...g,
         whatsApp: toWhatsAppNumber(g.phone),
@@ -76,20 +83,27 @@ export const buildMessage = (group) => {
   const lines = [
     `Dear ${group.tenantName},`,
     '',
-    overdue ? 'Your rent payment is overdue. Outstanding invoices:' : 'This is a reminder of your outstanding rent:',
+    overdue
+      ? 'Your rent payment is overdue. Outstanding invoices:'
+      : 'This is a reminder of your outstanding rent:',
     '',
   ]
   group.invoices.forEach((i) => {
     const unit = i.unitNumber ? ` – Unit ${i.unitNumber}` : ''
     lines.push(`• Invoice #${i.invoiceId}${unit} – ${invoiceLabel(i)}`)
-    lines.push(`  Balance: PKR ${money(i.balance)} | Due: ${formatDay(i.dueDate)}${i.state === 'Overdue' ? ' (overdue)' : ''}`)
+    lines.push(
+      `  Balance: PKR ${money(i.balance)} | Due: ${formatDay(i.dueDate)}${i.state === 'Overdue' ? ' (overdue)' : ''}`,
+    )
     if (Number(i.lateFee) > 0) lines.push(`  Late fee so far: PKR ${money(i.lateFee)}`)
   })
   // Show how the total is made up when late fees are part of it
   const lateFees = group.invoices.reduce((s, i) => s + (Number(i.lateFee) || 0), 0)
   lines.push('')
   if (lateFees > 0) {
-    lines.push(`Rent balance: PKR ${money(group.total - lateFees)}`, `Late fees: PKR ${money(lateFees)}`)
+    lines.push(
+      `Rent balance: PKR ${money(group.total - lateFees)}`,
+      `Late fees: PKR ${money(lateFees)}`,
+    )
   }
   lines.push(`Total outstanding: PKR ${money(group.total)}`, '')
   lines.push(
@@ -101,4 +115,6 @@ export const buildMessage = (group) => {
 }
 
 export const whatsAppLink = (group) =>
-  group.whatsApp ? `https://wa.me/${group.whatsApp}?text=${encodeURIComponent(buildMessage(group))}` : null
+  group.whatsApp
+    ? `https://wa.me/${group.whatsApp}?text=${encodeURIComponent(buildMessage(group))}`
+    : null

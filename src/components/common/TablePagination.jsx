@@ -53,7 +53,12 @@ export const TablePagination = ({ pageIndex, pageSize, total, onPageChange }) =>
         Showing {from} to {to} of {total} entries
       </div>
       <div className="d-flex gap-1 flex-wrap">
-        <CButton color="secondary" size="sm" onClick={() => onPageChange(pageIndex - 1)} disabled={pageIndex <= 0}>
+        <CButton
+          color="secondary"
+          size="sm"
+          onClick={() => onPageChange(pageIndex - 1)}
+          disabled={pageIndex <= 0}
+        >
           Previous
         </CButton>
         {pageNumbers(pageIndex, pageCount).map((p) =>

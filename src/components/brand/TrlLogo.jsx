@@ -24,7 +24,14 @@ export const TrlMark = ({ size = 32, className, title = 'The Ledger' }) => {
         </linearGradient>
       </defs>
       <rect width="64" height="64" rx="15" fill={`url(#${gradientId})`} />
-      <path d="M15 31 32 17 49 31" fill="none" stroke="#fff" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M15 31 32 17 49 31"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
       <path d="M21 38.5H43" stroke="#fff" strokeWidth="4.5" strokeLinecap="round" />
       <path d="M21 47H33" stroke="#fff" strokeWidth="4.5" strokeLinecap="round" />
       <path d="M38.5 47H43" stroke="#4ade80" strokeWidth="4.5" strokeLinecap="round" />
@@ -43,7 +50,14 @@ TrlMark.propTypes = {
 export const TrlLogo = ({ size = 32, className = '' }) => (
   <span className={`d-inline-flex align-items-center ${className}`} style={{ gap: size * 0.3 }}>
     <TrlMark size={size} />
-    <span style={{ fontSize: size * 0.58, lineHeight: 1, letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>
+    <span
+      style={{
+        fontSize: size * 0.58,
+        lineHeight: 1,
+        letterSpacing: '-0.01em',
+        whiteSpace: 'nowrap',
+      }}
+    >
       <span style={{ fontWeight: 400, opacity: 0.85 }}>The </span>
       <span style={{ fontWeight: 700 }}>Ledger</span>
     </span>

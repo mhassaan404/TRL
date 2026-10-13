@@ -12,13 +12,7 @@ const rowFor = (item) => ({
   isLateFeeWaived: item.waveLateFee,
 })
 
-const InvoiceHistoryModal = ({
-  visible,
-  invoice,
-  data,
-  loading,
-  onClose,
-}) => {
+const InvoiceHistoryModal = ({ visible, invoice, data, loading, onClose }) => {
   const isDark = useIsDarkMode()
 
   return (
@@ -34,7 +28,6 @@ const InvoiceHistoryModal = ({
           <div className="text-center py-5 text-muted">No payment history found</div>
         ) : (
           <div style={{ maxHeight: '380px', overflowY: 'auto' }}>
-
             <table className="table table-bordered table-hover table-sm">
               <thead className={isDark ? 'table-head-dark' : 'table-light'}>
                 <tr>
@@ -52,11 +45,20 @@ const InvoiceHistoryModal = ({
               </thead>
               <tbody>
                 {data.map((item, index) => (
-                  <tr key={item.paymentId ?? index} className={isReversed(item) ? 'text-body-secondary' : ''}>
+                  <tr
+                    key={item.paymentId ?? index}
+                    className={isReversed(item) ? 'text-body-secondary' : ''}
+                  >
                     <td>{formatDate(item.paymentDate)}</td>
                     <td>
-                      <CBadge color={PAYMENT_TYPE_COLOR[paymentType(rowFor(item))]}>{paymentType(rowFor(item))}</CBadge>
-                      {isReversed(item) && <CBadge color="danger" className="ms-1">Reversed</CBadge>}
+                      <CBadge color={PAYMENT_TYPE_COLOR[paymentType(rowFor(item))]}>
+                        {paymentType(rowFor(item))}
+                      </CBadge>
+                      {isReversed(item) && (
+                        <CBadge color="danger" className="ms-1">
+                          Reversed
+                        </CBadge>
+                      )}
                     </td>
                     <td className="text-end">{fmt(item.monthlyRent)}</td>
                     <td className="text-end">

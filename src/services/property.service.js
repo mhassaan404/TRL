@@ -68,7 +68,9 @@ export const propertyService = {
     return (await api.put('/Properties/UpdateUnit', body)).data
   },
 
-  deleteProperty: async (id) => { await api.delete(`/Properties/DeleteUnit/${id}`) },
+  deleteProperty: async (id) => {
+    await api.delete(`/Properties/DeleteUnit/${id}`)
+  },
 
   getBuildings: async () => {
     const res = await api.get('/Properties/GetBuildings')
@@ -95,7 +97,9 @@ export const propertyService = {
     return (await api.put(`/Properties/UpdateBuilding/${id}`, body)).data
   },
 
-  deleteBuilding: async (id) => { await api.delete(`/Properties/DeleteBuilding/${id}`) },
+  deleteBuilding: async (id) => {
+    await api.delete(`/Properties/DeleteBuilding/${id}`)
+  },
 
   getFloors: async (buildingId) => {
     if (!buildingId) return []
@@ -121,7 +125,9 @@ export const propertyService = {
     return (await api.put(`/Properties/UpdateFloor/${id}`, body)).data
   },
 
-  deleteFloor: async (id) => { await api.delete(`/Properties/DeleteFloor/${id}`) },
+  deleteFloor: async (id) => {
+    await api.delete(`/Properties/DeleteFloor/${id}`)
+  },
 
   getCities: async () => {
     const res = await api.get('/Properties/GetCities')

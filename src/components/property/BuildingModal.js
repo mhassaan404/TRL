@@ -15,7 +15,15 @@ import {
   CRow,
 } from '@coreui/react'
 
-const BuildingModal = ({ visible, editData, handleSubmit, closeModal, cities, buildingTypes, saving = false }) => {
+const BuildingModal = ({
+  visible,
+  editData,
+  handleSubmit,
+  closeModal,
+  cities,
+  buildingTypes,
+  saving = false,
+}) => {
   const [formData, setFormData] = useState({
     buildingName: '',
     cityId: '',
@@ -85,7 +93,9 @@ const BuildingModal = ({ visible, editData, handleSubmit, closeModal, cities, bu
               >
                 <option value="">Select Type...</option>
                 {buildingTypes.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
                 ))}
               </CFormSelect>
             </CCol>
@@ -117,7 +127,9 @@ const BuildingModal = ({ visible, editData, handleSubmit, closeModal, cities, bu
           </CRow>
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={closeModal}>Cancel</CButton>
+          <CButton color="secondary" onClick={closeModal}>
+            Cancel
+          </CButton>
           <CButton color="primary" type="submit" disabled={saving}>
             {editData ? 'Update Building' : 'Add Building'}
           </CButton>

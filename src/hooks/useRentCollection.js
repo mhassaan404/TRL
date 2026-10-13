@@ -104,7 +104,10 @@ export const useRentCollection = () => {
   }
 
   // ── Extra Charges ────────────────────────────────────────────────────────
-  const [extraChargeModal, setExtraChargeModal] = useState({ visible: false, form: emptyExtraChargeForm() })
+  const [extraChargeModal, setExtraChargeModal] = useState({
+    visible: false,
+    form: emptyExtraChargeForm(),
+  })
   const [isAddingCharge, setIsAddingCharge] = useState(false)
   const addingChargeRef = useRef(false) // blocks a second submit in the same instant (state applies on the next render)
 
@@ -134,7 +137,8 @@ export const useRentCollection = () => {
         chargeType: form.chargeType,
         description: form.description.trim(),
         amount: Number(form.amount),
-        relatedInvoiceId: tenantIds.length === 1 && form.relatedInvoiceId ? Number(form.relatedInvoiceId) : null,
+        relatedInvoiceId:
+          tenantIds.length === 1 && form.relatedInvoiceId ? Number(form.relatedInvoiceId) : null,
         applyLateFee: form.applyLateFee,
       })
       toast.success(result?.message || 'Charge added')
@@ -399,10 +403,12 @@ export const useRentCollection = () => {
     }
   }
 
-
   const handleChargeLateFee = async (invoice) => {
     if (invoice.charging || !(Number(invoice.lateFee) > 0)) return
-    if (!window.confirm(`Add late fee of ${fmt(invoice.lateFee)} to invoice #${invoice.invoiceId}?`)) return
+    if (
+      !window.confirm(`Add late fee of ${fmt(invoice.lateFee)} to invoice #${invoice.invoiceId}?`)
+    )
+      return
 
     const patch = (id, p) =>
       setRentForm((prev) => ({

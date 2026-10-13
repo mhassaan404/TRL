@@ -18,7 +18,12 @@ export const bucketOf = (daysOverdue) => {
   return BUCKETS.find((b) => d >= b.min && d <= b.max).key
 }
 
-const emptyTotals = () => ({ ...Object.fromEntries(BUCKETS.map((b) => [b.key, 0])), total: 0, credit: 0, net: 0 })
+const emptyTotals = () => ({
+  ...Object.fromEntries(BUCKETS.map((b) => [b.key, 0])),
+  total: 0,
+  credit: 0,
+  net: 0,
+})
 
 // Owed > 0 goes into its bucket; owed < 0 (overpaid invoice) is a credit, shown separately and taken off in Net.
 const addInvoice = (t, inv) => {
@@ -38,8 +43,14 @@ export const groupArrears = (rows) => {
   rows.forEach((r) => {
     if (!map.has(r.tenantId)) {
       map.set(r.tenantId, {
-        tenantId: r.tenantId, tenantName: r.tenantName, phone: r.phone,
-        units: new Set(), buildings: new Set(), invoices: [], oldestDays: 0, ...emptyTotals(),
+        tenantId: r.tenantId,
+        tenantName: r.tenantName,
+        phone: r.phone,
+        units: new Set(),
+        buildings: new Set(),
+        invoices: [],
+        oldestDays: 0,
+        ...emptyTotals(),
       })
     }
     const g = map.get(r.tenantId)
@@ -57,7 +68,9 @@ export const groupArrears = (rows) => {
 export const totalsOf = (groups) => {
   const t = emptyTotals()
   groups.forEach((g) => {
-    BUCKETS.forEach((b) => { t[b.key] = round2(t[b.key] + g[b.key]) })
+    BUCKETS.forEach((b) => {
+      t[b.key] = round2(t[b.key] + g[b.key])
+    })
     t.total = round2(t.total + g.total)
     t.credit = round2(t.credit + g.credit)
   })

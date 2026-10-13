@@ -25,8 +25,7 @@ const WidgetsDropdown = ({ className, tenants, rentDue, collected, pending }) =>
             <>
               {`${last(tenants).toLocaleString('en-US')}`}{' '}
               <span className="fs-6 fw-normal">
-                ({changeText}{' '}
-                <CIcon icon={isPositive ? cilArrowTop : cilArrowBottom} />)
+                ({changeText} <CIcon icon={isPositive ? cilArrowTop : cilArrowBottom} />)
               </span>
             </>
           }
@@ -62,11 +61,7 @@ const WidgetsDropdown = ({ className, tenants, rentDue, collected, pending }) =>
       <CCol sm={6} xl={4} xxl={3}>
         <CWidgetStatsA
           color="info"
-          value={
-            <>
-              {`${last(rentDue).toLocaleString('en-US')}`}
-            </>
-          }
+          value={<>{`${last(rentDue).toLocaleString('en-US')}`}</>}
           title="Total Rent Due (This Month)"
           chart={
             <CChartLine
@@ -84,7 +79,11 @@ const WidgetsDropdown = ({ className, tenants, rentDue, collected, pending }) =>
                   },
                 ],
               }}
-              options={{ plugins: { legend: { display: false } }, maintainAspectRatio: false, scales: { x: { display: false }, y: { display: false } } }}
+              options={{
+                plugins: { legend: { display: false } },
+                maintainAspectRatio: false,
+                scales: { x: { display: false }, y: { display: false } },
+              }}
             />
           }
         />
@@ -94,11 +93,7 @@ const WidgetsDropdown = ({ className, tenants, rentDue, collected, pending }) =>
       <CCol sm={6} xl={4} xxl={3}>
         <CWidgetStatsA
           color="success"
-          value={
-            <>
-              {`${last(collected).toLocaleString('en-US')}`}
-            </>
-          }
+          value={<>{`${last(collected).toLocaleString('en-US')}`}</>}
           title="Collected Amount"
           chart={
             <CChartLine
@@ -116,7 +111,11 @@ const WidgetsDropdown = ({ className, tenants, rentDue, collected, pending }) =>
                   },
                 ],
               }}
-              options={{ plugins: { legend: { display: false } }, maintainAspectRatio: false, scales: { x: { display: false }, y: { display: false } } }}
+              options={{
+                plugins: { legend: { display: false } },
+                maintainAspectRatio: false,
+                scales: { x: { display: false }, y: { display: false } },
+              }}
             />
           }
         />
@@ -126,11 +125,7 @@ const WidgetsDropdown = ({ className, tenants, rentDue, collected, pending }) =>
       <CCol sm={6} xl={4} xxl={3}>
         <CWidgetStatsA
           color="danger"
-          value={
-            <>
-              {`${last(pending).toLocaleString('en-US')}`}
-            </>
-          }
+          value={<>{`${last(pending).toLocaleString('en-US')}`}</>}
           title="Pending Amount"
           chart={
             <CChartLine
@@ -148,7 +143,11 @@ const WidgetsDropdown = ({ className, tenants, rentDue, collected, pending }) =>
                   },
                 ],
               }}
-              options={{ plugins: { legend: { display: false } }, maintainAspectRatio: false, scales: { x: { display: false }, y: { display: false } } }}
+              options={{
+                plugins: { legend: { display: false } },
+                maintainAspectRatio: false,
+                scales: { x: { display: false }, y: { display: false } },
+              }}
             />
           }
         />
@@ -169,8 +168,18 @@ const getPastMonths = (numMonths) => {
   const now = new Date()
   const months = []
   const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ]
 
   for (let i = numMonths - 1; i >= 0; i--) {

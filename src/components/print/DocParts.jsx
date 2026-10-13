@@ -12,7 +12,11 @@ export const PartyBlock = ({ heading, doc }) => (
     {doc.contactPerson && <div>Attn: {doc.contactPerson}</div>}
     {doc.contact && <div>Phone: {doc.contact}</div>}
     {doc.email && <div>{doc.email}</div>}
-    {doc.cnicNtn && <div>{doc.tenantType === 'Company' ? 'NTN/CNIC' : 'CNIC'}: {doc.cnicNtn}</div>}
+    {doc.cnicNtn && (
+      <div>
+        {doc.tenantType === 'Company' ? 'NTN/CNIC' : 'CNIC'}: {doc.cnicNtn}
+      </div>
+    )}
     {doc.tenantAddress && <div className="text-pre-line">{doc.tenantAddress}</div>}
   </div>
 )
@@ -24,7 +28,9 @@ export const PropertyBlock = ({ doc, children }) => (
   <div className="doc-box h-100">
     <div className="doc-label">Property</div>
     {doc.unitNumber ? (
-      <div className="fw-bold">{doc.buildingName} – Unit {doc.unitNumber}</div>
+      <div className="fw-bold">
+        {doc.buildingName} – Unit {doc.unitNumber}
+      </div>
     ) : (
       <div className="fw-bold">{doc.buildingName || '—'}</div>
     )}
@@ -45,8 +51,12 @@ export const DocFooter = ({ leftSignature, rightSignature }) => {
         <div className="doc-signature">{leftSignature}</div>
         <div className="doc-signature">{rightSignature}</div>
       </div>
-      {profile?.footerNote && <div className="text-center fw-semibold mt-4">{profile.footerNote}</div>}
-      <div className="text-center small text-body-secondary mt-2">This is a computer-generated document.</div>
+      {profile?.footerNote && (
+        <div className="text-center fw-semibold mt-4">{profile.footerNote}</div>
+      )}
+      <div className="text-center small text-body-secondary mt-2">
+        This is a computer-generated document.
+      </div>
     </div>
   )
 }

@@ -16,9 +16,13 @@ export const tenantService = {
   // tenantId set = update, otherwise create
   save: (tenantData, tenantId) =>
     request(
-      () => (tenantId ? api.put('/Tenant/Update', { TenantId: tenantId, ...tenantData }) : api.post('/Tenant/Create', tenantData)),
+      () =>
+        tenantId
+          ? api.put('/Tenant/Update', { TenantId: tenantId, ...tenantData })
+          : api.post('/Tenant/Create', tenantData),
       'Error saving tenant',
     ),
 
-  remove: (tenantId) => request(() => api.delete('/Tenant/Delete', { params: { tenantId } }), 'Error deleting tenant'),
+  remove: (tenantId) =>
+    request(() => api.delete('/Tenant/Delete', { params: { tenantId } }), 'Error deleting tenant'),
 }

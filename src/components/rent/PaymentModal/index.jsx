@@ -1,14 +1,6 @@
 // src/components/rent/PaymentModal/index.jsx
 import React from 'react'
-import {
-  CModal,
-  CModalBody,
-  CModalHeader,
-  CModalTitle,
-  CForm,
-  CCol,
-  CRow,
-} from '@coreui/react'
+import { CModal, CModalBody, CModalHeader, CModalTitle, CForm, CCol, CRow } from '@coreui/react'
 
 import TenantSelector from './TenantSelector'
 import SummaryCards from './SummaryCards'
@@ -40,7 +32,7 @@ const PaymentModal = ({
   handleApplyGlobalPaymentDate,
   handleApplyGlobalNotes,
   handleChargeLateFee,
-  handleReverseLateFee
+  handleReverseLateFee,
 }) => {
   const isDark = useIsDarkMode()
 
@@ -54,9 +46,7 @@ const PaymentModal = ({
       className="payment-modal"
     >
       <CModalHeader className={isDark ? 'bg-body-secondary' : 'bg-body-tertiary'} closeButton>
-        <CModalTitle>
-          {isEditMode ? 'Record Payment' : 'New Rent Payment'}
-        </CModalTitle>
+        <CModalTitle>{isEditMode ? 'Record Payment' : 'New Rent Payment'}</CModalTitle>
       </CModalHeader>
 
       <CModalBody className="p-4">

@@ -30,7 +30,10 @@ api.interceptors.response.use(
     if (!originalRequest) return Promise.reject(error)
 
     // Never refresh for the refresh call itself, and a failed login is not an expired session
-    if (originalRequest.url.includes('/Auth/refresh') || originalRequest.url.includes('/Auth/login')) {
+    if (
+      originalRequest.url.includes('/Auth/refresh') ||
+      originalRequest.url.includes('/Auth/login')
+    ) {
       return Promise.reject(error)
     }
 
@@ -66,10 +69,12 @@ api.interceptors.response.use(
 // a clear network message, or the given fallback. Never raw exception text.
 export const getErrorMessage = (err, fallback = 'Something went wrong. Please try again.') => {
   const data = err?.response?.data
-  if (data && typeof data === 'object' && (data.errorMessage || data.message)) return data.errorMessage || data.message
+  if (data && typeof data === 'object' && (data.errorMessage || data.message))
+    return data.errorMessage || data.message
   if (err?.response?.status === 403) return "You don't have permission to do this."
   if (err?.response) return fallback
-  if (err?.message === 'Network Error') return 'Cannot reach the server. Check your connection and try again.'
+  if (err?.message === 'Network Error')
+    return 'Cannot reach the server. Check your connection and try again.'
   return err?.message || fallback
 }
 
@@ -78,7 +83,8 @@ export const getErrorMessage = (err, fallback = 'Something went wrong. Please tr
 export const request = async (call, fallback) => {
   try {
     const res = await call()
-    if (res.data?.isSuccess === false) throw new Error(res.data.errorMessage || res.data.message || fallback)
+    if (res.data?.isSuccess === false)
+      throw new Error(res.data.errorMessage || res.data.message || fallback)
     return res.data
   } catch (err) {
     if (err?.isAxiosError) throw new Error(getErrorMessage(err, fallback))

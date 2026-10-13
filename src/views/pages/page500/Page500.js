@@ -12,7 +12,9 @@ const Page500 = () => {
             <div className="clearfix mb-3">
               <h1 className="float-start display-3 me-4">500</h1>
               <h4 className="pt-3">Something went wrong</h4>
-              <p className="text-body-secondary float-start">The server couldn't complete your request. Please try again in a moment.</p>
+              <p className="text-body-secondary float-start">
+                The server couldn't complete your request. Please try again in a moment.
+              </p>
             </div>
             <CButton color="primary" onClick={() => navigate('/dashboard')}>
               Go to Dashboard

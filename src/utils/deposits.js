@@ -6,7 +6,8 @@ export const DEPOSIT_METHODS = ['Cash', 'Bank Transfer', 'Cheque', 'Online']
 export const depositNo = (id) => `DEP-${String(id).padStart(6, '0')}`
 
 // What is still to be received: agreed - held (never below 0); null when no agreed deposit is set
-export const outstandingOf = (t) => (t.agreedAmount == null ? null : Math.max(0, num(t.agreedAmount) - num(t.held)))
+export const outstandingOf = (t) =>
+  t.agreedAmount == null ? null : Math.max(0, num(t.agreedAmount) - num(t.held))
 
 // One status per tenancy:
 //  Lease ended  - the lease is over but a deposit is still held (to settle)

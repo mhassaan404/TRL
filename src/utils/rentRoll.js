@@ -49,8 +49,19 @@ export const EXPIRY_FILTERS = [
 // Totals for a list of rows. Occupancy % = occupied / all units; economic occupancy = contracted / potential rent.
 export const summarize = (rows, today) => {
   const s = {
-    units: rows.length, occupied: 0, available: 0, reserved: 0, maintenance: 0,
-    contractedRent: 0, potentialRent: 0, vacancyLoss: 0, arrears: 0, holdover: 0, ends30: 0, ends60: 0, ends90: 0,
+    units: rows.length,
+    occupied: 0,
+    available: 0,
+    reserved: 0,
+    maintenance: 0,
+    contractedRent: 0,
+    potentialRent: 0,
+    vacancyLoss: 0,
+    arrears: 0,
+    holdover: 0,
+    ends30: 0,
+    ends60: 0,
+    ends90: 0,
   }
   rows.forEach((r) => {
     const st = statusOfRow(r)
