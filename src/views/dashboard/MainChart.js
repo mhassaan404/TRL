@@ -3,7 +3,8 @@ import React, { useEffect, useRef } from 'react'
 import { CChartLine } from '@coreui/react-chartjs'
 import { getStyle } from '@coreui/utils'
 
-const MainChart = ({ tenants, totalRent, collected, pending }) => {
+// Billed / collected / outstanding per month (labels and series from utils/dashboard chartSeries)
+const MainChart = ({ labels, billed, collected, outstanding }) => {
   const chartRef = useRef(null)
 
   useEffect(() => {
@@ -33,27 +34,19 @@ const MainChart = ({ tenants, totalRent, collected, pending }) => {
       ref={chartRef}
       style={{ height: '300px', marginTop: '40px' }}
       data={{
-        labels: getPastMonths(7), // ✅ dynamic months
+        labels,
         datasets: [
           {
-            label: 'Total Tenants',
-            backgroundColor: 'transparent',
-            borderColor: getStyle('--cui-warning'),
-            pointHoverBackgroundColor: getStyle('--cui-warning'),
-            borderWidth: 2,
-            data: tenants,
-          },
-          {
-            label: 'Total Rent Due',
+            label: 'Billed',
             backgroundColor: `rgba(${getStyle('--cui-info-rgb')}, .1)`,
             borderColor: getStyle('--cui-info'),
             pointHoverBackgroundColor: getStyle('--cui-info'),
             borderWidth: 2,
             fill: true,
-            data: totalRent,
+            data: billed,
           },
           {
-            label: 'Collected Amount',
+            label: 'Collected',
             backgroundColor: 'transparent',
             borderColor: getStyle('--cui-success'),
             pointHoverBackgroundColor: getStyle('--cui-success'),
@@ -61,13 +54,13 @@ const MainChart = ({ tenants, totalRent, collected, pending }) => {
             data: collected,
           },
           {
-            label: 'Pending Amount',
+            label: 'Outstanding',
             backgroundColor: 'transparent',
             borderColor: getStyle('--cui-danger'),
             pointHoverBackgroundColor: getStyle('--cui-danger'),
             borderWidth: 1,
             borderDash: [8, 5],
-            data: pending,
+            data: outstanding,
           },
         ],
       }}
@@ -80,7 +73,7 @@ const MainChart = ({ tenants, totalRent, collected, pending }) => {
             },
           },
           legend: {
-            display: true, // ✅ show legend since your datasets matter
+            display: true,
           },
         },
         scales: {
@@ -124,32 +117,6 @@ const MainChart = ({ tenants, totalRent, collected, pending }) => {
       }}
     />
   )
-}
-
-// Utility to get past N months labels
-const getPastMonths = (numMonths) => {
-  const now = new Date()
-  const months = []
-  const monthNames = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ]
-
-  for (let i = numMonths - 1; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    months.push(monthNames[d.getMonth()])
-  }
-  return months
 }
 
 export default MainChart

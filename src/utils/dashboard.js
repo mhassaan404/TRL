@@ -1,25 +1,49 @@
-// Dashboard figures, built only from data the app already loads (dashboard months, arrears ageing, rent roll,
+// Dashboard figures, built only from data the app already loads (Billing vs Collection, arrears ageing, rent roll,
 // collections, security deposits). Self-contained (no React or API imports) so the rules are easy to test.
+// Month figures (billed, collected, cash received, chart) follow the chosen month; the rest are as of today.
 import { groupArrears, totalsOf as arrearsTotals } from './arrears'
 import { daysToExpiry, summarize } from './rentRoll'
-import { isReversalRow, totalsOf as paymentTotals } from './collections'
+import { isReversalRow } from './collections'
 import { depositTotals } from './deposits'
 
 const num = (v) => Number(v) || 0
 const round2 = (v) => Math.round(v * 100) / 100
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-// Headline numbers. months = Dashboard rows ({ monthYear: 'yyyy-MM', totalRentDue, collectedAmount, ... }).
-export const kpis = ({
-  months = [],
-  arrears = [],
-  roll = [],
-  payments = [],
-  deposits = [],
-  today,
-}) => {
-  const thisMonth = months.find((m) => m.monthYear === String(today).slice(0, 7)) || {}
-  const billed = num(thisMonth.totalRentDue)
-  const collected = num(thisMonth.collectedAmount)
+// 'yyyy-MM' moved by n months (n may be negative)
+export const shiftMonth = (ym, n) => {
+  const [y, m] = String(ym).split('-').map(Number)
+  const d = new Date(y, m - 1 + n, 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+// 'Oct 2026'
+export const monthName = (ym) => {
+  const [y, m] = String(ym).split('-').map(Number)
+  return y && m ? `${MONTHS[m - 1]} ${y}` : ''
+}
+
+// Rows of one building only ('' = all buildings), matched by building name
+export const inBuilding = (rows, buildingName) =>
+  buildingName ? rows.filter((r) => r.buildingName === buildingName) : rows
+
+// Chart series from Billing vs Collection rows (one per month, oldest first)
+export const chartSeries = (bvc) => {
+  const rows = [...bvc].sort((a, b) => String(a.monthStart).localeCompare(String(b.monthStart)))
+  return {
+    labels: rows.map((r) => monthName(String(r.monthStart).slice(0, 7))),
+    billed: rows.map((r) => num(r.totalBilled)),
+    collected: rows.map((r) => num(r.collected)),
+    outstanding: rows.map((r) => num(r.outstanding)),
+  }
+}
+
+// Headline numbers. bvc = Billing vs Collection rows ({ monthStart, totalBilled, collected, cashReceived, ... });
+// month = 'yyyy-MM' chosen on the dashboard.
+export const kpis = ({ bvc = [], month, arrears = [], roll = [], deposits = [], today }) => {
+  const m = bvc.find((r) => String(r.monthStart).slice(0, 7) === month) || {}
+  const billed = num(m.totalBilled)
+  const collected = num(m.collected)
   const tenants = groupArrears(arrears)
   const owed = arrearsTotals(tenants)
   const occ = summarize(roll, today)
@@ -33,7 +57,7 @@ export const kpis = ({
     units: occ.units,
     occupied: occ.occupied,
     vacant: occ.units - occ.occupied,
-    cashReceived: paymentTotals(payments).amount,
+    cashReceived: num(m.cashReceived),
     depositsHeld: round2(depositTotals(deposits).held),
   }
 }

@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { format } from 'date-fns'
 import { useNavigate } from 'react-router-dom'
 import {
   CBadge,
@@ -8,6 +7,9 @@ import {
   CCardBody,
   CCardHeader,
   CCol,
+  CFormInput,
+  CFormLabel,
+  CFormSelect,
   CRow,
   CTable,
   CTableBody,
@@ -17,13 +19,21 @@ import {
   CTableRow,
 } from '@coreui/react'
 import Loader from '../../components/Loader'
-import { rentService } from '../../services/rent.service'
 import { reportService } from '../../services/report.service'
 import { depositService } from '../../services/deposit.service'
 import { fmt } from '../../utils/rentUtils'
 import { todayLocal } from '../../utils/dates'
 import { formatDay } from '../../utils/reminders'
-import { kpis, leasesEndingSoon, recentPayments, topOverdue } from '../../utils/dashboard'
+import {
+  chartSeries,
+  inBuilding,
+  kpis,
+  leasesEndingSoon,
+  monthName,
+  recentPayments,
+  shiftMonth,
+  topOverdue,
+} from '../../utils/dashboard'
 import MainChart from './MainChart'
 
 // One headline number
@@ -80,58 +90,82 @@ const ListCard = ({ title, linkText, onLink, empty, columns, rows }) => (
 const Dashboard = () => {
   const navigate = useNavigate()
   const today = todayLocal()
-  const monthStart = `${today.slice(0, 7)}-01`
-  const [data, setData] = useState({
-    months: [],
-    arrears: [],
-    roll: [],
-    payments: [],
-    deposits: [],
-  })
-  const [loading, setLoading] = useState(false)
+  const thisMonth = today.slice(0, 7)
+  const [month, setMonth] = useState(thisMonth) // 'yyyy-MM': billed, collected, cash, payments, chart
+  const [buildingId, setBuildingId] = useState('') // '' = all buildings
+  const [now, setNow] = useState({ arrears: [], roll: [], deposits: [], buildings: [] }) // as of today
+  const [period, setPeriod] = useState({ bvc: [], payments: [] }) // for the chosen month and building
+  const [loading, setLoading] = useState(0)
 
-  // Everything comes from existing endpoints; each service shows its own load error and returns []
+  // As-of-today data, loaded once. Each service shows its own load error and returns [].
   useEffect(() => {
+    let live = true
     ;(async () => {
-      setLoading(true)
-      const lastMonthStart = format(
-        new Date(Number(today.slice(0, 4)), Number(today.slice(5, 7)) - 2, 1),
-        'yyyy-MM-dd',
-      )
-      const [months, arrears, roll, payments, deposits] = await Promise.all([
-        rentService.getDashboard(),
+      setLoading((n) => n + 1)
+      const [arrears, roll, deposits, buildings] = await Promise.all([
         reportService.getArrearsAgeing(),
         reportService.getRentRoll(),
-        reportService.getCollections(lastMonthStart, today),
         depositService.getAll(),
+        reportService.getBuildings(),
       ])
-      setData({ months, arrears, roll, payments, deposits })
-      setLoading(false)
+      if (live) setNow({ arrears, roll, deposits, buildings })
+      setLoading((n) => n - 1)
     })()
+    return () => {
+      live = false
+    }
   }, [today])
 
-  const k = useMemo(
-    () =>
-      kpis({
-        ...data,
-        payments: data.payments.filter((p) => String(p.paymentDate).slice(0, 10) >= monthStart),
-        today,
-      }),
-    [data, monthStart, today],
-  )
-  const overdue = useMemo(() => topOverdue(data.arrears), [data.arrears])
-  const ending = useMemo(() => leasesEndingSoon(data.roll, today), [data.roll, today])
-  const recent = useMemo(() => recentPayments(data.payments), [data.payments])
+  // Month data: the 7 months up to the chosen one (Billing vs Collection) and that month's payments.
+  // A newer choice wins over a slower, older answer.
+  useEffect(() => {
+    let live = true
+    ;(async () => {
+      setLoading((n) => n + 1)
+      const [y, m] = month.split('-').map(Number)
+      const lastDay = `${month}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`
+      const [bvc, payments] = await Promise.all([
+        reportService.getBillingVsCollection(shiftMonth(month, -6), month, buildingId),
+        reportService.getCollections(`${month}-01`, lastDay < today ? lastDay : today),
+      ])
+      if (live) setPeriod({ bvc, payments })
+      setLoading((n) => n - 1)
+    })()
+    return () => {
+      live = false
+    }
+  }, [month, buildingId, today])
 
-  // 7-month chart (same data as before)
-  const tenants = useMemo(() => data.months.map((x) => x.totalTenants), [data.months])
-  const totalRent = useMemo(() => data.months.map((x) => x.totalRentDue), [data.months])
-  const collected = useMemo(() => data.months.map((x) => x.collectedAmount), [data.months])
-  const pending = useMemo(() => data.months.map((x) => x.pendingAmount), [data.months])
+  const buildingName = useMemo(
+    () => now.buildings.find((b) => String(b.buildingId) === buildingId)?.buildingName || '',
+    [now.buildings, buildingId],
+  )
+  const arrears = useMemo(() => inBuilding(now.arrears, buildingName), [now.arrears, buildingName])
+  const roll = useMemo(() => inBuilding(now.roll, buildingName), [now.roll, buildingName])
+  const deposits = useMemo(
+    () => inBuilding(now.deposits, buildingName),
+    [now.deposits, buildingName],
+  )
+  const payments = useMemo(
+    () => inBuilding(period.payments, buildingName),
+    [period.payments, buildingName],
+  )
+
+  const k = useMemo(
+    () => kpis({ bvc: period.bvc, month, arrears, roll, deposits, today }),
+    [period.bvc, month, arrears, roll, deposits, today],
+  )
+  const overdue = useMemo(() => topOverdue(arrears), [arrears])
+  const ending = useMemo(() => leasesEndingSoon(roll, today), [roll, today])
+  const recent = useMemo(() => recentPayments(payments), [payments])
+  const chart = useMemo(() => chartSeries(period.bvc), [period.bvc])
+
+  const mName = monthName(month)
+  const scope = now.buildings.length > 1 ? ` · ${buildingName || 'all buildings'}` : ''
 
   return (
     <>
-      {loading && <Loader />}
+      {loading > 0 && <Loader />}
 
       <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <div>
@@ -156,6 +190,63 @@ const Dashboard = () => {
         </div>
       </div>
 
+      <CCard className="mb-3">
+        <CCardBody className="py-2 d-flex flex-wrap align-items-end gap-3">
+          <div>
+            <CFormLabel htmlFor="dash-month" className="small mb-1">
+              Month
+            </CFormLabel>
+            <CFormInput
+              id="dash-month"
+              type="month"
+              size="sm"
+              value={month}
+              min="2000-01"
+              max={thisMonth}
+              onChange={(e) => e.target.value && setMonth(e.target.value)}
+            />
+          </div>
+          {/* Only useful when there is more than one building */}
+          {now.buildings.length > 1 && (
+            <div>
+              <CFormLabel htmlFor="dash-building" className="small mb-1">
+                Building
+              </CFormLabel>
+              <CFormSelect
+                id="dash-building"
+                size="sm"
+                value={buildingId}
+                onChange={(e) => setBuildingId(e.target.value)}
+              >
+                <option value="">All buildings</option>
+                {now.buildings.map((b) => (
+                  <option key={b.buildingId} value={String(b.buildingId)}>
+                    {b.buildingName}
+                    {b.isActive === false ? ' (inactive)' : ''}
+                  </option>
+                ))}
+              </CFormSelect>
+            </div>
+          )}
+          {(month !== thisMonth || buildingId) && (
+            <CButton
+              color="secondary"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setMonth(thisMonth)
+                setBuildingId('')
+              }}
+            >
+              Reset
+            </CButton>
+          )}
+          <div className="small text-body-secondary ms-auto">
+            Month figures: {mName} · balances, occupancy and deposits: today{scope}
+          </div>
+        </CCardBody>
+      </CCard>
+
       <CRow
         className="g-3 mb-4"
         xs={{ cols: 1 }}
@@ -164,13 +255,17 @@ const Dashboard = () => {
         xxl={{ cols: 6 }}
       >
         <CCol>
-          <Kpi label="Billed this month" value={fmt(k.billed)} sub="rent, charges and late fees" />
+          <Kpi
+            label={`Billed · ${mName}`}
+            value={fmt(k.billed)}
+            sub="rent, charges and late fees"
+          />
         </CCol>
         <CCol>
           <Kpi
-            label="Collection rate"
+            label={`Collection rate · ${mName}`}
             value={k.collectionRate == null ? '—' : `${k.collectionRate}%`}
-            sub={`${fmt(k.collected)} paid of this month's invoices`}
+            sub={`${fmt(k.collected)} paid of that month's invoices`}
             color={
               k.collectionRate == null || k.collectionRate >= 90
                 ? 'success'
@@ -182,7 +277,7 @@ const Dashboard = () => {
         </CCol>
         <CCol>
           <Kpi
-            label="Total outstanding"
+            label="Total outstanding · today"
             value={fmt(k.outstanding)}
             sub={`${k.overdueTenants} tenant${k.overdueTenants === 1 ? '' : 's'} overdue`}
             color={k.outstanding > 0 ? 'danger' : 'success'}
@@ -190,7 +285,7 @@ const Dashboard = () => {
         </CCol>
         <CCol>
           <Kpi
-            label="Occupancy"
+            label="Occupancy · today"
             value={k.occupancy == null ? '—' : `${k.occupancy}%`}
             sub={`${k.occupied} of ${k.units} units · ${k.vacant} vacant`}
             color="info"
@@ -198,15 +293,15 @@ const Dashboard = () => {
         </CCol>
         <CCol>
           <Kpi
-            label="Cash received this month"
+            label={`Cash received · ${mName}`}
             value={fmt(k.cashReceived)}
-            sub="payments dated this month"
+            sub="payments dated in that month"
             color="success"
           />
         </CCol>
         <CCol>
           <Kpi
-            label="Deposits held"
+            label="Deposits held · today"
             value={fmt(k.depositsHeld)}
             sub="not rent income"
             color="secondary"
@@ -263,10 +358,10 @@ const Dashboard = () => {
       <CRow className="g-3 mb-4">
         <CCol lg={5}>
           <ListCard
-            title="Recent payments"
+            title={`Latest payments · ${mName}`}
             linkText="Payment Records →"
             onLink={() => navigate('/rent/payments')}
-            empty="No payments in the last two months."
+            empty={`No payments in ${mName}.`}
             rows={recent}
             columns={[
               { label: 'Date', cell: (r) => formatDay(r.paymentDate) },
@@ -280,14 +375,16 @@ const Dashboard = () => {
           <CCard className="h-100">
             <CCardHeader>
               <strong>Rent overview</strong>
-              <span className="small text-body-secondary ms-2">{getPastMonthsRange(7)}</span>
+              <span className="small text-body-secondary ms-2">
+                {monthName(shiftMonth(month, -6))} – {mName}
+              </span>
             </CCardHeader>
             <CCardBody>
               <MainChart
-                tenants={tenants}
-                totalRent={totalRent}
-                collected={collected}
-                pending={pending}
+                labels={chart.labels}
+                billed={chart.billed}
+                collected={chart.collected}
+                outstanding={chart.outstanding}
               />
             </CCardBody>
           </CCard>
@@ -295,19 +392,6 @@ const Dashboard = () => {
       </CRow>
     </>
   )
-}
-
-// Utility to get month names
-const getPastMonthsRange = (numMonths) => {
-  const now = new Date()
-  const months = []
-
-  for (let i = numMonths - 1; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    months.push(format(d, 'MMMM yyyy'))
-  }
-
-  return `${months[0]} - ${months[months.length - 1]}`
 }
 
 export default Dashboard

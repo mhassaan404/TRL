@@ -1,10 +1,32 @@
 import { describe, expect, it } from 'vitest'
-import { kpis, leasesEndingSoon, recentPayments, topOverdue } from '../dashboard'
+import {
+  chartSeries,
+  inBuilding,
+  kpis,
+  leasesEndingSoon,
+  monthName,
+  recentPayments,
+  shiftMonth,
+  topOverdue,
+} from '../dashboard'
 
 const today = '2026-10-13'
-const months = [
-  { monthYear: '2026-09', totalRentDue: 50000, collectedAmount: 50000 },
-  { monthYear: '2026-10', totalRentDue: 80000, collectedAmount: 60000 },
+// Billing vs Collection rows (one per month)
+const bvc = [
+  {
+    monthStart: '2026-10-01T00:00:00',
+    totalBilled: 80000,
+    collected: 60000,
+    outstanding: 20000,
+    cashReceived: 17000,
+  },
+  {
+    monthStart: '2026-09-01T00:00:00',
+    totalBilled: 50000,
+    collected: 50000,
+    outstanding: 0,
+    cashReceived: 52000,
+  },
 ]
 const arrears = [
   {
@@ -101,15 +123,15 @@ const payments = [
 
 describe('dashboard kpis', () => {
   const k = kpis({
-    months,
+    bvc,
+    month: '2026-10',
     arrears,
     roll,
-    payments,
     deposits: [{ held: 15000 }, { held: 5000 }],
     today,
   })
 
-  it('uses this month for billed / collected / rate', () => {
+  it('uses the chosen month for billed / collected / rate / cash', () => {
     expect(k.billed).toBe(80000)
     expect(k.collected).toBe(60000)
     expect(k.collectionRate).toBe(75)
@@ -121,12 +143,13 @@ describe('dashboard kpis', () => {
   it('occupancy from the rent roll', () => {
     expect(k).toMatchObject({ units: 5, occupied: 4, vacant: 1, occupancy: 80 })
   })
-  it('cash received nets reversals; deposits held summed', () => {
+  it('cash received from that month; deposits held summed', () => {
     expect(k.cashReceived).toBe(17000)
+    expect(kpis({ bvc, month: '2026-09', today }).cashReceived).toBe(52000)
     expect(k.depositsHeld).toBe(20000)
   })
   it('no invoices this month -> no rate', () => {
-    expect(kpis({ months: [], today }).collectionRate).toBeNull()
+    expect(kpis({ bvc, month: '2026-08', today }).collectionRate).toBeNull()
   })
 })
 
@@ -145,5 +168,25 @@ describe('dashboard lists', () => {
   })
   it('recent payments: newest first, no reversals or reversed payments', () => {
     expect(recentPayments(payments).map((p) => p.paymentId)).toEqual([4, 1])
+  })
+})
+
+describe('dashboard filters', () => {
+  it('month helpers', () => {
+    expect(shiftMonth('2026-10', -6)).toBe('2026-04')
+    expect(shiftMonth('2026-02', -3)).toBe('2025-11')
+    expect(monthName('2026-10')).toBe('Oct 2026')
+  })
+  it('building filter by name; empty = all', () => {
+    expect(inBuilding(arrears, 'B2').map((r) => r.tenantId)).toEqual([3, 4])
+    expect(inBuilding(arrears, '')).toHaveLength(5)
+  })
+  it('chart series oldest month first', () => {
+    expect(chartSeries(bvc)).toEqual({
+      labels: ['Sep 2026', 'Oct 2026'],
+      billed: [50000, 80000],
+      collected: [50000, 60000],
+      outstanding: [0, 20000],
+    })
   })
 })
