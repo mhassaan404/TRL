@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TRL Rent Management – Guide</title>
+<style>
+  @page { size: A4; margin: 14mm 14mm 14mm 14mm; }
+  body { font: 10.5pt/1.45 "Segoe UI", Arial, sans-serif; color: #1d2433; }
+  h1 { font-size: 20pt; margin: 0 0 2px; }
+  .sub { color: #5a6475; margin: 0 0 14px; }
+  h2 { font-size: 14pt; margin: 18px 0 6px; padding-bottom: 3px; border-bottom: 2px solid #2f5bd3; color: #2f5bd3; }
+  h3 { font-size: 11pt; margin: 12px 0 4px; }
+  table { width: 100%; border-collapse: collapse; margin: 4px 0 8px; }
+  th, td { text-align: left; vertical-align: top; padding: 4px 6px; border: 1px solid #d5dae3; }
+  th { background: #eef2fb; }
+  td:first-child { white-space: nowrap; font-weight: 600; }
+  code { font: 9.5pt Consolas, monospace; background: #f2f4f8; padding: 0 3px; border-radius: 3px; }
+  pre { font: 9.5pt Consolas, monospace; background: #f2f4f8; padding: 6px 8px; margin: 4px 0 8px; white-space: pre-wrap; }
+  ul, ol { margin: 4px 0 8px; padding-left: 20px; }
+  li { margin: 2px 0; }
+  .box { border: 1px solid #f0c36d; background: #fff8e6; padding: 6px 10px; margin: 8px 0; }
+  .page { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<h1>TRL Rent Management – Guide</h1>
+<p class="sub">Features · Running and operating the app · Essential information. Version deployed 13 Oct 2026 (TRL 7295654, TRL_API e47a63e).</p>
+
+<h2>1. Features (what each menu does)</h2>
+<table>
+  <tr><th>Menu</th><th>What you do there</th></tr>
+  <tr><td>Dashboard</td><td>Rent due vs collected, occupancy and arrears at a glance.</td></tr>
+  <tr><td>Tenants</td><td>Add / edit tenants (individual or company). A tenant can't be deleted while they have an active lease, an open balance or a deposit held.</td></tr>
+  <tr><td>Buildings &amp; Units</td><td>Buildings → floors → units (type, base rent, status). Deleting is refused while something is still in use.</td></tr>
+  <tr><td>Unit Occupancy</td><td>Which units are occupied or vacant.</td></tr>
+  <tr><td>Lease Management</td><td>Create a lease (tenant, unit, rent, start date, months). Renew, end (move-out) or cancel. One active lease per unit. A tenant's unit and rent always come from their lease.</td></tr>
+  <tr><td>Rent Collection</td><td>Generate monthly invoices; record payments (Cash, Bank Transfer, Cheque, Online) with optional discount or late-fee waiver; charge late fees; extra charges; change due dates; cancel an invoice (with a reason). Print a receipt after paying.</td></tr>
+  <tr><td>Rent History</td><td>All invoices and their history. <b>Reverse</b> a wrong payment here (payments are never edited or deleted – a reversal adds a matching negative record). Print invoice.</td></tr>
+  <tr><td>Payment Records</td><td>All payments in a date range, receipt links, CSV export.</td></tr>
+  <tr><td>Security Deposits</td><td>Agreed deposit per tenancy, record received amounts, corrections, deposit receipts. Kept separate from rent income.</td></tr>
+  <tr><td>Move-out Settlements</td><td>After a lease has ended: dues vs deposit, deductions, apply deposit, refund or balance due. Printable settlement.</td></tr>
+  <tr><td>Reminders</td><td>Unpaid / overdue invoices to follow up.</td></tr>
+  <tr><td>Maintenance</td><td>Maintenance jobs, cost, status; optionally bill the cost to a tenant.</td></tr>
+  <tr><td>Reports</td><td><b>Arrears Ageing</b> (who owes, how long) · <b>Collections</b> (cash received by date) · <b>Tenant Statement</b> (running balance) · <b>Billing vs Collection</b> (per month) · <b>Occupancy / Rent Roll</b> · <b>Maintenance Cost</b>. All can be printed or exported (CSV).</td></tr>
+  <tr><td>Company Profile</td><td>Phone, e-mail, NTN, address, logo – printed as letterhead on receipts, invoices and reports.</td></tr>
+  <tr><td>Late Fee Settings</td><td>Grace days, fee per day, maximum (default 5 days, 500/day, max 2 × invoice rent). Applies to invoices generated after the change.</td></tr>
+  <tr><td>Change Password</td><td>Account menu (top right). Logs out other devices.</td></tr>
+</table>
+<p><b>Rules to know:</b> only Admin users can log in · each company's data is in its own database · dates use Pakistan time · payments are corrected only by reversal · the database itself blocks invalid money data.</p>
+
+<h3>Typical monthly flow</h3>
+<ol>
+  <li>New tenant: <b>Tenants</b> → add → <b>Lease Management</b> → create lease → <b>Security Deposits</b> → record deposit.</li>
+  <li>Each month: <b>Rent Collection</b> → Generate Invoices → record payments as they come in → print receipts.</li>
+  <li>Follow up: <b>Reminders</b> / <b>Arrears Ageing</b>.</li>
+  <li>Move-out: <b>Lease Management</b> → end lease → <b>Move-out Settlements</b> → finalize → print.</li>
+</ol>
+
+<h2 class="page">2. Running and operating the app</h2>
+
+<h3>Run on your PC (development)</h3>
+<ol>
+  <li>SQL Server Express <code>.\SQLEXPRESS</code> must be running (databases <code>TRL_DB</code> and <code>TRL_Catalog</code>).</li>
+  <li>API: open <code>D:\TRL\TRL_API</code> in Visual Studio and run the <b>https</b> profile (or <code>dotnet run --project TRL_API --launch-profile https</code>) → <code>https://localhost:7295</code>.</li>
+  <li>Frontend: in <code>D:\TRL\TRL</code> run <code>npm install</code> (first time) then <code>npm start</code> → open the address it prints (e.g. <code>http://localhost:3000</code>).</li>
+  <li>Log in with company code <code>TRL</code> and your Admin user.</li>
+</ol>
+<p>Tests: frontend <code>npm test</code> · API end-to-end <code>node e2e/run.mjs</code> (in TRL_API; uses temporary databases only) · API unit tests <code>dotnet test TRL_API.Tests</code>.</p>
+
+<h3>Deploy a new version (order matters)</h3>
+<ol>
+  <li><b>Backup</b> the production database (below).</li>
+  <li><b>Database change</b> (only if the release has one): run its script in MonsterASP WebMSSQL on db71356 and check the result row. WebMSSQL scripts must start with <code>SET NOCOUNT ON</code>; "Caution: Changing any part of an object name…" lines are harmless.</li>
+  <li><b>API</b>: Visual Studio → TRL_API → Publish → profile <code>site95547-WebDeploy</code>.</li>
+  <li><b>Frontend</b>: <code>npm run build</code> with <code>VITE_API_BASE_URL=https://rent-trlapi.runasp.net/api</code>, then Netlify → Deploys → drag the <code>build</code> folder (or push to GitHub if Netlify builds from it).</li>
+  <li><b>Check</b>: <code>powershell -ExecutionPolicy Bypass -File D:\TRL\deploy_ready\phase6\post_deploy_check.ps1</code> → must end with <b>ALL CHECKS PASSED</b>.</li>
+</ol>
+<p>Undo: Netlify → previous deploy → Publish; API → publish the previous build; database → its script in <code>Database/rollback</code> (WebMSSQL: the <code>_v3_ROLLBACK</code> files).</p>
+
+<h3>Backups (most important)</h3>
+<ul>
+  <li><b>Every week</b> and before every change: MonsterASP → Databases → db71356 → Backups → <b>Create BAK file</b> → Download. Keep a copy off the PC (cloud).</li>
+  <li>Keep the last 8 weekly + 12 monthly backups.</li>
+  <li>Restore only after data loss: panel → Backups → restore. Everything recorded after that backup must be re-entered.</li>
+</ul>
+
+<h3>Monitoring and logs</h3>
+<ul>
+  <li>Health: <code>https://rent-trlapi.runasp.net/api/health</code> → <code>{"status":"ok"}</code>. Set up UptimeRobot (free) on it, every 5 minutes, alert by e-mail.</li>
+  <li>Logs: MonsterASP File Manager → site95547 → <code>logs/trl-&lt;date&gt;.log</code> (failed logins, errors; kept 30 days). An error shown to users has a "Reference" code – search it in the log.</li>
+</ul>
+
+<h3>Add a new company (client)</h3>
+<pre>dotnet run --project TRL_Tools -- provision --code CODE --name "Company Name" --connection-key KEY --admin-user USER --create-database</pre>
+<p>Then add the setting <code>ClientConnections__KEY</code> (its database connection) on the API host. Details: <code>TRL_API/Database/README.md</code>.</p>
+
+<h3>If something goes wrong</h3>
+<table>
+  <tr><th>Problem</th><th>Cause / fix</th></tr>
+  <tr><td>"This company's database needs an update"</td><td>A database migration wasn't applied. Run it (WebMSSQL in production, <code>TRL_Tools migrate --client TRL</code> locally).</td></tr>
+  <tr><td>Health shows 503</td><td>Same as above, or the database can't be reached. Check the log file.</td></tr>
+  <tr><td>Locked out after wrong passwords</td><td>Wait 15 minutes and try again.</td></tr>
+  <tr><td>Freshly built API won't start on your PC</td><td>Windows Smart App Control blocked the new DLL – rebuild, or run it from another folder.</td></tr>
+  <tr><td>Page doesn't load at all</td><td>Check Netlify (frontend) and the health link (API).</td></tr>
+</table>
+
+<h2 class="page">3. Essential information</h2>
+<table>
+  <tr><th>Item</th><th>Value</th></tr>
+  <tr><td>Website (frontend)</td><td><code>https://voluble-lokum-rent.netlify.app</code> (Netlify)</td></tr>
+  <tr><td>API</td><td><code>https://rent-trlapi.runasp.net/api</code> (MonsterASP site95547)</td></tr>
+  <tr><td>Production database</td><td>db71356 (SQL Server 2025) – only through MonsterASP <b>WebMSSQL</b>; catalog db72317</td></tr>
+  <tr><td>Company code</td><td><code>TRL</code></td></tr>
+  <tr><td>Source code</td><td><code>D:\TRL\TRL</code> (frontend, React/Vite) · <code>D:\TRL\TRL_API</code> (API .NET 8, database scripts, tools, tests)</td></tr>
+  <tr><td>Deployment packages</td><td><code>D:\TRL\deploy_ready\phase6</code> (current) · <code>deploy_ready\api</code> (previous API, for undo)</td></tr>
+  <tr><td>Production SQL scripts</td><td><code>D:\TRL\prod_import</code> – use the <code>_v3_</code> files; <code>verify_13_READONLY.sql</code> checks the database</td></tr>
+  <tr><td>Documentation</td><td><code>TRL_API/OPERATIONS.md</code> (operations) · <code>TRL_API/Database/README.md</code> (database) · <code>deploy_ready/phase6/DEPLOY_PHASE6.txt</code></td></tr>
+  <tr><td>Local databases</td><td><code>TRL_DB</code>, <code>TRL_Catalog</code> on <code>.\SQLEXPRESS</code></td></tr>
+</table>
+
+<h3>Still to do</h3>
+<ul>
+  <li>In about a week (after a new backup): run <code>11W_v3_db71356_drop_tenant_unit_copy_WEBMSSQL.sql</code> in WebMSSQL – removes 4 unused old columns. Optional; nothing breaks without it.</li>
+  <li>Set up UptimeRobot on the health link; check once that the log file is written.</li>
+  <li>Before real customers: change the Admin password, and delete <code>prod_import\users.sql</code> and <code>trl_prod_import.sql</code> (they contain the old password hash).</li>
+</ul>
+
+<div class="box"><b>Security:</b> never share passwords, connection strings, backups or the <code>prod_import</code> folder. Passwords are not stored in this document.</div>
+
+<h3>Possible later improvements</h3>
+<p>User roles (manager, accountant, view-only) · audit log · stronger hosting (Azure) with staging and automatic deployment · two-factor login.</p>
+
+</body>
+</html>
