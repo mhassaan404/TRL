@@ -1,27 +1,30 @@
 import React from 'react'
 
-const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
-const Tenants = React.lazy(() => import('./views/tenants/Tenants'))
-const Properties = React.lazy(() => import('./views/properties/Properties'))
-const PropertyDashboard = React.lazy(() => import('./views/properties/PropertyDashboard'))
-const RentCollection = React.lazy(() => import('./views/rent/RentCollection'))
-const RentHistory = React.lazy(() => import('./views/rent/RentHistory'))
-const Payments = React.lazy(() => import('./views/rent/Payments'))
-const Reminders = React.lazy(() => import('./views/rent/Reminders'))
-const MaintenanceJobs = React.lazy(() => import('./views/maintenance/MaintenanceJobs'))
-const LeaseManagement = React.lazy(() => import('./views/rent/LeaseManagement.page'))
-const ArrearsAgeing = React.lazy(() => import('./views/reports/ArrearsAgeing'))
-const Collections = React.lazy(() => import('./views/reports/Collections'))
-const TenantStatement = React.lazy(() => import('./views/reports/TenantStatement'))
-const BillingVsCollection = React.lazy(() => import('./views/reports/BillingVsCollection'))
-const RentRoll = React.lazy(() => import('./views/reports/RentRoll'))
-const MaintenanceCost = React.lazy(() => import('./views/reports/MaintenanceCost'))
-const CompanyProfile = React.lazy(() => import('./views/settings/CompanyProfile'))
-const SecurityDeposits = React.lazy(() => import('./views/rent/SecurityDeposits'))
-const MoveOutSettlements = React.lazy(() => import('./views/rent/MoveOutSettlements'))
-const SettlementForm = React.lazy(() => import('./views/rent/SettlementForm'))
-const ChangePassword = React.lazy(() => import('./views/account/ChangePassword'))
-const LateFeeSettings = React.lazy(() => import('./views/settings/LateFeeSettings'))
+// A lazily loaded page that can also be fetched ahead of time (preloadRoutes)
+const lazyPage = (load) => Object.assign(React.lazy(load), { preload: load })
+
+const Dashboard = lazyPage(() => import('./views/dashboard/Dashboard'))
+const Tenants = lazyPage(() => import('./views/tenants/Tenants'))
+const Properties = lazyPage(() => import('./views/properties/Properties'))
+const PropertyDashboard = lazyPage(() => import('./views/properties/PropertyDashboard'))
+const RentCollection = lazyPage(() => import('./views/rent/RentCollection'))
+const RentHistory = lazyPage(() => import('./views/rent/RentHistory'))
+const Payments = lazyPage(() => import('./views/rent/Payments'))
+const Reminders = lazyPage(() => import('./views/rent/Reminders'))
+const MaintenanceJobs = lazyPage(() => import('./views/maintenance/MaintenanceJobs'))
+const LeaseManagement = lazyPage(() => import('./views/rent/LeaseManagement.page'))
+const ArrearsAgeing = lazyPage(() => import('./views/reports/ArrearsAgeing'))
+const Collections = lazyPage(() => import('./views/reports/Collections'))
+const TenantStatement = lazyPage(() => import('./views/reports/TenantStatement'))
+const BillingVsCollection = lazyPage(() => import('./views/reports/BillingVsCollection'))
+const RentRoll = lazyPage(() => import('./views/reports/RentRoll'))
+const MaintenanceCost = lazyPage(() => import('./views/reports/MaintenanceCost'))
+const CompanyProfile = lazyPage(() => import('./views/settings/CompanyProfile'))
+const SecurityDeposits = lazyPage(() => import('./views/rent/SecurityDeposits'))
+const MoveOutSettlements = lazyPage(() => import('./views/rent/MoveOutSettlements'))
+const SettlementForm = lazyPage(() => import('./views/rent/SettlementForm'))
+const ChangePassword = lazyPage(() => import('./views/account/ChangePassword'))
+const LateFeeSettings = lazyPage(() => import('./views/settings/LateFeeSettings'))
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
@@ -56,5 +59,8 @@ const routes = [
   { path: '/settings/company-profile', name: 'Company Profile', element: CompanyProfile },
   { path: '/settings/late-fee', name: 'Late Fee Settings', element: LateFeeSettings },
 ]
+
+// Download every page in the background (after login), so opening a menu item is instant
+export const preloadRoutes = () => routes.forEach((r) => r.element?.preload?.().catch(() => {}))
 
 export default routes

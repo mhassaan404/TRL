@@ -8,7 +8,14 @@ import routes from '../routes'
 const AppContent = () => {
   return (
     <CContainer className="px-4" lg>
-      <Suspense fallback={<CSpinner color="primary" />}>
+      <Suspense
+        fallback={
+          <div className="d-flex align-items-center justify-content-center gap-2 py-5 text-body-secondary">
+            <CSpinner color="primary" size="sm" />
+            Loading…
+          </div>
+        }
+      >
         <Routes>
           {routes.map((route, idx) => {
             return (

@@ -281,3 +281,40 @@ body:has(.print-root) {
     print-color-adjust: exact;
   }
 }
+
+// Loading bar at the top of the screen while the app waits for the server (components/TopProgress.jsx)
+.top-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2000;
+  height: 3px;
+  overflow: hidden;
+  background: rgba(var(--cui-primary-rgb), 0.2);
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 40%;
+    background: var(--cui-primary);
+    animation: top-progress-slide 1.1s ease-in-out infinite;
+  }
+}
+
+@keyframes top-progress-slide {
+  from {
+    left: -40%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+@media print {
+  .top-progress {
+    display: none;
+  }
+}

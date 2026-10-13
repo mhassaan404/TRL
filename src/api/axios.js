@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { API_BASE_URL } from '../config'
+import { requestFinished, requestStarted } from './activity'
 
 // Auth lives in HttpOnly cookies (access + refresh token), so every request sends credentials.
 // X-Requested-With is the API's CSRF check: other sites can't add it without passing CORS.
@@ -11,6 +12,23 @@ const api = axios.create({
     'X-Requested-With': 'XMLHttpRequest',
   },
 })
+
+// Requests in flight (top loading bar). Registered before the refresh handler, so every request is counted once
+// when it starts and once when its answer (or error) arrives; a retry after a refresh is a new request.
+api.interceptors.request.use((config) => {
+  requestStarted()
+  return config
+})
+api.interceptors.response.use(
+  (response) => {
+    requestFinished()
+    return response
+  },
+  (error) => {
+    requestFinished()
+    return Promise.reject(error)
+  },
+)
 
 // Flag & queue for the refresh-token flow: while one refresh runs, other 401s wait for it
 let isRefreshing = false
