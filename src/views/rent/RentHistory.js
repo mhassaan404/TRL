@@ -24,6 +24,13 @@ import {
 
 import { useRentHistory } from '../../hooks/useRentHistory'
 import { toLocalDateString } from '../../utils/dates'
+import {
+  DEFAULT_HISTORY_RANGE,
+  HISTORY_RANGES,
+  customRangeError,
+  inRange,
+  rangeOf,
+} from '../../utils/historyRange'
 import { exportCSV } from '../../utils/exportUtils'
 import { invoiceNo, openInvoice } from '../../utils/documents'
 import {
@@ -61,47 +68,35 @@ const RentHistory = () => {
   const [unitFilter, setUnitFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [historyId, setHistoryId] = useState(null) // invoice shown in the History window
-  const [datePreset, setDatePreset] = useState('all')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
+  // Invoice-date range: a preset (default last 3 months, so the page stays quick) or a custom From / To
+  const [datePreset, setDatePreset] = useState(DEFAULT_HISTORY_RANGE)
+  const [customFrom, setCustomFrom] = useState('')
+  const [customTo, setCustomTo] = useState('')
 
   // Load data on mount
   useEffect(() => {
     loadRentHistory()
   }, [loadRentHistory])
 
-  // Date preset logic
+  const today = toLocalDateString(new Date())
+  const customError = datePreset === 'custom' ? customRangeError(customFrom, customTo) : ''
+  // The range in force; an invalid custom range filters nothing until it is fixed
+  const range = useMemo(() => {
+    if (datePreset !== 'custom') return rangeOf(datePreset, today)
+    return customError ? { from: '', to: '' } : { from: customFrom, to: customTo }
+  }, [datePreset, customFrom, customTo, customError, today])
+
+  // Switching to Custom starts from the range shown now, so nothing jumps
   const applyDatePreset = (preset) => {
+    if (preset === 'custom') {
+      setCustomFrom(range.from || '')
+      setCustomTo(range.to || '')
+    }
     setDatePreset(preset)
-
-    if (preset === 'all' || preset === 'custom') {
-      setDateFrom('')
-      setDateTo('')
-      return
-    }
-
-    const today = new Date()
-    const todayStr = toLocalDateString(today)
-
-    let from = ''
-
-    if (preset === 'thisMonth') {
-      from = toLocalDateString(new Date(today.getFullYear(), today.getMonth(), 1))
-    } else if (preset === 'last3') {
-      const d = new Date()
-      d.setMonth(d.getMonth() - 3)
-      from = toLocalDateString(d)
-    } else if (preset === 'lastYear') {
-      const d = new Date()
-      d.setFullYear(d.getFullYear() - 1)
-      from = toLocalDateString(d)
-    }
-
-    setDateFrom(from)
-    setDateTo(todayStr)
   }
 
-  const filteredData = useMemo(() => {
+  // Every filter except the date range
+  const matchingOthers = useMemo(() => {
     return historyRecords.filter((record) => {
       const term = globalSearch.toLowerCase().trim()
 
@@ -112,6 +107,7 @@ const RentHistory = () => {
           record.unit?.toLowerCase().includes(term) ||
           record.buildingName?.toLowerCase().includes(term) ||
           String(record.invoiceId || '').includes(term) ||
+          (record.invoiceId && invoiceNo(record.invoiceId).toLowerCase().includes(term)) ||
           String(record.monthlyRent || '').includes(term)
 
         if (!matches) return false
@@ -132,16 +128,16 @@ const RentHistory = () => {
         return false
       }
 
-      const recDate = normalizeDate(record.invoiceDate)
-
-      if (!recDate) return true
-
-      if (dateFrom && recDate < dateFrom) return false
-      if (dateTo && recDate > dateTo) return false
-
       return true
     })
-  }, [historyRecords, globalSearch, tenantFilter, unitFilter, statusFilter, dateFrom, dateTo])
+  }, [historyRecords, globalSearch, tenantFilter, unitFilter, statusFilter])
+
+  const filteredData = useMemo(
+    () => matchingOthers.filter((record) => inRange(normalizeDate(record.invoiceDate), range)),
+    [matchingOthers, range],
+  )
+  // Invoices that match everything else but fall outside the date range (shown as a hint)
+  const outsideRange = matchingOthers.length - filteredData.length
 
   useEffect(() => {
     setPagination((prev) => ({
@@ -368,41 +364,71 @@ const RentHistory = () => {
               </div>
 
               <div className="col-md-3">
-                <label className="form-label small text-muted mb-1">Date Range</label>
+                <label htmlFor="rh-range" className="form-label small text-muted mb-1">
+                  Invoice date
+                </label>
 
-                <CFormSelect value={datePreset} onChange={(e) => applyDatePreset(e.target.value)}>
-                  <option value="all">All Time</option>
-                  <option value="thisMonth">This Month</option>
-                  <option value="last3">Last 3 Months</option>
-                  <option value="lastYear">Last 12 Months</option>
-                  <option value="custom">Custom Range</option>
+                <CFormSelect
+                  id="rh-range"
+                  value={datePreset}
+                  onChange={(e) => applyDatePreset(e.target.value)}
+                >
+                  {HISTORY_RANGES.map((r) => (
+                    <option key={r.key} value={r.key}>
+                      {r.label}
+                    </option>
+                  ))}
                 </CFormSelect>
               </div>
 
               {datePreset === 'custom' && (
                 <>
                   <div className="col-md-3">
-                    <label className="form-label small text-muted mb-1">From</label>
-
+                    <label htmlFor="rh-from" className="form-label small text-muted mb-1">
+                      From
+                    </label>
                     <CFormInput
+                      id="rh-from"
                       type="date"
-                      value={dateFrom}
-                      onChange={(e) => setDateFrom(e.target.value)}
+                      value={customFrom}
+                      max={customTo || undefined}
+                      invalid={!!customError}
+                      onChange={(e) => setCustomFrom(e.target.value)}
                     />
                   </div>
 
                   <div className="col-md-3">
-                    <label className="form-label small text-muted mb-1">To</label>
-
+                    <label htmlFor="rh-to" className="form-label small text-muted mb-1">
+                      To
+                    </label>
                     <CFormInput
+                      id="rh-to"
                       type="date"
-                      value={dateTo}
-                      onChange={(e) => setDateTo(e.target.value)}
+                      value={customTo}
+                      min={customFrom || undefined}
+                      invalid={!!customError}
+                      onChange={(e) => setCustomTo(e.target.value)}
                     />
                   </div>
+                  {customError && <div className="col-12 small text-danger">{customError}</div>}
                 </>
               )}
             </div>
+
+            {!loading && outsideRange > 0 && (
+              <div className="small text-body-secondary mb-2">
+                {outsideRange} invoice{outsideRange === 1 ? ' is' : 's are'} outside this date
+                range.{' '}
+                <CButton
+                  color="link"
+                  size="sm"
+                  className="p-0 align-baseline"
+                  onClick={() => applyDatePreset('all')}
+                >
+                  Show all time
+                </CButton>
+              </div>
+            )}
 
             <div className="mb-2">
               <PageSizeSelect {...tablePageSizeProps(table)} />

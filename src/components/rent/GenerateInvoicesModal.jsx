@@ -41,9 +41,9 @@ const GenerateInvoicesModal = ({
   isSubmitting,
   isDark,
 }) => {
-  // Billing window (enforced by the API too): last month, this month and next month
+  // Billing window (enforced by the API too): next month, this month and the last 12 months, newest first
   const now = new Date()
-  const allowedMonths = [-1, 0, 1].map((offset) => {
+  const allowedMonths = Array.from({ length: 14 }, (_, i) => 1 - i).map((offset) => {
     const d = new Date(now.getFullYear(), now.getMonth() + offset, 1)
     return { month: d.getMonth() + 1, year: d.getFullYear() }
   })
