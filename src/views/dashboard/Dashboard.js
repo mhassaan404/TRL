@@ -265,7 +265,10 @@ const Dashboard = () => {
           <Kpi
             label={`Collection rate · ${mName}`}
             value={k.collectionRate == null ? '—' : `${k.collectionRate}%`}
-            sub={`${fmt(k.collected)} paid of that month's invoices`}
+            sub={
+              `${fmt(k.collected)} paid · ${fmt(k.discounts)} discount · ${fmt(k.monthOwed)} still owed` +
+              (k.monthCredit > 0 ? ` · ${fmt(k.monthCredit)} credit` : '')
+            }
             color={
               k.collectionRate == null || k.collectionRate >= 90
                 ? 'success'

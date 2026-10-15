@@ -50,6 +50,10 @@ export const kpis = ({ bvc = [], month, arrears = [], roll = [], deposits = [], 
   return {
     billed,
     collected,
+    // That month's invoices only: billed - paid - discounts = still owed - credit (overpaid)
+    discounts: num(m.discounts),
+    monthOwed: num(m.outstanding),
+    monthCredit: num(m.credit),
     collectionRate: billed > 0 ? round2((collected / billed) * 100) : null,
     outstanding: owed.total,
     overdueTenants: tenants.filter((t) => t.oldestDays > 0 && t.total > 0).length,

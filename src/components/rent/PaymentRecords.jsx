@@ -19,6 +19,8 @@ import { exportCSV } from '../../utils/exportUtils'
 import { toLocalDateString } from '../../utils/dates'
 import { PageSizeSelect, TablePagination, DEFAULT_PAGE_SIZE } from '../common/TablePagination'
 import TenantFilter from './TenantFilter'
+import { matchesLeaseFilter } from '../../utils/leaseFilter'
+import LeaseFilterButtons from '../common/LeaseFilterButtons'
 import { hasReceipt, openReceipts, receiptNo } from '../../utils/documents'
 import {
   isReversed,
@@ -53,6 +55,7 @@ const PaymentRecords = () => {
   const [to, setTo] = useState(iso(new Date()))
   const [search, setSearch] = useState('')
   const [tenantFilter, setTenantFilter] = useState('') // '' = all tenants
+  const [leaseFilter, setLeaseFilter] = useState('') // '' all, 'current', 'moved' (utils/leaseFilter)
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(false)
   const [pageIndex, setPageIndex] = useState(0)
@@ -74,7 +77,9 @@ const PaymentRecords = () => {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    const byTenant = tenantFilter ? rows.filter((r) => r.tenantName === tenantFilter) : rows
+    const byTenant = rows.filter(
+      (r) => (!tenantFilter || r.tenantName === tenantFilter) && matchesLeaseFilter(r, leaseFilter),
+    )
     if (!q) return byTenant
     return byTenant.filter((r) =>
       [
@@ -93,12 +98,12 @@ const PaymentRecords = () => {
         .toLowerCase()
         .includes(q),
     )
-  }, [rows, search, tenantFilter])
+  }, [rows, search, tenantFilter, leaseFilter])
 
   // Back to page 1 whenever the dates, tenant, search or page size change the list
   useEffect(() => {
     setPageIndex(0)
-  }, [from, to, tenantFilter, search, pageSize])
+  }, [from, to, tenantFilter, leaseFilter, search, pageSize])
   const paged = filtered.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)
 
   const totalPaid = filtered.reduce((s, r) => s + Number(r.paymentAmount || 0), 0)
@@ -148,6 +153,9 @@ const PaymentRecords = () => {
               value={tenantFilter}
               onChange={setTenantFilter}
             />
+          </div>
+          <div className="d-flex align-items-center">
+            <LeaseFilterButtons value={leaseFilter} onChange={setLeaseFilter} />
           </div>
           <CFormInput
             placeholder="Search tenant, invoice, method..."

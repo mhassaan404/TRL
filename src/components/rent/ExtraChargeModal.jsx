@@ -201,6 +201,7 @@ const ExtraChargeModal = ({
               <div id="xc-related">
                 <SearchableSelect
                   options={singleTenantId ? relatedOptions : []}
+                  maxShown={50}
                   value={form.relatedInvoiceId}
                   disabled={!singleTenantId}
                   placeholder={singleTenantId ? 'None' : 'Select one tenant to link an invoice'}

@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useIsDarkMode } from '../../hooks/useIsDarkMode'
+import { visibleOptions } from '../../utils/selectOptions'
 
 // options: [{ value, label }]
 // required: adds a hidden required input so a form's checkValidity() catches an empty choice;
 // invalid: shows the red invalid border
+// maxShown: list at most this many matches (long lists stay quick); the search still covers every option
 const SearchableSelect = ({
   options,
   value,
@@ -12,6 +14,7 @@ const SearchableSelect = ({
   disabled,
   required,
   invalid,
+  maxShown,
 }) => {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -19,9 +22,7 @@ const SearchableSelect = ({
   const isDark = useIsDarkMode()
 
   const selected = options.find((o) => String(o.value) === String(value))
-  const filtered = search.trim()
-    ? options.filter((o) => o.label.toLowerCase().includes(search.trim().toLowerCase()))
-    : options
+  const { shown: filtered, total } = visibleOptions(options, search, maxShown)
 
   useEffect(() => {
     const onClickOutside = (e) => {
@@ -125,6 +126,12 @@ const SearchableSelect = ({
               </div>
             ))}
           </div>
+          {total > filtered.length && (
+            <div className="px-3 py-1 small text-body-secondary border-top">
+              Showing {filtered.length} of {total.toLocaleString('en-US')} · type to search for
+              others
+            </div>
+          )}
         </div>
       )}
     </div>

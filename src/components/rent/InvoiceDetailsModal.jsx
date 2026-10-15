@@ -139,9 +139,9 @@ const InvoiceDetailsModal = ({ invoiceId, onClose, onOpenInvoice, onChanged }) =
           at: inv.createdAt,
           label: 'Invoice created',
           amountLabel: 'Amount',
-          amount: null,
+          amount: Number(inv.totalRent),
           reason: inv.description || '',
-          by: '',
+          by: inv.createdBy || '', // empty for invoices made before the creator was recorded
         },
         ...(Number(inv.lateFeeCharged) > 0
           ? [

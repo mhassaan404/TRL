@@ -32,6 +32,8 @@ import {
   rangeOf,
 } from '../../utils/historyRange'
 import { exportCSV } from '../../utils/exportUtils'
+import { matchesLeaseFilter } from '../../utils/leaseFilter'
+import LeaseFilterButtons from '../../components/common/LeaseFilterButtons'
 import { invoiceNo, openInvoice } from '../../utils/documents'
 import {
   PageSizeSelect,
@@ -67,6 +69,7 @@ const RentHistory = () => {
   const [tenantFilter, setTenantFilter] = useState('')
   const [unitFilter, setUnitFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [leaseFilter, setLeaseFilter] = useState('') // '' all, 'current', 'moved' (utils/leaseFilter)
   const [historyId, setHistoryId] = useState(null) // invoice shown in the History window
   // Invoice-date range: a preset (default last 3 months, so the page stays quick) or a custom From / To
   const [datePreset, setDatePreset] = useState(DEFAULT_HISTORY_RANGE)
@@ -128,9 +131,14 @@ const RentHistory = () => {
         return false
       }
 
+      // Current tenants / moved out (of that unit)
+      if (!matchesLeaseFilter(record, leaseFilter)) {
+        return false
+      }
+
       return true
     })
-  }, [historyRecords, globalSearch, tenantFilter, unitFilter, statusFilter])
+  }, [historyRecords, globalSearch, tenantFilter, unitFilter, statusFilter, leaseFilter])
 
   const filteredData = useMemo(
     () => matchingOthers.filter((record) => inRange(normalizeDate(record.invoiceDate), range)),
@@ -361,6 +369,11 @@ const RentHistory = () => {
                   <option value="Overpaid">Overpaid</option>
                   <option value="Cancelled">Cancelled</option>
                 </CFormSelect>
+              </div>
+
+              <div className="col-auto">
+                <div className="form-label small text-muted mb-1">Tenants</div>
+                <LeaseFilterButtons value={leaseFilter} onChange={setLeaseFilter} />
               </div>
 
               <div className="col-md-3">

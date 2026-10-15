@@ -190,3 +190,44 @@ describe('dashboard filters', () => {
     })
   })
 })
+
+describe('collection card adds up', () => {
+  it('billed - paid - discount = still owed (the October example)', () => {
+    const oct = [
+      {
+        monthStart: '2026-10-01T00:00:00',
+        totalBilled: 108484,
+        collected: 65968,
+        discounts: 500,
+        outstanding: 42016,
+        credit: 0,
+      },
+    ]
+    const k = kpis({ bvc: oct, month: '2026-10', today })
+    expect([k.billed, k.collected, k.discounts, k.monthOwed, k.monthCredit]).toEqual([
+      108484, 65968, 500, 42016, 0,
+    ])
+    expect(k.billed - k.collected - k.discounts).toBe(k.monthOwed - k.monthCredit)
+  })
+  it('an overpaid invoice shows as credit, and the sum still holds', () => {
+    const m = [
+      {
+        monthStart: '2026-10-01T00:00:00',
+        totalBilled: 10000,
+        collected: 12000,
+        discounts: 0,
+        outstanding: 1000,
+        credit: 3000,
+      },
+    ]
+    const k = kpis({ bvc: m, month: '2026-10', today })
+    expect(k.billed - k.collected - k.discounts).toBe(k.monthOwed - k.monthCredit)
+  })
+  it('a month without invoices shows zeros', () => {
+    expect(kpis({ bvc: [], month: '2026-10', today })).toMatchObject({
+      discounts: 0,
+      monthOwed: 0,
+      monthCredit: 0,
+    })
+  })
+})
