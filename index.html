@@ -11,13 +11,33 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
   <meta name="theme-color" content="#3d3bb5">
+  <style>
+    /* Shown at once while the app's files download (React replaces it); on a slow connection the page is never blank */
+    .boot { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 14px; font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Arial, sans-serif; color: #4a4f63; background: #f3f4f7; }
+    .boot-spin { width: 34px; height: 34px; border: 3px solid #d6d7e6; border-top-color: #3d3bb5; border-radius: 50%;
+                 animation: boot-turn .8s linear infinite; }
+    .boot-slow { font-size: 13px; color: #80869a; opacity: 0; animation: boot-show .3s ease 8s forwards; }
+    @keyframes boot-turn { to { transform: rotate(360deg); } }
+    @keyframes boot-show { to { opacity: 1; } }
+    @media (prefers-color-scheme: dark) {
+      .boot { color: #c9cbd6; background: #1d222b; }
+      .boot-spin { border-color: #3a4150; border-top-color: #8d8bf2; }
+    }
+  </style>
 </head>
 
 <body>
   <noscript>
     You need to enable JavaScript to run this app
   </noscript>
-  <div id="root"></div>
+  <div id="root">
+    <div class="boot" role="status" aria-live="polite">
+      <div class="boot-spin"></div>
+      <div>Loading The Ledger…</div>
+      <div class="boot-slow">Slow connection — still loading, please wait.</div>
+    </div>
+  </div>
   <script type="module" src="/src/index.js"></script>
   <!-- built files will be auto injected -->
 </body>

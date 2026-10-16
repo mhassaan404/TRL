@@ -9,6 +9,20 @@ export default defineConfig(() => {
     base: './',
     build: {
       outDir: 'build',
+      rollupOptions: {
+        output: {
+          // The libraries every page needs go in their own file: it changes only when they are updated, so after
+          // an app update browsers keep it from the cache (public/_headers caches /assets for good).
+          manualChunks(id) {
+            if (
+              /[\\/]node_modules[\\/](react|react-dom|scheduler|react-router|react-router-dom|react-redux|redux|use-sync-external-store|axios|react-toastify)[\\/]/.test(
+                id,
+              )
+            )
+              return 'vendor'
+          },
+        },
+      },
     },
     css: {
       postcss: {

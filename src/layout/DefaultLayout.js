@@ -2,11 +2,14 @@ import React, { useEffect } from 'react'
 import { AppContent, AppSidebar, AppFooter, AppHeader } from '../components/index'
 import TopProgress from '../components/TopProgress'
 import { preloadRoutes } from '../routes'
+import { shouldPreloadPages } from '../utils/network'
 
 const DefaultLayout = () => {
-  // Fetch the other pages' code once the current page has loaded, so menu items open without a wait
+  // Fetch the other pages' code once the current page has loaded, so menu items open without a wait.
+  // Skipped on slow / data-saving connections: there the page being opened gets all the bandwidth.
   useEffect(() => {
-    const t = setTimeout(preloadRoutes, 1500)
+    if (!shouldPreloadPages()) return undefined
+    const t = setTimeout(preloadRoutes, 3000)
     return () => clearTimeout(t)
   }, [])
 
