@@ -73,7 +73,7 @@
   <li><b>Backup</b> the production database (below).</li>
   <li><b>Database change</b> (only if the release has one): run its script in MonsterASP WebMSSQL on db71356 and check the result row. WebMSSQL scripts must start with <code>SET NOCOUNT ON</code>; "Caution: Changing any part of an object name…" lines are harmless.</li>
   <li><b>API</b>: Visual Studio → TRL_API → Publish → profile <code>site95547-WebDeploy</code>.</li>
-  <li><b>Frontend</b>: <code>npm run build</code> with <code>VITE_API_BASE_URL=https://rent-trlapi.runasp.net/api</code>, then Netlify → Deploys → drag the <code>build</code> folder (or push to GitHub if Netlify builds from it).</li>
+  <li><b>Frontend</b>: <code>npm run build</code> (do <b>not</b> set <code>VITE_API_BASE_URL</code>: the app calls <code>/api</code> on its own site and Netlify forwards it to the API, so logins work on every browser and phone), then Netlify → Deploys → drag the <code>build</code> folder (or push to GitHub if Netlify builds from it).</li>
   <li><b>Check</b>: <code>powershell -ExecutionPolicy Bypass -File D:\TRL\deploy_ready\phase6\post_deploy_check.ps1</code> → must end with <b>ALL CHECKS PASSED</b>.</li>
 </ol>
 <p>Undo: Netlify → previous deploy → Publish; API → publish the previous build; database → its script in <code>Database/rollback</code> (WebMSSQL: the <code>_v3_ROLLBACK</code> files).</p>

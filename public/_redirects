@@ -1,0 +1,4 @@
+# Netlify: the app calls /api on its own site and Netlify forwards it to the API server (status 200 = proxy, the
+# address bar never changes). Keeps the login cookie first-party, so browsers that block third-party cookies
+# (Safari, incognito, Brave...) keep the user logged in. "!" = always forward, even if a file has that name.
+/api/*  https://rent-trlapi.runasp.net/api/:splat  200!
