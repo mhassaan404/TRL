@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'
+import { useAccess } from '../../access'
 import Loader from '../../components/Loader'
 import { tenantService } from '../../services/tenant.service'
 import {
@@ -84,6 +85,10 @@ const validateTenant = (t) => {
 const Required = () => <span className="text-danger">*</span>
 
 const Tenants = () => {
+  // View-only users don't see the add / edit / delete buttons (the server refuses them anyway)
+  const { canEdit, can } = useAccess()
+  const editable = canEdit('tenants')
+  const deletable = editable && can('action:deleteCancel')
   const [tenants, setTenants] = useState([])
   const [visible, setVisible] = useState(false)
   const [editData, setEditData] = useState(null)
@@ -255,25 +260,29 @@ const Tenants = () => {
         enableGlobalFilter: false,
         cell: ({ row }) => (
           <>
-            <CButton
-              size="sm"
-              color="info"
-              className="me-2"
-              onClick={() => handleEdit(row.original)}
-            >
-              Edit
-            </CButton>
+            {editable && (
+              <CButton
+                size="sm"
+                color="info"
+                className="me-2"
+                onClick={() => handleEdit(row.original)}
+              >
+                Edit
+              </CButton>
+            )}
 
-            <CButton size="sm" color="danger" onClick={() => handleDelete(row.original.tenantId)}>
-              Delete
-            </CButton>
+            {deletable && (
+              <CButton size="sm" color="danger" onClick={() => handleDelete(row.original.tenantId)}>
+                Delete
+              </CButton>
+            )}
           </>
         ),
       },
     ],
     // handleDelete only uses state setters and services, so an older copy behaves the same
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [expandedRows],
+    [expandedRows, editable, deletable],
   )
 
   // Filter data manually for status
@@ -321,17 +330,19 @@ const Tenants = () => {
                   Export CSV
                 </CButton>
 
-                <CButton
-                  color="primary"
-                  onClick={() => {
-                    setEditData(null)
-                    setTenant(emptyTenant)
-                    setSubmitted(false)
-                    setVisible(true)
-                  }}
-                >
-                  + Add Tenant
-                </CButton>
+                {editable && (
+                  <CButton
+                    color="primary"
+                    onClick={() => {
+                      setEditData(null)
+                      setTenant(emptyTenant)
+                      setSubmitted(false)
+                      setVisible(true)
+                    }}
+                  >
+                    + Add Tenant
+                  </CButton>
+                )}
               </div>
             </CCardHeader>
 

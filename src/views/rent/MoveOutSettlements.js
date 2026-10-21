@@ -39,6 +39,7 @@ import {
   settlementNo,
   settlementStatusOf,
 } from '../../utils/settlement'
+import { useAccess } from '../../access'
 
 // Move-out settlements: tenancies whose lease has ended and are waiting to be settled, and the settlements recorded.
 // A settlement uses the deposit to pay what is owed; money paid back later is recorded here as a refund.
@@ -198,6 +199,9 @@ RefundModal.propTypes = {
 }
 
 const MoveOutSettlements = () => {
+  // Buttons this user may not use are hidden (the server refuses them anyway)
+  const { canEdit } = useAccess()
+  const editable = canEdit('settlements')
   const navigate = useNavigate()
   const [data, setData] = useState({ candidates: [], settlements: [] })
   const [loading, setLoading] = useState(true)
@@ -257,13 +261,15 @@ const MoveOutSettlements = () => {
                   <CTableDataCell className="text-end">{money(c.credit)}</CTableDataCell>
                   <CTableDataCell className="text-end">{money(c.held)}</CTableDataCell>
                   <CTableDataCell className="text-end">
-                    <CButton
-                      size="sm"
-                      color="primary"
-                      onClick={() => navigate(`/rent/settlements/new/${c.tenantId}/${c.unitId}`)}
-                    >
-                      Settle
-                    </CButton>
+                    {editable && (
+                      <CButton
+                        size="sm"
+                        color="primary"
+                        onClick={() => navigate(`/rent/settlements/new/${c.tenantId}/${c.unitId}`)}
+                      >
+                        Settle
+                      </CButton>
+                    )}
                   </CTableDataCell>
                 </CTableRow>
               ))}
@@ -344,7 +350,7 @@ const MoveOutSettlements = () => {
                         >
                           Statement
                         </CButton>
-                        {Number(s.refundDue) > Number(s.refundPaid) && (
+                        {editable && Number(s.refundDue) > Number(s.refundPaid) && (
                           <CButton
                             size="sm"
                             color="warning"

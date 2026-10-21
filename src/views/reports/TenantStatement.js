@@ -34,6 +34,7 @@ const TYPE_COLOR = {
   'Late Fee': 'danger',
   Payment: 'success',
   Discount: 'info',
+  Adjustment: 'warning', // rent changed later (e.g. lease ended early): its own dated line
 }
 const money = (v) => (Number(v) ? fmt(v) : '—')
 // Positive = the tenant owes; negative = the tenant has credit
@@ -323,8 +324,8 @@ const TenantStatement = () => {
                     {balanceText(s.openingBalance)}
                   </CTableDataCell>
                 </CTableRow>
-                {s.lines.map((l) => (
-                  <CTableRow key={`${l.type}-${l.invoiceId}-${l.paymentId}`}>
+                {s.lines.map((l, i) => (
+                  <CTableRow key={`${i}-${l.type}-${l.invoiceId}-${l.paymentId}`}>
                     <CTableDataCell className="text-nowrap">{formatDay(l.date)}</CTableDataCell>
                     <CTableDataCell>
                       <CBadge color={TYPE_COLOR[l.type] || 'secondary'}>{l.type}</CBadge>

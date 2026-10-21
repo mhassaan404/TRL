@@ -1,5 +1,6 @@
 // src/services/auth.service.js
 import api, { request } from '../api/axios' // your axios instance with interceptors
+import { reloadAccess } from '../access'
 
 export const LAST_CLIENT_CODE = 'lastClientCode'
 
@@ -7,7 +8,8 @@ class AuthService {
   /**
    * Login with client (company) code + username/password
    * - Tokens are HttpOnly cookies (withCredentials: true); the server picks the client's database from them
-   * - Stores only non-sensitive details: { username, role, clientCode, clientName }
+   * - Stores only non-sensitive details: { username, role, clientCode, clientName, access } (access: what the user
+   *   may open and do, see src/access.js)
    */
   async login(clientCode, username, password) {
     try {
@@ -17,8 +19,12 @@ class AuthService {
         password: password.trim(),
       })
 
-      const user = response.data.user || response.data
+      const user = {
+        ...(response.data.user || response.data),
+        access: response.data.access ?? null,
+      }
       localStorage.setItem('user', JSON.stringify(user))
+      reloadAccess()
       // Remembered to pre-fill the login form next time (not secret)
       if (user?.clientCode) localStorage.setItem(LAST_CLIENT_CODE, user.clientCode)
 
@@ -59,6 +65,7 @@ class AuthService {
       // silent fail - clear anyway
     } finally {
       localStorage.removeItem('user')
+      reloadAccess()
       // Refresh token cookie is HttpOnly → browser clears on logout
       window.location.replace('#/login')
     }

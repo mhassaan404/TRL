@@ -25,7 +25,7 @@ import {
 import { rentService } from '../../services/rent.service'
 import { fmt, formatDate } from '../../utils/rentUtils'
 import { hasReceipt, invoiceNo, openInvoice, openReceipts, receiptNo } from '../../utils/documents'
-import { todayLocal } from '../../utils/dates'
+import { formatTime, todayLocal } from '../../utils/dates'
 import { INVOICE_STATUS_COLOR as STATUS_COLOR } from '../../utils/invoiceStatus'
 import {
   canReverse,
@@ -36,6 +36,7 @@ import {
   REVERSE_BLOCK_TEXT,
   reversalEffects,
 } from '../../utils/payments'
+import { useAccess } from '../../access'
 
 // History window for one invoice (Rent History): the invoice, its totals, every payment record and every
 // recorded event. The only change made here is reversing a payment record entered by mistake (with a reason);
@@ -56,10 +57,7 @@ const EVENT_AMOUNT_LABEL = {
   LATE_FEE_REVERSED: 'Amount',
 }
 
-const dateTime = (d) =>
-  d
-    ? `${formatDate(d)} ${new Date(d).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
-    : '—'
+const dateTime = (d) => (d ? `${formatDate(d)} ${formatTime(d)}` : '—')
 
 const Field = ({ label, children }) => (
   <div className="mb-2">
@@ -70,6 +68,9 @@ const Field = ({ label, children }) => (
 Field.propTypes = { label: PropTypes.string.isRequired, children: PropTypes.node }
 
 const InvoiceDetailsModal = ({ invoiceId, onClose, onOpenInvoice, onChanged }) => {
+  // Buttons this user may not use are hidden (the server refuses them anyway)
+  const { canEdit, can } = useAccess()
+  const reverseOk = canEdit('rentHistory') && can('action:reversePayment')
   const [state, setState] = useState({ loading: true, error: '', data: null })
   const [reloadKey, setReloadKey] = useState(0)
   const [reversing, setReversing] = useState(null) // payment record in the Reverse window
@@ -419,7 +420,7 @@ const InvoiceDetailsModal = ({ invoiceId, onClose, onOpenInvoice, onChanged }) =
                         )}
                       </CTableDataCell>
                       <CTableDataCell className="text-nowrap">
-                        {canReverse(p) ? (
+                        {!reverseOk ? null : canReverse(p) ? (
                           <CButton
                             color="danger"
                             variant="outline"

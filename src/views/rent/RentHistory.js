@@ -43,6 +43,7 @@ import {
   DEFAULT_PAGE_SIZE,
 } from '../../components/common/TablePagination'
 import { invoiceStatusColor } from '../../utils/invoiceStatus'
+import { useAccess } from '../../access'
 
 // CSV Export Helper
 
@@ -62,6 +63,9 @@ const normalizeDate = (value) => {
 }
 
 const RentHistory = () => {
+  // Buttons this user may not use are hidden (the server refuses them anyway)
+  const { canEdit, can } = useAccess()
+  const cancelOk = canEdit('rentHistory') && can('action:deleteCancel')
   const { loading, historyRecords, loadRentHistory, handleCancel, handleReinstate } =
     useRentHistory()
 
@@ -247,7 +251,7 @@ const RentHistory = () => {
               >
                 Print
               </CButton>
-              {status === 'Cancelled' ? (
+              {!cancelOk ? null : status === 'Cancelled' ? (
                 // Same rule as the API (CanReinstate): disabled when its lease no longer covers that month or a newer
                 // invoice already bills it
                 <span
@@ -299,7 +303,7 @@ const RentHistory = () => {
         },
       },
     ],
-    [handleCancel, handleReinstate],
+    [handleCancel, handleReinstate, cancelOk],
   )
 
   const [pagination, setPagination] = useState({

@@ -47,7 +47,7 @@
   <tr><td>Late Fee Settings</td><td>Grace days, fee per day, maximum (default 5 days, 500/day, max 2 × invoice rent). Applies to invoices generated after the change.</td></tr>
   <tr><td>Change Password</td><td>Account menu (top right). Logs out other devices.</td></tr>
 </table>
-<p><b>Rules to know:</b> only Admin users can log in · each company's data is in its own database · dates use Pakistan time · payments are corrected only by reversal · the database itself blocks invalid money data.</p>
+<p><b>Rules to know:</b> the Super Admin can do everything; staff users see only the pages and actions ticked for them on the Users page · each company's data is in its own database · dates use Pakistan time · payments are corrected only by reversal · the database itself blocks invalid money data.</p>
 
 <h3>Typical monthly flow</h3>
 <ol>
@@ -72,11 +72,11 @@
 <ol>
   <li><b>Backup</b> the production database (below).</li>
   <li><b>Database change</b> (only if the release has one): run its script in MonsterASP WebMSSQL on db71356 and check the result row. WebMSSQL scripts must start with <code>SET NOCOUNT ON</code>; "Caution: Changing any part of an object name…" lines are harmless.</li>
-  <li><b>API</b>: Visual Studio → TRL_API → Publish → profile <code>site95547-WebDeploy</code>.</li>
-  <li><b>Frontend</b>: <code>npm run build</code> (do <b>not</b> set <code>VITE_API_BASE_URL</code>: the app calls <code>/api</code> on its own site and Netlify forwards it to the API, so logins work on every browser and phone), then Netlify → Deploys → drag the <code>build</code> folder (or push to GitHub if Netlify builds from it).</li>
+  <li><b>Website</b>: in <code>D:\TRL\TRL</code> run <code>npm run build:server</code> (do <b>not</b> set <code>VITE_API_BASE_URL</code>). It puts the app into the API project, so website and API are published together on one address.</li>
+  <li><b>API + website</b>: Visual Studio → TRL_API → Publish → profile <code>site95547-WebDeploy</code>.</li>
   <li><b>Check</b>: <code>powershell -ExecutionPolicy Bypass -File D:\TRL\deploy_ready\phase6\post_deploy_check.ps1</code> → must end with <b>ALL CHECKS PASSED</b>.</li>
 </ol>
-<p>Undo: Netlify → previous deploy → Publish; API → publish the previous build; database → its script in <code>Database/rollback</code> (WebMSSQL: the <code>_v3_ROLLBACK</code> files).</p>
+<p>Undo: publish the previous build (API + website); database → its script in <code>Database/rollback</code> (WebMSSQL: the <code>_v3_ROLLBACK</code> files).</p>
 
 <h3>Backups (most important)</h3>
 <ul>
@@ -102,14 +102,13 @@
   <tr><td>Health shows 503</td><td>Same as above, or the database can't be reached. Check the log file.</td></tr>
   <tr><td>Locked out after wrong passwords</td><td>Wait 15 minutes and try again.</td></tr>
   <tr><td>Freshly built API won't start on your PC</td><td>Windows Smart App Control blocked the new DLL – rebuild, or run it from another folder.</td></tr>
-  <tr><td>Page doesn't load at all</td><td>Check Netlify (frontend) and the health link (API).</td></tr>
+  <tr><td>Page doesn't load at all</td><td>Check the health link; if it fails, the API server (MonsterASP) is down or the database needs an update.</td></tr>
 </table>
 
 <h2 class="page">3. Essential information</h2>
 <table>
   <tr><th>Item</th><th>Value</th></tr>
-  <tr><td>Website (frontend)</td><td><code>https://voluble-lokum-rent.netlify.app</code> (Netlify)</td></tr>
-  <tr><td>API</td><td><code>https://rent-trlapi.runasp.net/api</code> (MonsterASP site95547)</td></tr>
+  <tr><td>Website + API</td><td><code>https://rent-trlapi.runasp.net</code> (MonsterASP site95547; the API is at <code>/api</code>). The old Netlify address is no longer updated.</td></tr>
   <tr><td>Production database</td><td>db71356 (SQL Server 2025) – only through MonsterASP <b>WebMSSQL</b>; catalog db72317</td></tr>
   <tr><td>Company code</td><td><code>TRL</code></td></tr>
   <tr><td>Source code</td><td><code>D:\TRL\TRL</code> (frontend, React/Vite) · <code>D:\TRL\TRL_API</code> (API .NET 8, database scripts, tools, tests)</td></tr>

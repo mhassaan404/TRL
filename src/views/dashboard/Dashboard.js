@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { Suspense, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   CBadge,
@@ -11,6 +11,7 @@ import {
   CFormLabel,
   CFormSelect,
   CRow,
+  CSpinner,
   CTable,
   CTableBody,
   CTableDataCell,
@@ -34,7 +35,9 @@ import {
   shiftMonth,
   topOverdue,
 } from '../../utils/dashboard'
-import MainChart from './MainChart'
+import { useAccess } from '../../access'
+// The chart library is the biggest part of this page: it loads on its own, after the numbers are shown
+const MainChart = React.lazy(() => import('./MainChart'))
 
 // One headline number
 const Kpi = ({ label, value, sub, color = 'primary' }) => (
@@ -88,6 +91,8 @@ const ListCard = ({ title, linkText, onLink, empty, columns, rows }) => (
 )
 
 const Dashboard = () => {
+  // Quick buttons only for pages this user can edit
+  const { canEdit } = useAccess()
   const navigate = useNavigate()
   const today = todayLocal()
   const thisMonth = today.slice(0, 7)
@@ -173,20 +178,31 @@ const Dashboard = () => {
           <div className="small text-body-secondary">{formatDay(today)}</div>
         </div>
         <div className="d-flex flex-wrap gap-2">
-          <CButton color="primary" size="sm" onClick={() => navigate('/rent/rentcollection')}>
-            Generate Invoices / Record Payment
-          </CButton>
-          <CButton
-            color="primary"
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/rent/leasemanagement')}
-          >
-            New Lease
-          </CButton>
-          <CButton color="primary" variant="outline" size="sm" onClick={() => navigate('/tenants')}>
-            Add Tenant
-          </CButton>
+          {canEdit('rentCollection') && (
+            <CButton color="primary" size="sm" onClick={() => navigate('/rent/rentcollection')}>
+              Generate Invoices / Record Payment
+            </CButton>
+          )}
+          {canEdit('leases') && (
+            <CButton
+              color="primary"
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/rent/leasemanagement')}
+            >
+              New Lease
+            </CButton>
+          )}
+          {canEdit('tenants') && (
+            <CButton
+              color="primary"
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/tenants')}
+            >
+              Add Tenant
+            </CButton>
+          )}
         </div>
       </div>
 
@@ -383,12 +399,23 @@ const Dashboard = () => {
               </span>
             </CCardHeader>
             <CCardBody>
-              <MainChart
-                labels={chart.labels}
-                billed={chart.billed}
-                collected={chart.collected}
-                outstanding={chart.outstanding}
-              />
+              <Suspense
+                fallback={
+                  <div
+                    className="d-flex align-items-center justify-content-center gap-2 text-body-secondary small"
+                    style={{ height: 300 }}
+                  >
+                    <CSpinner size="sm" color="primary" /> Loading chart…
+                  </div>
+                }
+              >
+                <MainChart
+                  labels={chart.labels}
+                  billed={chart.billed}
+                  collected={chart.collected}
+                  outstanding={chart.outstanding}
+                />
+              </Suspense>
             </CCardBody>
           </CCard>
         </CCol>

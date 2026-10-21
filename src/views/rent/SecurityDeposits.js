@@ -49,6 +49,7 @@ import {
   depositTotals,
   outstandingOf,
 } from '../../utils/deposits'
+import { useAccess } from '../../access'
 
 // Security deposits: money held for each tenancy (tenant + unit). It is not rent or income: no invoices are created
 // and rent balances, reports and late fees are not affected. Entries are never edited or deleted; a wrong entry is
@@ -383,6 +384,9 @@ AgreedModal.propTypes = {
 
 // ---- History, with corrections ----
 const HistoryModal = ({ t, onClose, onSaved }) => {
+  // Buttons this user may not use are hidden (the server refuses them anyway)
+  const { canEdit } = useAccess()
+  const editable = canEdit('deposits')
   const [rows, setRows] = useState(null)
   const [correcting, setCorrecting] = useState(false)
   const [form, setForm] = useState({ amount: '', entryDate: todayLocal(), reason: '' })
@@ -592,7 +596,7 @@ const HistoryModal = ({ t, onClose, onSaved }) => {
         )}
       </CModalBody>
       <CModalFooter>
-        {!correcting && (
+        {editable && !correcting && (
           <span
             className="me-auto"
             title={held > 0 ? '' : 'Nothing is held, so there is nothing to correct.'}
@@ -621,6 +625,9 @@ HistoryModal.propTypes = {
 }
 
 const SecurityDeposits = () => {
+  // Buttons this user may not use are hidden (the server refuses them anyway)
+  const { canEdit } = useAccess()
+  const editable = canEdit('deposits')
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -815,27 +822,29 @@ const SecurityDeposits = () => {
                   </CTableDataCell>
                   <CTableDataCell>
                     <div className="d-flex gap-1 flex-wrap">
-                      <span
-                        title={
-                          canRecord
-                            ? ''
-                            : !r.hasCurrentLease
-                              ? 'The lease has ended.'
-                              : r.tenantDeleted
-                                ? 'The tenant has been deleted.'
-                                : 'The agreed deposit has been received in full.'
-                        }
-                      >
-                        <CButton
-                          size="sm"
-                          color="success"
-                          variant="outline"
-                          disabled={!canRecord}
-                          onClick={() => setModal({ type: 'record', key: keyOf(r) })}
+                      {editable && (
+                        <span
+                          title={
+                            canRecord
+                              ? ''
+                              : !r.hasCurrentLease
+                                ? 'The lease has ended.'
+                                : r.tenantDeleted
+                                  ? 'The tenant has been deleted.'
+                                  : 'The agreed deposit has been received in full.'
+                          }
                         >
-                          Record Deposit
-                        </CButton>
-                      </span>
+                          <CButton
+                            size="sm"
+                            color="success"
+                            variant="outline"
+                            disabled={!canRecord}
+                            onClick={() => setModal({ type: 'record', key: keyOf(r) })}
+                          >
+                            Record Deposit
+                          </CButton>
+                        </span>
+                      )}
                       <CButton
                         size="sm"
                         color="info"
@@ -844,7 +853,7 @@ const SecurityDeposits = () => {
                       >
                         History
                       </CButton>
-                      {r.hasCurrentLease && (
+                      {editable && r.hasCurrentLease && (
                         <CButton
                           size="sm"
                           color="secondary"

@@ -10,7 +10,8 @@
     "lint": "eslint",
     "serve": "vite preview",
     "start": "vite",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:server": "vite build --outDir ../TRL_API/TRL_API/wwwroot --emptyOutDir && node -e \"for (const f of ['_redirects', '_headers']) require('fs').rmSync('../TRL_API/TRL_API/wwwroot/' + f, { force: true })\""
   },
   "dependencies": {
     "@coreui/chartjs": "^4.1.0",

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import { useAccess } from '../../access'
 
 import {
   CRow,
@@ -46,6 +47,10 @@ const typeIcon = {
 }
 
 const Properties = () => {
+  // View-only users don't see the add / edit / delete buttons (the server refuses them anyway)
+  const { canEdit, can } = useAccess()
+  const editable = canEdit('properties')
+  const deletable = editable && can('action:deleteCancel')
   const isDark = useIsDarkMode()
 
   const {
@@ -371,7 +376,7 @@ const Properties = () => {
 
           <div className="d-flex flex-wrap gap-2 justify-content-md-end">
             {/* ---------- LEVEL 1: BUILDINGS ---------- */}
-            {!selectedBuilding && (
+            {editable && !selectedBuilding && (
               <>
                 <CButton color="outline-secondary" size="sm" onClick={openAddBuildingModal}>
                   + Add Building
@@ -384,7 +389,7 @@ const Properties = () => {
             )}
 
             {/* ---------- LEVEL 2: FLOORS (building selected, no floor yet) ---------- */}
-            {selectedBuilding && !selectedFloor && (
+            {editable && selectedBuilding && !selectedFloor && (
               <>
                 {selectedBuildingObj && (
                   <CDropdown>
@@ -397,16 +402,18 @@ const Properties = () => {
                         ✏️ Edit Building
                       </CDropdownItem>
 
-                      <CDropdownItem
-                        className="text-danger"
-                        onClick={() => {
-                          handleBuildingDelete(selectedBuildingId)
-                          setSelectedBuildingId(null)
-                          setSelectedFloorId(null)
-                        }}
-                      >
-                        🗑 Delete Building
-                      </CDropdownItem>
+                      {deletable && (
+                        <CDropdownItem
+                          className="text-danger"
+                          onClick={() => {
+                            handleBuildingDelete(selectedBuildingId)
+                            setSelectedBuildingId(null)
+                            setSelectedFloorId(null)
+                          }}
+                        >
+                          🗑 Delete Building
+                        </CDropdownItem>
+                      )}
                     </CDropdownMenu>
                   </CDropdown>
                 )}
@@ -422,7 +429,7 @@ const Properties = () => {
             )}
 
             {/* ---------- LEVEL 3: UNITS (building + floor selected) ---------- */}
-            {selectedBuilding && selectedFloor && (
+            {editable && selectedBuilding && selectedFloor && (
               <>
                 <CDropdown>
                   <CDropdownToggle color="outline-secondary" size="sm">
@@ -436,12 +443,14 @@ const Properties = () => {
                       ✏️ Edit Floor
                     </CDropdownItem>
 
-                    <CDropdownItem
-                      className="text-danger"
-                      onClick={() => handleFloorDelete(selectedFloor.id, selectedBuildingId)}
-                    >
-                      🗑 Delete Floor
-                    </CDropdownItem>
+                    {deletable && (
+                      <CDropdownItem
+                        className="text-danger"
+                        onClick={() => handleFloorDelete(selectedFloor.id, selectedBuildingId)}
+                      >
+                        🗑 Delete Floor
+                      </CDropdownItem>
+                    )}
                   </CDropdownMenu>
                 </CDropdown>
 
@@ -554,9 +563,11 @@ const Properties = () => {
 
                 <p className="mt-2 mb-3">No buildings found.</p>
 
-                <CButton color="primary" size="sm" onClick={openAddBuildingModal}>
-                  + Add Your First Building
-                </CButton>
+                {editable && (
+                  <CButton color="primary" size="sm" onClick={openAddBuildingModal}>
+                    + Add Your First Building
+                  </CButton>
+                )}
               </CCardBody>
             </CCard>
           ) : (
@@ -606,43 +617,47 @@ const Properties = () => {
                             )}
                           </div>
 
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <CDropdown>
-                              <CDropdownToggle
-                                color="light"
-                                size="sm"
-                                caret={false}
-                                style={{
-                                  padding: '2px 8px',
-                                }}
-                              >
-                                ⋮
-                              </CDropdownToggle>
-
-                              <CDropdownMenu>
-                                <CDropdownItem
-                                  onClick={() => {
-                                    if (bObj) {
-                                      openEditBuildingModal(bObj)
-                                    }
+                          {editable && (
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <CDropdown>
+                                <CDropdownToggle
+                                  color="light"
+                                  size="sm"
+                                  caret={false}
+                                  style={{
+                                    padding: '2px 8px',
                                   }}
                                 >
-                                  ✏️ Edit
-                                </CDropdownItem>
+                                  ⋮
+                                </CDropdownToggle>
 
-                                <CDropdownItem onClick={() => openAddFloorModal(b.buildingId)}>
-                                  + Add Floor
-                                </CDropdownItem>
+                                <CDropdownMenu>
+                                  <CDropdownItem
+                                    onClick={() => {
+                                      if (bObj) {
+                                        openEditBuildingModal(bObj)
+                                      }
+                                    }}
+                                  >
+                                    ✏️ Edit
+                                  </CDropdownItem>
 
-                                <CDropdownItem
-                                  className="text-danger"
-                                  onClick={() => handleBuildingDelete(b.buildingId)}
-                                >
-                                  🗑 Delete
-                                </CDropdownItem>
-                              </CDropdownMenu>
-                            </CDropdown>
-                          </div>
+                                  <CDropdownItem onClick={() => openAddFloorModal(b.buildingId)}>
+                                    + Add Floor
+                                  </CDropdownItem>
+
+                                  {deletable && (
+                                    <CDropdownItem
+                                      className="text-danger"
+                                      onClick={() => handleBuildingDelete(b.buildingId)}
+                                    >
+                                      🗑 Delete
+                                    </CDropdownItem>
+                                  )}
+                                </CDropdownMenu>
+                              </CDropdown>
+                            </div>
+                          )}
                         </div>
 
                         <hr className="my-2" />
@@ -681,13 +696,15 @@ const Properties = () => {
 
                 <p className="mt-2 mb-3">No floors found.</p>
 
-                <CButton
-                  color="primary"
-                  size="sm"
-                  onClick={() => openAddFloorModal(selectedBuildingId)}
-                >
-                  + Add First Floor
-                </CButton>
+                {editable && (
+                  <CButton
+                    color="primary"
+                    size="sm"
+                    onClick={() => openAddFloorModal(selectedBuildingId)}
+                  >
+                    + Add First Floor
+                  </CButton>
+                )}
               </CCardBody>
             </CCard>
           ) : (
@@ -731,35 +748,41 @@ const Properties = () => {
                             <small className="text-muted">{floorUnits.length} Units</small>
                           </div>
 
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <CDropdown>
-                              <CDropdownToggle
-                                color="light"
-                                size="sm"
-                                caret={false}
-                                style={{
-                                  padding: '2px 8px',
-                                }}
-                              >
-                                ⋮
-                              </CDropdownToggle>
-
-                              <CDropdownMenu>
-                                <CDropdownItem
-                                  onClick={() => openEditFloorModal(floor, selectedBuildingId)}
+                          {editable && (
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <CDropdown>
+                                <CDropdownToggle
+                                  color="light"
+                                  size="sm"
+                                  caret={false}
+                                  style={{
+                                    padding: '2px 8px',
+                                  }}
                                 >
-                                  ✏️ Edit
-                                </CDropdownItem>
+                                  ⋮
+                                </CDropdownToggle>
 
-                                <CDropdownItem
-                                  className="text-danger"
-                                  onClick={() => handleFloorDelete(floor.id, selectedBuildingId)}
-                                >
-                                  🗑 Delete
-                                </CDropdownItem>
-                              </CDropdownMenu>
-                            </CDropdown>
-                          </div>
+                                <CDropdownMenu>
+                                  <CDropdownItem
+                                    onClick={() => openEditFloorModal(floor, selectedBuildingId)}
+                                  >
+                                    ✏️ Edit
+                                  </CDropdownItem>
+
+                                  {deletable && (
+                                    <CDropdownItem
+                                      className="text-danger"
+                                      onClick={() =>
+                                        handleFloorDelete(floor.id, selectedBuildingId)
+                                      }
+                                    >
+                                      🗑 Delete
+                                    </CDropdownItem>
+                                  )}
+                                </CDropdownMenu>
+                              </CDropdown>
+                            </div>
+                          )}
                         </div>
 
                         <hr className="my-2" />
@@ -798,13 +821,15 @@ const Properties = () => {
 
                 <p className="mt-2 mb-3">No units found on this floor.</p>
 
-                <CButton
-                  color="primary"
-                  size="sm"
-                  onClick={() => openAddModal(selectedBuildingId, selectedFloorId)}
-                >
-                  + Add First Unit
-                </CButton>
+                {editable && (
+                  <CButton
+                    color="primary"
+                    size="sm"
+                    onClick={() => openAddModal(selectedBuildingId, selectedFloorId)}
+                  >
+                    + Add First Unit
+                  </CButton>
+                )}
               </CCardBody>
             </CCard>
           ) : (
@@ -850,25 +875,29 @@ const Properties = () => {
                         )}
 
                         <div className="d-flex gap-2 mt-3">
-                          <CButton
-                            size="sm"
-                            color="primary"
-                            variant="outline"
-                            className="flex-grow-1"
-                            onClick={() => openEditModal(p)}
-                          >
-                            ✏️ Edit
-                          </CButton>
+                          {editable && (
+                            <CButton
+                              size="sm"
+                              color="primary"
+                              variant="outline"
+                              className="flex-grow-1"
+                              onClick={() => openEditModal(p)}
+                            >
+                              ✏️ Edit
+                            </CButton>
+                          )}
 
-                          <CButton
-                            size="sm"
-                            color="danger"
-                            variant="outline"
-                            className="flex-grow-1"
-                            onClick={() => handleDelete(p.id)}
-                          >
-                            🗑 Delete
-                          </CButton>
+                          {deletable && (
+                            <CButton
+                              size="sm"
+                              color="danger"
+                              variant="outline"
+                              className="flex-grow-1"
+                              onClick={() => handleDelete(p.id)}
+                            >
+                              🗑 Delete
+                            </CButton>
+                          )}
                         </div>
                       </CCardBody>
                     </CCard>

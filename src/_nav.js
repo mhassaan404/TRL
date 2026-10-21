@@ -10,9 +10,11 @@ import {
   cilClipboard,
   cilChartLine,
   cilBriefcase,
+  cilPeople,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 
+// Each link is shown only when the user may open it (filterNav in src/permissions.js)
 const _nav = [
   {
     component: CNavItem,
@@ -149,6 +151,13 @@ const _nav = [
     name: 'Late Fee Settings',
     to: '/settings/late-fee',
     icon: <CIcon icon={cilSettings} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Users',
+    to: '/settings/users',
+    superAdmin: true,
+    icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
   },
 ]
 

@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { firstAllowedPath } from '../../../permissions'
 import {
   CButton,
   CCard,
@@ -21,6 +22,7 @@ import { cilBuilding, cilLockLocked, cilUser } from '@coreui/icons'
 
 import authService, { LAST_CLIENT_CODE } from '../../../services/auth.service'
 import { TrlLogo } from '../../../components/brand/TrlLogo'
+import { preloadAfterLogin } from '../../../routes'
 
 // Pre-fills the company code used last time on this browser (not secret)
 const lastClientCode = () => {
@@ -33,6 +35,12 @@ const lastClientCode = () => {
 
 const Login = () => {
   const navigate = useNavigate()
+
+  // While the user types, fetch what comes after login (app frame + dashboard), so it opens without a wait
+  useEffect(() => {
+    const t = setTimeout(preloadAfterLogin, 300)
+    return () => clearTimeout(t)
+  }, [])
 
   const [clientCode, setClientCode] = useState(lastClientCode)
   const [username, setUsername] = useState('')
@@ -54,8 +62,9 @@ const Login = () => {
     setLoading(true)
 
     try {
-      await authService.login(clientCode.trim(), username.trim(), password)
-      navigate('/dashboard', { replace: true })
+      const user = await authService.login(clientCode.trim(), username.trim(), password)
+      // The dashboard, or a staff user's first permitted page
+      navigate(firstAllowedPath(user.access) || '/dashboard', { replace: true })
     } catch (err) {
       setServerError(err.message || 'Invalid client code, username or password')
     } finally {

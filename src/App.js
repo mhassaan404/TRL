@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
-import { CSpinner, useColorModes } from '@coreui/react'
+import { useColorModes } from '@coreui/react'
 import './scss/style.scss'
 import './App.css'
 import authService from './services/auth.service'
@@ -50,8 +50,11 @@ const App = () => {
     <HashRouter>
       <Suspense
         fallback={
-          <div className="pt-3 text-center">
-            <CSpinner color="primary" variant="grow" />
+          // Same look as the start-up screen in index.html (its .boot styles), so a slow download never looks frozen
+          <div className="boot" role="status" aria-live="polite">
+            <div className="boot-spin"></div>
+            <div>Loading…</div>
+            <div className="boot-slow">Slow connection — still loading, please wait.</div>
           </div>
         }
       >

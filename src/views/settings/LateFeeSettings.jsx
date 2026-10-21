@@ -20,6 +20,7 @@ import { toast } from 'react-toastify'
 import CurrencyInput from '../../components/common/CurrencyInput'
 import { settingsService } from '../../services/settings.service'
 import { fmt, formatDate } from '../../utils/rentUtils'
+import { useAccess } from '../../access'
 
 // Same limits as the API (LateFeeSettingsService) and the database CHECK constraints
 const MAX_DUE_DAYS = 90
@@ -63,6 +64,9 @@ const addDays = (date, days) => {
 }
 
 const LateFeeSettings = () => {
+  // Buttons this user may not use are hidden (the server refuses them anyway)
+  const { canEdit } = useAccess()
+  const editable = canEdit('lateFeeSettings')
   const [status, setStatus] = useState('loading') // loading | error | ready
   const [loadError, setLoadError] = useState('')
   const [saved, setSaved] = useState(null) // last values loaded from / saved to the server
@@ -172,7 +176,7 @@ const LateFeeSettings = () => {
             </CAlert>
 
             <CForm onSubmit={handleSave} noValidate>
-              <fieldset disabled={saving}>
+              <fieldset disabled={saving || !editable}>
                 <CRow className="g-4">
                   <CCol md={4}>
                     <CFormLabel htmlFor="lf-due-days">

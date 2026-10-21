@@ -14,11 +14,16 @@ import { TrlLogo, TrlMark } from './brand/TrlLogo'
 
 // sidebar nav config
 import navigation from '../_nav'
+import { useAccess } from '../access'
+import { filterNav } from '../permissions'
 
 const AppSidebar = () => {
   const dispatch = useDispatch()
   const unfoldable = useSelector((state) => state.sidebarUnfoldable)
   const sidebarShow = useSelector((state) => state.sidebarShow)
+  // Only the pages this user may open
+  const { access } = useAccess()
+  const items = React.useMemo(() => filterNav(navigation, access), [access])
 
   return (
     <CSidebar
@@ -48,7 +53,7 @@ const AppSidebar = () => {
           onClick={() => dispatch({ type: 'set', sidebarShow: false })}
         />
       </CSidebarHeader>
-      <AppSidebarNav items={navigation} />
+      <AppSidebarNav items={items} />
       <CSidebarFooter className="border-top d-none d-lg-flex">
         <CSidebarToggler
           onClick={() => dispatch({ type: 'set', sidebarUnfoldable: !unfoldable })}

@@ -26,6 +26,8 @@ api.interceptors.response.use(
   },
   (error) => {
     requestFinished()
+    // No permission: the user's access may have changed on the Users page, so the menu asks again (src/access.js)
+    if (error?.response?.status === 403) window.dispatchEvent(new Event('trl:forbidden'))
     return Promise.reject(error)
   },
 )

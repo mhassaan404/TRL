@@ -29,6 +29,7 @@ import {
 } from '../../utils/validators'
 import { prepareLogo } from '../../utils/logoImage'
 import { formatDate } from '../../utils/rentUtils'
+import { useAccess } from '../../access'
 
 // Company Profile: the client's own details printed on receipts, invoices, statements and reports.
 // Same limits as the API (CompanyProfileService). The company name comes from the client account and is read only.
@@ -73,6 +74,9 @@ const validate = (f) => {
 }
 
 const CompanyProfile = () => {
+  // Buttons this user may not use are hidden (the server refuses them anyway)
+  const { canEdit } = useAccess()
+  const editable = canEdit('companyProfile')
   const [status, setStatus] = useState('loading') // loading | error | ready
   const [loadError, setLoadError] = useState('')
   const [saved, setSaved] = useState(null) // profile as last loaded from / saved to the server
@@ -204,7 +208,7 @@ const CompanyProfile = () => {
                 receipts and reports.
               </CAlert>
             )}
-            <fieldset disabled={saving}>
+            <fieldset disabled={saving || !editable}>
               <CRow className="g-3">
                 <CCol md={6}>
                   <div className="form-label">Company Name</div>

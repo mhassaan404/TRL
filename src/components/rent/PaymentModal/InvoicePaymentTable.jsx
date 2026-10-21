@@ -18,6 +18,7 @@ import { fmt, formatDate, getRemainingRent } from '../../../utils/rentUtils'
 import CurrencyInput from '../../common/CurrencyInput'
 import { rentService } from '../../../services/rent.service'
 import { useIsDarkMode } from '../../../hooks/useIsDarkMode'
+import { useAccess } from '../../../access'
 import { todayLocal } from '../../../utils/dates'
 
 const InvoicePaymentTable = ({
@@ -33,6 +34,10 @@ const InvoicePaymentTable = ({
   handleReverseLateFee,
 }) => {
   const isDark = useIsDarkMode()
+  // Charging / waiving a late fee and discounts need their own permission (the server checks it too)
+  const { can } = useAccess()
+  const lateFeeOk = can('action:lateFee')
+  const discountOk = can('action:discount')
 
   const [historyState, setHistoryState] = useState({
     visible: false,
@@ -147,18 +152,20 @@ const InvoicePaymentTable = ({
                         <span className="badge bg-secondary me-1">
                           Charged {fmt(inv.lateFeeCharged)}
                         </span>
-                        <CButton
-                          color="link"
-                          size="sm"
-                          className="p-0 text-danger"
-                          disabled={!!inv.reversing}
-                          onClick={() => {
-                            const reason = window.prompt('Reason for reversing the late fee:')
-                            if (reason?.trim()) handleReverseLateFee(inv, reason.trim())
-                          }}
-                        >
-                          {inv.reversing ? '...' : 'Reverse'}
-                        </CButton>
+                        {lateFeeOk && (
+                          <CButton
+                            color="link"
+                            size="sm"
+                            className="p-0 text-danger"
+                            disabled={!!inv.reversing}
+                            onClick={() => {
+                              const reason = window.prompt('Reason for reversing the late fee:')
+                              if (reason?.trim()) handleReverseLateFee(inv, reason.trim())
+                            }}
+                          >
+                            {inv.reversing ? '...' : 'Reverse'}
+                          </CButton>
+                        )}
                       </div>
                     )}
                   </CTableDataCell>
@@ -168,12 +175,15 @@ const InvoicePaymentTable = ({
                     <div className="d-flex flex-column align-items-center gap-1">
                       <CFormCheck
                         checked={!!inv.waveLateFee}
-                        disabled={!!rentForm.globalWaveLateFee}
+                        disabled={!!rentForm.globalWaveLateFee || !lateFeeOk}
+                        title={
+                          lateFeeOk ? undefined : 'You don’t have permission to waive late fees'
+                        }
                         onChange={(e) =>
                           updateInvoiceField(inv.invoiceId, 'waveLateFee', e.target.checked)
                         }
                       />
-                      {Number(inv.lateFee) > 0 && !inv.waveLateFee && (
+                      {lateFeeOk && Number(inv.lateFee) > 0 && !inv.waveLateFee && (
                         <CButton
                           color="warning"
                           size="sm"
@@ -197,6 +207,8 @@ const InvoicePaymentTable = ({
                       onValueChange={(v) =>
                         updateInvoiceField(inv.invoiceId, 'discountAmount', Number(v))
                       }
+                      disabled={!discountOk}
+                      title={discountOk ? undefined : 'You don’t have permission to give discounts'}
                       placeholder="0"
                     />
                   </CTableDataCell>

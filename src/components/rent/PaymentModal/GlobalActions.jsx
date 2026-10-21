@@ -2,6 +2,7 @@ import React from 'react'
 import { CFormLabel, CFormSelect, CFormInput, CFormCheck, CButton, CRow, CCol } from '@coreui/react'
 import CurrencyInput from '../../common/CurrencyInput'
 import { todayLocal } from '../../../utils/dates'
+import { useAccess } from '../../../access'
 
 const GlobalActionsSection = ({
   rentForm,
@@ -13,6 +14,10 @@ const GlobalActionsSection = ({
   handleApplyGlobalPaymentDate,
   handleApplyGlobalNotes,
 }) => {
+  // Discounts and late-fee waivers need their own permission (the server checks it too)
+  const { can } = useAccess()
+  const discountOk = can('action:discount')
+  const lateFeeOk = can('action:lateFee')
   return (
     <>
       <CRow className="g-3 align-items-end">
@@ -74,7 +79,7 @@ const GlobalActionsSection = ({
         </CCol>
 
         {/* Discount Amount */}
-        <CCol md={3}>
+        <CCol md={3} className={discountOk ? undefined : 'd-none'}>
           <CFormLabel className="fw-medium mb-2">Discount Amount</CFormLabel>
           <div className="input-group">
             <CurrencyInput
@@ -100,7 +105,7 @@ const GlobalActionsSection = ({
         </CCol>
 
         {/* Waive Late Fee – same row */}
-        <CCol md={3} className="d-flex align-items-end pb-2">
+        <CCol md={3} className={lateFeeOk ? 'd-flex align-items-end pb-2' : 'd-none'}>
           <CFormCheck
             id="global-waive-late-fee"
             label="Waive Late Fee Globally"

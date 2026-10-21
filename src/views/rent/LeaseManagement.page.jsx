@@ -35,6 +35,7 @@ import {
 } from '../../components/common/TablePagination'
 import { fmt, formatDate } from '../../utils/rentUtils'
 import { addMonths, todayLocal } from '../../utils/dates'
+import { useAccess } from '../../access'
 
 // A fresh form each time (today's date is taken when the form opens, not when the page first loaded)
 const newForm = () => ({
@@ -79,6 +80,11 @@ const STATUS_BADGE = {
 const hasStarted = (l) => String(l.startDate || '').slice(0, 10) <= todayLocal()
 
 const LeaseManagement = () => {
+  // Buttons this user may not use are hidden (the server refuses them anyway)
+  const { canEdit, can } = useAccess()
+  const editable = canEdit('leases')
+  const cancelOk = editable && can('action:deleteCancel')
+  const endOk = editable && can('action:endLease')
   const [leases, setLeases] = useState([])
   const [tenants, setTenants] = useState([])
   const [modal, setModal] = useState({ visible: false })
@@ -342,15 +348,17 @@ const LeaseManagement = () => {
           <div className="fw-semibold fs-5">Lease Management</div>
           <div className="small text-body-secondary">{leases.length} leases in total</div>
         </div>
-        <CButton
-          color="primary"
-          onClick={() => {
-            setForm(newForm())
-            setModal({ visible: true })
-          }}
-        >
-          + New Lease
-        </CButton>
+        {editable && (
+          <CButton
+            color="primary"
+            onClick={() => {
+              setForm(newForm())
+              setModal({ visible: true })
+            }}
+          >
+            + New Lease
+          </CButton>
+        )}
       </CCardHeader>
       <CCardBody>
         {/* Filters: search + tenant on the left, status on the right */}
@@ -463,7 +471,7 @@ const LeaseManagement = () => {
                   )}
                 </CTableDataCell>
                 <CTableDataCell>
-                  {l.isActive && (
+                  {editable && l.isActive && (
                     <div className="d-flex gap-1 text-nowrap">
                       <CButton
                         size="sm"
@@ -493,7 +501,7 @@ const LeaseManagement = () => {
                         </CButton>
                       )}
                       {/* Only for a lease made by mistake; a renewal is refused by the API (use End) */}
-                      {statusOf(l) === 'Active' && !previousOf(l) && (
+                      {cancelOk && statusOf(l) === 'Active' && !previousOf(l) && (
                         <CButton
                           size="sm"
                           color="warning"
@@ -503,7 +511,7 @@ const LeaseManagement = () => {
                           Cancel Lease
                         </CButton>
                       )}
-                      {l.isPendingRenewal && (
+                      {cancelOk && l.isPendingRenewal && (
                         <CButton
                           size="sm"
                           color="warning"
@@ -513,17 +521,19 @@ const LeaseManagement = () => {
                           Cancel Renewal
                         </CButton>
                       )}
-                      <CButton
-                        size="sm"
-                        color="danger"
-                        variant="outline"
-                        onClick={() => openTerminate(l)}
-                      >
-                        End
-                      </CButton>
+                      {endOk && (
+                        <CButton
+                          size="sm"
+                          color="danger"
+                          variant="outline"
+                          onClick={() => openTerminate(l)}
+                        >
+                          End
+                        </CButton>
+                      )}
                     </div>
                   )}
-                  {endedOnStartDay(l) && (
+                  {cancelOk && endedOnStartDay(l) && (
                     <CButton
                       size="sm"
                       color="warning"

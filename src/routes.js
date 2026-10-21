@@ -25,42 +25,117 @@ const MoveOutSettlements = lazyPage(() => import('./views/rent/MoveOutSettlement
 const SettlementForm = lazyPage(() => import('./views/rent/SettlementForm'))
 const ChangePassword = lazyPage(() => import('./views/account/ChangePassword'))
 const LateFeeSettings = lazyPage(() => import('./views/settings/LateFeeSettings'))
+const Users = lazyPage(() => import('./views/settings/Users'))
 
+// page: the permission page (src/permissions.js) a user needs to open it (edit: needs its Edit level);
+// superAdmin: Super Admin only; neither: any signed-in user
 const routes = [
   { path: '/', exact: true, name: 'Home' },
-  { path: '/dashboard', name: 'Dashboard', element: Dashboard },
-  { path: '/tenants', name: 'Tenants', element: Tenants },
-  { path: '/properties', name: 'Buildings & Units', element: Properties },
-  { path: '/properties/propertyDashboard', name: 'Unit Occupancy', element: PropertyDashboard },
-  { path: '/rent/rentcollection', name: 'RentCollection', element: RentCollection },
-  { path: '/rent/renthistory', name: 'RentHistory', element: RentHistory },
-  { path: '/rent/payments', name: 'Payments', element: Payments },
-  { path: '/rent/reminders', name: 'Reminders', element: Reminders },
-  { path: '/maintenance', name: 'Maintenance', element: MaintenanceJobs },
-  { path: '/rent/leasemanagement', name: 'LeaseManagement', element: LeaseManagement },
-  { path: '/reports/arrears-ageing', name: 'Arrears Ageing', element: ArrearsAgeing },
-  { path: '/reports/collections', name: 'Collections', element: Collections },
-  { path: '/reports/tenant-statement', name: 'Tenant Statement', element: TenantStatement },
+  { path: '/dashboard', name: 'Dashboard', element: Dashboard, page: 'dashboard' },
+  { path: '/tenants', name: 'Tenants', element: Tenants, page: 'tenants' },
+  { path: '/properties', name: 'Buildings & Units', element: Properties, page: 'properties' },
+  {
+    path: '/properties/propertyDashboard',
+    name: 'Unit Occupancy',
+    element: PropertyDashboard,
+    page: 'occupancy',
+  },
+  {
+    path: '/rent/rentcollection',
+    name: 'RentCollection',
+    element: RentCollection,
+    page: 'rentCollection',
+  },
+  { path: '/rent/renthistory', name: 'RentHistory', element: RentHistory, page: 'rentHistory' },
+  { path: '/rent/payments', name: 'Payments', element: Payments, page: 'payments' },
+  { path: '/rent/reminders', name: 'Reminders', element: Reminders, page: 'reminders' },
+  { path: '/maintenance', name: 'Maintenance', element: MaintenanceJobs, page: 'maintenance' },
+  {
+    path: '/rent/leasemanagement',
+    name: 'LeaseManagement',
+    element: LeaseManagement,
+    page: 'leases',
+  },
+  {
+    path: '/reports/arrears-ageing',
+    name: 'Arrears Ageing',
+    element: ArrearsAgeing,
+    page: 'arrearsReport',
+  },
+  {
+    path: '/reports/collections',
+    name: 'Collections',
+    element: Collections,
+    page: 'collectionsReport',
+  },
+  {
+    path: '/reports/tenant-statement',
+    name: 'Tenant Statement',
+    element: TenantStatement,
+    page: 'statementReport',
+  },
   {
     path: '/reports/billing-vs-collection',
     name: 'Billing vs Collection',
     element: BillingVsCollection,
+    page: 'billingReport',
   },
-  { path: '/reports/rent-roll', name: 'Occupancy / Rent Roll', element: RentRoll },
-  { path: '/reports/maintenance-cost', name: 'Maintenance Cost', element: MaintenanceCost },
-  { path: '/rent/deposits', name: 'Security Deposits', element: SecurityDeposits },
-  { path: '/rent/settlements', name: 'Move-out Settlements', element: MoveOutSettlements },
+  {
+    path: '/reports/rent-roll',
+    name: 'Occupancy / Rent Roll',
+    element: RentRoll,
+    page: 'rentRollReport',
+  },
+  {
+    path: '/reports/maintenance-cost',
+    name: 'Maintenance Cost',
+    element: MaintenanceCost,
+    page: 'maintenanceCostReport',
+  },
+  {
+    path: '/rent/deposits',
+    name: 'Security Deposits',
+    element: SecurityDeposits,
+    page: 'deposits',
+  },
+  {
+    path: '/rent/settlements',
+    name: 'Move-out Settlements',
+    element: MoveOutSettlements,
+    page: 'settlements',
+  },
   {
     path: '/rent/settlements/new/:tenantId/:unitId',
     name: 'Settle Tenancy',
     element: SettlementForm,
+    page: 'settlements',
+    edit: true,
   },
   { path: '/account/change-password', name: 'Change Password', element: ChangePassword },
-  { path: '/settings/company-profile', name: 'Company Profile', element: CompanyProfile },
-  { path: '/settings/late-fee', name: 'Late Fee Settings', element: LateFeeSettings },
+  {
+    path: '/settings/company-profile',
+    name: 'Company Profile',
+    element: CompanyProfile,
+    page: 'companyProfile',
+  },
+  {
+    path: '/settings/late-fee',
+    name: 'Late Fee Settings',
+    element: LateFeeSettings,
+    page: 'lateFeeSettings',
+  },
+  { path: '/settings/users', name: 'Users', element: Users, superAdmin: true },
 ]
 
 // Download every page in the background (after login), so opening a menu item is instant
 export const preloadRoutes = () => routes.forEach((r) => r.element?.preload?.().catch(() => {}))
+
+// What the user sees right after logging in (the app frame, then the dashboard, then its chart), fetched while they
+// type on the login page: on a slow connection the dashboard is then ready instead of a long wait after "Login".
+export const preloadAfterLogin = () =>
+  import('./layout/DefaultLayout')
+    .then(() => Dashboard.preload())
+    .then(() => import('./views/dashboard/MainChart'))
+    .catch(() => {}) // a failed prefetch only means it loads normally later
 
 export default routes

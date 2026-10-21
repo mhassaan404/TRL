@@ -35,7 +35,7 @@ import {
   DEFAULT_PAGE_SIZE,
 } from '../../components/common/TablePagination'
 import { fmt, formatDate } from '../../utils/rentUtils'
-import { todayLocal } from '../../utils/dates'
+import { formatTime, todayLocal } from '../../utils/dates'
 import {
   CATEGORIES,
   PRIORITIES,
@@ -47,6 +47,7 @@ import {
   nextStatuses,
   summarize,
 } from '../../utils/maintenance'
+import { useAccess } from '../../access'
 
 // Maintenance jobs per building / floor / unit. Billing to the tenant creates a normal Maintenance extra-charge
 // invoice (Rent Collection, Reminders, late fees and payments then work as usual). All rules are enforced by the API.
@@ -80,6 +81,9 @@ const day = (d) => String(d || '').slice(0, 10)
 const toId = (v) => (v === '' || v == null ? null : Number(v))
 
 const MaintenanceJobs = () => {
+  // Buttons this user may not use are hidden (the server refuses them anyway)
+  const { canEdit } = useAccess()
+  const editable = canEdit('maintenance')
   const [jobs, setJobs] = useState([])
   const [loading, setLoading] = useState(true)
   const [locations, setLocations] = useState({ buildings: [], units: [] })
@@ -327,9 +331,11 @@ const MaintenanceJobs = () => {
           <div className="fw-semibold fs-5">Maintenance</div>
           <div className="small text-body-secondary">{jobs.length} jobs in total</div>
         </div>
-        <CButton color="primary" onClick={openNew}>
-          + New Request
-        </CButton>
+        {editable && (
+          <CButton color="primary" onClick={openNew}>
+            + New Request
+          </CButton>
+        )}
       </CCardHeader>
       <CCardBody>
         {/* Summary cards (click to filter) */}
@@ -496,37 +502,43 @@ const MaintenanceJobs = () => {
                   </CTableDataCell>
                   <CTableDataCell>
                     <div className="d-flex gap-1 text-nowrap">
-                      <CButton
-                        size="sm"
-                        color="secondary"
-                        variant="outline"
-                        disabled={j.status === 'Cancelled'}
-                        title={j.status === 'Cancelled' ? "Cancelled jobs can't be edited." : ''}
-                        onClick={() => openEdit(j)}
-                      >
-                        Edit
-                      </CButton>
-                      <CButton
-                        size="sm"
-                        color="primary"
-                        variant="outline"
-                        disabled={isClosed(j)}
-                        title={isClosed(j) ? 'This job is closed.' : ''}
-                        onClick={() => openStatus(j)}
-                      >
-                        Status
-                      </CButton>
-                      <span title={billReason || ''}>
+                      {editable && (
                         <CButton
                           size="sm"
-                          color="success"
+                          color="secondary"
                           variant="outline"
-                          disabled={!!billReason}
-                          onClick={() => openBill(j)}
+                          disabled={j.status === 'Cancelled'}
+                          title={j.status === 'Cancelled' ? "Cancelled jobs can't be edited." : ''}
+                          onClick={() => openEdit(j)}
                         >
-                          Bill Tenant
+                          Edit
                         </CButton>
-                      </span>
+                      )}
+                      {editable && (
+                        <CButton
+                          size="sm"
+                          color="primary"
+                          variant="outline"
+                          disabled={isClosed(j)}
+                          title={isClosed(j) ? 'This job is closed.' : ''}
+                          onClick={() => openStatus(j)}
+                        >
+                          Status
+                        </CButton>
+                      )}
+                      {editable && (
+                        <span title={billReason || ''}>
+                          <CButton
+                            size="sm"
+                            color="success"
+                            variant="outline"
+                            disabled={!!billReason}
+                            onClick={() => openBill(j)}
+                          >
+                            Bill Tenant
+                          </CButton>
+                        </span>
+                      )}
                       <CButton
                         size="sm"
                         color="info"
@@ -922,7 +934,7 @@ const MaintenanceJobs = () => {
                 {historyState.rows.map((r) => (
                   <CTableRow key={r.id}>
                     <CTableDataCell className="text-nowrap">
-                      {new Date(r.createdAt).toLocaleString('en-GB')}
+                      {formatDate(r.createdAt)} {formatTime(r.createdAt)}
                     </CTableDataCell>
                     <CTableDataCell>{r.action}</CTableDataCell>
                     <CTableDataCell>{r.note || '—'}</CTableDataCell>

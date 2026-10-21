@@ -8,6 +8,15 @@ export const toLocalDateString = (date) =>
 
 export const todayLocal = () => toLocalDateString(new Date())
 
+// Time of day in 12-hour form, e.g. "4:47 PM" (the app shows times this way everywhere). '' for a missing/bad value.
+export const formatTime = (value) => {
+  if (!value) return ''
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return ''
+  const h = d.getHours()
+  return `${h % 12 || 12}:${pad(d.getMinutes())} ${h < 12 ? 'AM' : 'PM'}`
+}
+
 // YYYY-MM-DD plus whole months, kept on the last day of a shorter month (31 Jan + 1 month = 28/29 Feb), the same as
 // SQL Server's DATEADD(MONTH, ...) that computes a lease's end date
 export const addMonths = (ymd, months) => {

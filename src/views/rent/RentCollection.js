@@ -30,8 +30,12 @@ import { exportCSV } from '../../utils/exportUtils'
 import { useIsDarkMode } from '../../hooks/useIsDarkMode'
 import { todayLocal } from '../../utils/dates'
 import { invoiceStatusColor } from '../../utils/invoiceStatus'
+import { useAccess } from '../../access'
 
 const RentCollection = () => {
+  // Buttons this user may not use are hidden (the server refuses them anyway)
+  const { canEdit } = useAccess()
+  const editable = canEdit('rentCollection')
   const {
     loading,
     rentList,
@@ -201,19 +205,21 @@ const RentCollection = () => {
         header: 'Actions',
         cell: ({ row }) => (
           <div className="d-flex gap-2">
-            <CButton
-              color="primary"
-              size="sm"
-              variant="outline"
-              onClick={() => openEditPayment(row.original)}
-            >
-              Record Payment
-            </CButton>
+            {editable && (
+              <CButton
+                color="primary"
+                size="sm"
+                variant="outline"
+                onClick={() => openEditPayment(row.original)}
+              >
+                Record Payment
+              </CButton>
+            )}
           </div>
         ),
       },
     ],
-    [openEditPayment],
+    [openEditPayment, editable],
   )
 
   const table = useReactTable({
@@ -298,41 +304,49 @@ const RentCollection = () => {
                     />
                   </div>
                   {/* Generate Invoices (theme-aware colours: readable in light and dark mode) */}
-                  <CButton color="primary" variant="outline" onClick={openGenerateInvoices}>
-                    + Generate Invoices
-                  </CButton>
+                  {editable && (
+                    <CButton color="primary" variant="outline" onClick={openGenerateInvoices}>
+                      + Generate Invoices
+                    </CButton>
+                  )}
                   {/* Extra Charge: a separate one-time invoice (maintenance, utility, damage, rent correction...) */}
-                  <CButton color="info" variant="outline" onClick={openExtraCharge}>
-                    + Extra Charge
-                  </CButton>
+                  {editable && (
+                    <CButton color="info" variant="outline" onClick={openExtraCharge}>
+                      + Extra Charge
+                    </CButton>
+                  )}
                   {/* New Payment */}
-                  <CButton color="primary" onClick={openNewPayment}>
-                    + New Payment
-                  </CButton>
+                  {editable && (
+                    <CButton color="primary" onClick={openNewPayment}>
+                      + New Payment
+                    </CButton>
+                  )}
                   {/* Update Due Date */}
-                  <CButton
-                    color="warning"
-                    variant="outline"
-                    disabled={selectedIds.length === 0}
-                    onClick={() => {
-                      let prefill = todayLocal()
-                      if (selectedIds.length === 1) {
-                        const invoice = rentList.find((r) => r.invoiceId === selectedIds[0])
-                        if (invoice?.dueDate) {
-                          const datePart = String(invoice.dueDate).split('T')[0]
-                          if (datePart && datePart.includes('-') && datePart.length >= 10) {
-                            prefill = datePart
+                  {editable && (
+                    <CButton
+                      color="warning"
+                      variant="outline"
+                      disabled={selectedIds.length === 0}
+                      onClick={() => {
+                        let prefill = todayLocal()
+                        if (selectedIds.length === 1) {
+                          const invoice = rentList.find((r) => r.invoiceId === selectedIds[0])
+                          if (invoice?.dueDate) {
+                            const datePart = String(invoice.dueDate).split('T')[0]
+                            if (datePart && datePart.includes('-') && datePart.length >= 10) {
+                              prefill = datePart
+                            }
                           }
                         }
-                      }
-                      setBulkDueDateState({
-                        visible: true,
-                        newDueDate: prefill,
-                      })
-                    }}
-                  >
-                    Update Due Date
-                  </CButton>
+                        setBulkDueDateState({
+                          visible: true,
+                          newDueDate: prefill,
+                        })
+                      }}
+                    >
+                      Update Due Date
+                    </CButton>
+                  )}
                 </div>
                 {/* Filtered Count */}
                 <div className="text-body-secondary small mt-2">

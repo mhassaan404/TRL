@@ -3,8 +3,18 @@ import { AppContent, AppSidebar, AppFooter, AppHeader } from '../components/inde
 import TopProgress from '../components/TopProgress'
 import { preloadRoutes } from '../routes'
 import { shouldPreloadPages } from '../utils/network'
+import { refreshAccess } from '../access'
 
 const DefaultLayout = () => {
+  // The user's current access (pages and actions): asked when the app opens and when the window is used again, so
+  // changes on the Users page show without logging out
+  useEffect(() => {
+    refreshAccess(true)
+    const onFocus = () => refreshAccess()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [])
+
   // Fetch the other pages' code once the current page has loaded, so menu items open without a wait.
   // Skipped on slow / data-saving connections: there the page being opened gets all the bandwidth.
   useEffect(() => {
