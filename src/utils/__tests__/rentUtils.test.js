@@ -143,5 +143,7 @@ describe('CSV export', () => {
       '"\'=HYPERLINK(""x"")","say ""hi"", ok"',
       '"\'-5",""',
     ])
+    // starts with the UTF-8 BOM, so Excel shows "—" and Urdu text correctly
+    expect([...new Uint8Array(await blob.arrayBuffer()).slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf])
   })
 })

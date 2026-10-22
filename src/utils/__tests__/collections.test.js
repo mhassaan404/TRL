@@ -1,5 +1,32 @@
 import { describe, expect, test } from 'vitest'
-import { groupPayments, isReversalRow, monthLabel, presetRange, totalsOf } from '../collections'
+import {
+  groupPayments,
+  isReversalRow,
+  monthLabel,
+  paymentsLabel,
+  presetRange,
+  totalsOf,
+} from '../collections'
+
+describe('paymentsLabel', () => {
+  test('shows reversals next to the payment count', () => {
+    expect(paymentsLabel({ count: 2, reversals: 0 })).toBe('2')
+    expect(paymentsLabel({ count: 2, reversals: 1 })).toBe('2 (+1 reversal)')
+    expect(paymentsLabel({ count: 0, reversals: 3 })).toBe('0 (+3 reversals)')
+    expect(paymentsLabel({})).toBe('0')
+  })
+
+  test('works on real totals: 2 payments and 1 reversal on one day', () => {
+    const rows = [
+      { paymentDate: '2026-10-15', amount: 1000, tenantId: 1 },
+      { paymentDate: '2026-10-15', amount: 597, tenantId: 1 },
+      { paymentDate: '2026-10-15', amount: -12500, reversalOfPaymentId: 3, tenantId: 1 },
+    ]
+    const [day] = groupPayments(rows, 'Day')
+    expect(paymentsLabel(day)).toBe('2 (+1 reversal)')
+    expect(paymentsLabel(totalsOf(rows))).toBe('2 (+1 reversal)')
+  })
+})
 
 describe('presetRange', () => {
   test('ranges relative to today, both days included', () => {

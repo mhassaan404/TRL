@@ -71,13 +71,6 @@ export const rentService = {
       'Failed to load payment history',
     ),
 
-  getAllPayments: (from, to) =>
-    load(
-      async () => list(await api.get('/Rent/GetAllPayments', { params: { from, to } })),
-      [],
-      'Failed to load payments',
-    ),
-
   getVacantUnits: (includeUnitId) =>
     load(
       async () => list(await api.get('/Rent/GetVacantUnits', { params: { includeUnitId } })),

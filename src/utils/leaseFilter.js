@@ -1,4 +1,4 @@
-// "Current / Moved out" filter for Rent History and Payment Records. The API marks each row with leaseCurrent:
+// "Current / Moved out" filter for Rent History and Collections. The API marks each row with leaseCurrent:
 // true = that tenant + unit still has an active lease (running or booked), false = moved out of that unit.
 export const LEASE_FILTERS = [
   { key: '', label: 'All tenants' },

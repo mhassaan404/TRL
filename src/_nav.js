@@ -66,11 +66,6 @@ const _nav = [
       },
       {
         component: CNavItem,
-        name: 'Payment Records',
-        to: '/rent/Payments',
-      },
-      {
-        component: CNavItem,
         name: 'Lease Management',
         to: '/rent/LeaseManagement',
       },

@@ -21,11 +21,11 @@ describe('can', () => {
   })
 
   it('lets edit include view, but not the other way round', () => {
-    const a = staff(['tenants:edit', 'payments:view'])
+    const a = staff(['tenants:edit', 'collectionsReport:view'])
     expect(canView(a, 'tenants')).toBe(true)
     expect(canEdit(a, 'tenants')).toBe(true)
-    expect(canView(a, 'payments')).toBe(true)
-    expect(canEdit(a, 'payments')).toBe(false)
+    expect(canView(a, 'collectionsReport')).toBe(true)
+    expect(canEdit(a, 'collectionsReport')).toBe(false)
     expect(canView(a, 'leases')).toBe(false)
   })
 
@@ -50,7 +50,6 @@ describe('pages and routes', () => {
       'occupancy',
       'rentCollection',
       'rentHistory',
-      'payments',
       'leases',
       'deposits',
       'settlements',
@@ -97,6 +96,12 @@ describe('pages and routes', () => {
     }
   })
 
+  it('has no Payment Records page any more (merged into Collections)', () => {
+    expect(PAGES.some((p) => p.key === 'payments')).toBe(false)
+    expect(routes.some((r) => r.path.toLowerCase() === '/rent/payments')).toBe(false)
+    expect(pageOfPath('/rent/payments')).toBe(null)
+  })
+
   it('finds the most specific page of an address', () => {
     expect(pageOfPath('/properties')).toBe('properties')
     expect(pageOfPath('/properties/PropertyDashboard')).toBe('occupancy')
@@ -106,7 +111,7 @@ describe('pages and routes', () => {
 
   it('starts on the dashboard, or the first allowed page', () => {
     expect(firstAllowedPath(admin)).toBe('/dashboard')
-    expect(firstAllowedPath(staff(['payments:view', 'tenants:view']))).toBe('/tenants')
+    expect(firstAllowedPath(staff(['collectionsReport:view', 'tenants:view']))).toBe('/tenants')
     expect(firstAllowedPath(staff([]))).toBe(null)
   })
 })
@@ -120,7 +125,7 @@ describe('filterNav', () => {
       name: 'Rent',
       items: [
         { name: 'Rent Collection', to: '/rent/RentCollection' },
-        { name: 'Payment Records', to: '/rent/Payments' },
+        { name: 'Rent History', to: '/rent/RentHistory' },
       ],
     },
     { name: 'Administration' },
@@ -135,9 +140,9 @@ describe('filterNav', () => {
   })
 
   it('keeps only allowed links and drops empty groups and titles', () => {
-    const items = filterNav(nav, staff(['tenants:view', 'payments:view']))
+    const items = filterNav(nav, staff(['tenants:view', 'rentHistory:view']))
     expect(items.map((i) => i.name)).toEqual(['Operations', 'Tenants', 'Rent'])
-    expect(items[2].items.map((i) => i.name)).toEqual(['Payment Records'])
+    expect(items[2].items.map((i) => i.name)).toEqual(['Rent History'])
   })
 
   it('shows nothing when nothing is allowed', () => {

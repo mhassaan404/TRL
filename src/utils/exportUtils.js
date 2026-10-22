@@ -24,7 +24,9 @@ export const exportCSV = (columns, data, filename = 'export.csv') => {
     ...data.map((row) => cols.map((c) => quote(cell(row, c.key))).join(',')),
   ].join('\n')
 
-  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
+  // The BOM (﻿) at the start tells Excel the file is UTF-8, so "—", Urdu and other non-English letters show
+  // correctly instead of garbled symbols like "â€”"
+  const url = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' }))
   const link = document.createElement('a')
   link.href = url
   link.download = filename

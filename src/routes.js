@@ -9,7 +9,6 @@ const Properties = lazyPage(() => import('./views/properties/Properties'))
 const PropertyDashboard = lazyPage(() => import('./views/properties/PropertyDashboard'))
 const RentCollection = lazyPage(() => import('./views/rent/RentCollection'))
 const RentHistory = lazyPage(() => import('./views/rent/RentHistory'))
-const Payments = lazyPage(() => import('./views/rent/Payments'))
 const Reminders = lazyPage(() => import('./views/rent/Reminders'))
 const MaintenanceJobs = lazyPage(() => import('./views/maintenance/MaintenanceJobs'))
 const LeaseManagement = lazyPage(() => import('./views/rent/LeaseManagement.page'))
@@ -47,7 +46,6 @@ const routes = [
     page: 'rentCollection',
   },
   { path: '/rent/renthistory', name: 'RentHistory', element: RentHistory, page: 'rentHistory' },
-  { path: '/rent/payments', name: 'Payments', element: Payments, page: 'payments' },
   { path: '/rent/reminders', name: 'Reminders', element: Reminders, page: 'reminders' },
   { path: '/maintenance', name: 'Maintenance', element: MaintenanceJobs, page: 'maintenance' },
   {

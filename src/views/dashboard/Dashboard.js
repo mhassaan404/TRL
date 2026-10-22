@@ -378,8 +378,8 @@ const Dashboard = () => {
         <CCol lg={5}>
           <ListCard
             title={`Latest payments · ${mName}`}
-            linkText="Payment Records →"
-            onLink={() => navigate('/rent/payments')}
+            linkText="Collections →"
+            onLink={() => navigate('/reports/collections')}
             empty={`No payments in ${mName}.`}
             rows={recent}
             columns={[

@@ -59,6 +59,11 @@ export const GROUP_BY = {
   Tenant: { key: (p) => p.tenantName || 'Unknown', label: (k) => k },
 }
 
+// The Payments column: "2", or "2 (+1 reversal)" when reversals are in the group too (their minus amounts are in
+// Received, but they are not counted as payments)
+export const paymentsLabel = ({ count = 0, reversals = 0 }) =>
+  reversals ? `${count} (+${reversals} reversal${reversals === 1 ? '' : 's'})` : String(count)
+
 export const isReversalRow = (p) => p?.reversalOfPaymentId != null
 
 // Totals over a list of payments. A reversal (payment entered by mistake, taken back on its own date) has negative

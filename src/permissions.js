@@ -33,7 +33,6 @@ export const PAGES = [
     edit: true,
     paths: ['/rent/renthistory'],
   },
-  { key: 'payments', label: 'Payment Records', group: 'Rent', paths: ['/rent/payments'] },
   {
     key: 'leases',
     label: 'Lease Management',

@@ -11,11 +11,12 @@ export const PAGE_SIZES = [5, 10, 20, 50]
 export const DEFAULT_PAGE_SIZE = 10
 
 export const PageSizeSelect = ({ pageSize, onChange }) => (
-  <div className="d-flex align-items-center gap-2 flex-wrap">
+  // One line always ("Show [10] entries"), also inside narrow toolbars
+  <div className="d-flex align-items-center gap-2 text-nowrap">
     <span>Show</span>
     <select
-      className="form-select form-select-sm"
-      style={{ maxWidth: '70px' }}
+      className="form-select form-select-sm flex-shrink-0"
+      style={{ width: '70px' }}
       value={pageSize}
       onChange={(e) => onChange(Number(e.target.value))}
     >

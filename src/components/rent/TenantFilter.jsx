@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import PropTypes from 'prop-types'
 import SearchableSelect from './SearchableSelect'
 
-// Tenant / Company filter (Rent Collection, Rent History, Payment Records, Lease Management, Property Dashboard).
+// Tenant / Company filter (Rent Collection, Rent History, Collections, Lease Management, Property Dashboard).
 // The choices are the names found in the loaded records, so tenants that have moved out still appear
 // in their history. value '' = all; otherwise the exact tenant / company name. The current choice stays
 // in the list even when the records no longer contain it (e.g. after changing the date range).

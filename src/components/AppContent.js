@@ -65,6 +65,8 @@ const AppContent = () => {
             )
           })}
           <Route path="/" element={<Home />} />
+          {/* The old Payment Records page is now part of the Collections report */}
+          <Route path="/rent/payments" element={<Navigate to="/reports/collections" replace />} />
           {/* Any other address inside the app: the Not Found page instead of an empty screen */}
           <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>

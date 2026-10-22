@@ -2,7 +2,7 @@ import React from 'react'
 import { CButton, CButtonGroup } from '@coreui/react'
 import { LEASE_FILTERS } from '../../utils/leaseFilter'
 
-// Compact "All | Current | Moved out" switch (Rent History, Payment Records). value: '' | 'current' | 'moved'
+// Compact "All | Current | Moved out" switch (Rent History, Collections). value: '' | 'current' | 'moved'
 const SHORT = { '': 'All', current: 'Current', moved: 'Moved out' }
 
 const LeaseFilterButtons = ({ value, onChange }) => (
