@@ -28,6 +28,14 @@ export const reportService = {
       'Failed to load collections',
     ),
 
+  // Overpaid rent given back at move-out settlements from..to (refund dates): Collections' "Refunded"
+  getCollectionRefunds: (from, to) =>
+    load(
+      async () => list(await api.get('/Reports/CollectionRefunds', { params: { from, to } })),
+      [],
+      'Failed to load refunds',
+    ),
+
   // Tenants for the statement picker (deleted ones included, flagged)
   getStatementTenants: () =>
     load(

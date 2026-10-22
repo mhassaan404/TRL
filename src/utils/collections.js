@@ -66,12 +66,54 @@ export const paymentsLabel = ({ count = 0, reversals = 0 }) =>
 
 export const isReversalRow = (p) => p?.reversalOfPaymentId != null
 
-// Totals over a list of payments. A reversal (payment entered by mistake, taken back on its own date) has negative
-// amounts, so it lowers Received / Discount by exactly its cash / discount; it is counted under "reversals", not
-// as a payment, and takes one off "waived" when the reversed record had waived the late fee.
+// Overpaid rent given back at a move-out settlement (Reports/CollectionRefunds) as a Collections list entry: money
+// out on its refund date, never part of Received; only the rent part of the refund (the deposit was never income)
+export const isRefundRow = (p) => p?.isRefund === true
+export const refundEntry = (r) => ({
+  isRefund: true,
+  rowKey: `r${r.refundId}`,
+  refundId: r.refundId,
+  settlementId: r.settlementId,
+  paymentId: null,
+  paymentDate: r.refundDate,
+  enteredAt: r.enteredAt,
+  amount: -num(r.creditPart),
+  discount: 0,
+  refundTotal: num(r.refundTotal),
+  method: r.method,
+  reference: r.reference || '',
+  recordedBy: r.recordedBy,
+  tenantId: r.tenantId,
+  tenantName: r.tenantName,
+  buildingName: r.buildingName,
+  floorNumber: r.floorNumber,
+  unitNumber: r.unitNumber,
+  leaseCurrent: r.leaseCurrent,
+  notes: '',
+})
+
+// Totals over a list of payments (and refunds). A reversal (payment entered by mistake, taken back on its own date)
+// has negative amounts, so it lowers Received / Discount by exactly its cash / discount; it is counted under
+// "reversals", not as a payment, and takes one off "waived" when the reversed record had waived the late fee.
+// A refund (overpaid rent given back) is money out: counted under refunds / refunded, never in Received;
+// net = received - refunded.
 export const totalsOf = (payments) => {
-  const t = { count: 0, reversals: 0, amount: 0, discount: 0, waived: 0, tenants: new Set() }
+  const t = {
+    count: 0,
+    reversals: 0,
+    refunds: 0,
+    amount: 0,
+    refunded: 0,
+    discount: 0,
+    waived: 0,
+    tenants: new Set(),
+  }
   payments.forEach((p) => {
+    if (isRefundRow(p)) {
+      t.refunds += 1
+      t.refunded = round2(t.refunded - num(p.amount))
+      return
+    }
     if (isReversalRow(p)) {
       t.reversals += 1
       if (p.reversesWaiver === true || p.reversesWaiver === 1) t.waived -= 1
@@ -83,11 +125,11 @@ export const totalsOf = (payments) => {
     t.discount = round2(t.discount + num(p.discount))
     t.tenants.add(p.tenantId)
   })
-  return { ...t, tenants: t.tenants.size }
+  return { ...t, tenants: t.tenants.size, net: round2(t.amount - t.refunded) }
 }
 
-// One row per group: { key, label, count, amount, discount, waived, tenants, share (% of amount) }.
-// Day/Month in date order; the others by amount received, largest first.
+// One row per group: { key, label, count, amount, refunded, net, discount, waived, tenants, share (% of received) }.
+// Day/Month newest first; the others by amount received, largest first.
 export const groupPayments = (payments, by) => {
   const g = GROUP_BY[by]
   const map = new Map()
@@ -96,14 +138,79 @@ export const groupPayments = (payments, by) => {
     if (!map.has(k)) map.set(k, [])
     map.get(k).push(p)
   })
-  const total = payments.reduce((s, p) => s + num(p.amount), 0)
+  const total = payments.reduce((s, p) => s + (isRefundRow(p) ? 0 : num(p.amount)), 0)
   const rows = [...map.entries()].map(([k, list]) => {
     const t = totalsOf(list)
     return { key: k, label: g.label(k), ...t, share: total ? round2((t.amount / total) * 100) : 0 }
   })
   return rows.sort((a, b) =>
     g.sortByKey
-      ? a.key.localeCompare(b.key)
+      ? b.key.localeCompare(a.key)
       : b.amount - a.amount || a.label.localeCompare(b.label),
   )
+}
+
+// The Payments list: days newest first; within a day in the order the entries were made (time entered, then #), so
+// a day reads like a story: a payment, then the reversal that took it back
+const enteredAt = (p) => String(p.enteredAt || '')
+export const listOrder = (payments) =>
+  [...payments].sort(
+    (a, b) =>
+      day(b.paymentDate).localeCompare(day(a.paymentDate)) ||
+      enteredAt(a).localeCompare(enteredAt(b)) ||
+      num(a.paymentId) - num(b.paymentId),
+  )
+
+// One status per entry, instead of several labels:
+//   ok        - a normal entry that counts
+//   cancelled - an entry reversed later (by #reversedByPaymentId); it and its reversal add up to zero
+//   reversal  - the entry that reverses #reversalOfPaymentId (minus amounts); reason = what was typed
+export const entryStatus = (p) => {
+  if (isRefundRow(p))
+    return {
+      kind: 'refund',
+      text: `Refund · settlement #${p.settlementId}`,
+      // a refund that also returned deposit money: say which part is rent (the deposit part isn't counted)
+      reason:
+        p.refundTotal > -num(p.amount)
+          ? `Overpaid rent part of a ${p.refundTotal.toLocaleString('en-US')} refund`
+          : 'Overpaid rent',
+    }
+  if (isReversalRow(p))
+    return {
+      kind: 'reversal',
+      text: `Reverses payment #${p.reversalOfPaymentId}`,
+      reason: p.notes || '',
+    }
+  if (p.reversedByPaymentId != null)
+    return {
+      kind: 'cancelled',
+      text: `Reversed by #${p.reversedByPaymentId}`,
+      at: p.reversedAt || null,
+      reason: p.reversalReason || '',
+    }
+  return { kind: 'ok', text: 'Counted' }
+}
+
+// Does a payment belong to a Summary row (e.g. by 'Day', key '2026-10-14')?
+export const inGroup = (p, by, key) => !!GROUP_BY[by] && GROUP_BY[by].key(p) === key
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+// "2026-10-14" -> "Wed, 14 Oct 2026"
+export const dayHeading = (d) => {
+  const [y, m, dd] = day(d).split('-').map(Number)
+  if (!y || !m || !dd) return ''
+  return `${WEEKDAYS[new Date(y, m - 1, dd).getDay()]}, ${pad(dd)} ${MONTHS[m - 1]} ${y}`
+}
+
+// Rows of one page cut into days: [{ day, rows }], in list order
+export const sectionsByDay = (rows) => {
+  const out = []
+  rows.forEach((p) => {
+    const d = day(p.paymentDate)
+    let s = out[out.length - 1]
+    if (!s || s.day !== d) out.push((s = { day: d, rows: [] }))
+    s.rows.push(p)
+  })
+  return out
 }
