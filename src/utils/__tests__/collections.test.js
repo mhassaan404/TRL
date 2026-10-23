@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import {
   groupPayments,
+  groupUnits,
   isRefundRow,
   isReversalRow,
   refundEntry,
@@ -355,5 +356,19 @@ describe('totals with reversals', () => {
     const byMethod = groupPayments(rows, 'Method')
     expect(byMethod[0].label).toBe('Bank Transfer')
     expect(byMethod.find((g) => g.key === 'Cash').share).toBe(0)
+  })
+})
+
+describe('groupUnits', () => {
+  test('writes each building once', () => {
+    expect(
+      groupUnits(
+        'Business Center – 101, Business Center – 102, Business Center – 103, Tower A – 5',
+      ),
+    ).toBe('Business Center: 101, 102, 103 · Tower A: 5')
+    expect(groupUnits('Business Center – 101')).toBe('Business Center: 101')
+    expect(groupUnits('U1, Tower – 2')).toBe('U1 · Tower: 2')
+    expect(groupUnits('')).toBe('')
+    expect(groupUnits(null)).toBe('')
   })
 })

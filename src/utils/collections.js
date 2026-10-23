@@ -214,3 +214,24 @@ export const sectionsByDay = (rows) => {
   })
   return out
 }
+
+// Tenant Statement header: "Business Center – 101, Business Center – 102, Tower – 5" (as the API lists a tenant's
+// units) -> "Business Center: 101, 102 · Tower: 5", so many units stay short. Units without a building stay as they are.
+export const groupUnits = (text) => {
+  const order = []
+  const byBuilding = new Map()
+  String(text || '')
+    .split(', ')
+    .map((u) => u.trim())
+    .filter(Boolean)
+    .forEach((u) => {
+      const i = u.lastIndexOf(' – ')
+      const [b, unit] = i > 0 ? [u.slice(0, i), u.slice(i + 3)] : ['', u]
+      if (!byBuilding.has(b)) {
+        byBuilding.set(b, [])
+        order.push(b)
+      }
+      byBuilding.get(b).push(unit)
+    })
+  return order.map((b) => (b ? `${b}: ` : '') + byBuilding.get(b).join(', ')).join(' · ')
+}

@@ -353,13 +353,15 @@ const Collections = () => {
   const cards = [
     {
       label: 'Total Received',
-      value: `PKR ${fmt(totals.amount)}`,
+      value: fmt(totals.amount),
+      currency: true,
       lines: [{ text: totals.reversals ? 'after reversals' : 'money received' }],
     },
     {
       // What is really kept: received minus overpaid rent given back at move-out
       label: 'Net Collected',
-      value: `PKR ${fmt(totals.net)}`,
+      value: fmt(totals.net),
+      currency: true,
       strong: true,
       negative: totals.net < 0,
       lines: [
@@ -378,7 +380,8 @@ const Collections = () => {
     },
     {
       label: 'Discounts Given',
-      value: `PKR ${fmt(totals.discount)}`,
+      value: fmt(totals.discount),
+      currency: true,
       lines: [{ text: discounted ? `on ${plural(discounted, 'payment')}` : 'none' }],
     },
     {
@@ -509,7 +512,21 @@ const Collections = () => {
                     c.strong ? (c.negative ? 'text-danger' : 'text-success') : ''
                   }`}
                 >
-                  {loading ? '…' : c.value}
+                  {loading ? (
+                    '…'
+                  ) : (
+                    <>
+                      {c.currency && (
+                        <span
+                          className="fw-semibold text-body-secondary me-1"
+                          style={{ fontSize: '0.5em' }}
+                        >
+                          PKR
+                        </span>
+                      )}
+                      {c.value}
+                    </>
+                  )}
                 </div>
                 {/* the small lines share one row ("from 3 tenants · 2 reversals"), so every box has the same height */}
                 {!loading && (

@@ -25,7 +25,7 @@ import { fmt } from '../../utils/rentUtils'
 import { exportCSV } from '../../utils/exportUtils'
 import { todayLocal } from '../../utils/dates'
 import { formatDay } from '../../utils/reminders'
-import { ALL_TIME_FROM, STATEMENT_PRESETS, presetRange } from '../../utils/collections'
+import { ALL_TIME_FROM, STATEMENT_PRESETS, groupUnits, presetRange } from '../../utils/collections'
 
 // Tenant Statement: one tenant's account for a period. Opening balance, every charge (invoice, charged late fee) and
 // credit (payment, discount) with the running balance, then the closing balance. Read only; made for printing.
@@ -143,7 +143,6 @@ const TenantStatement = () => {
         ['Email', s.email],
         ['CNIC / NTN', s.cnicNtn],
         ['Address', s.address],
-        ['Unit(s)', s.units],
       ].filter(([, v]) => v)
     : []
 
@@ -280,6 +279,12 @@ const TenantStatement = () => {
                     <span className="text-body-secondary">{k}:</span> {v}
                   </CCol>
                 ))}
+                {/* Units on their own full line, each building once, so many units stay short */}
+                {s.units && (
+                  <CCol xs={12}>
+                    <span className="text-body-secondary">Unit(s):</span> {groupUnits(s.units)}
+                  </CCol>
+                )}
               </CRow>
             </div>
 
